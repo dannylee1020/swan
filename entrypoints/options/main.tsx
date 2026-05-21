@@ -221,6 +221,10 @@ function OptionsApp() {
 
       <section className="band">
         <h2>Twilio SMS</h2>
+        <p className="sectionNote">
+          Swan uses Twilio directly for SMS alerts only. AI calls are started
+          through ElevenLabs.
+        </p>
         <div className="grid three">
           <label>
             Account SID
@@ -274,6 +278,11 @@ function OptionsApp() {
 
       <section className="band">
         <h2>ElevenLabs AI Call</h2>
+        <p className="sectionNote">
+          Configure an ElevenLabs Conversational AI agent and connect a phone
+          number there. If the number is from Twilio, import or verify it in
+          ElevenLabs before using its phone number ID here.
+        </p>
         <div className="grid three">
           <label>
             API key

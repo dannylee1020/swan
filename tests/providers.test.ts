@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ElevenLabsCallProvider } from "../lib/providers/elevenlabs";
 import { TwilioSmsProvider } from "../lib/providers/twilio";
 import type { AlertContext } from "../lib/types";
@@ -39,6 +39,10 @@ describe("provider request builders", () => {
     );
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("sends Twilio SMS without full URL context", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -50,10 +54,38 @@ describe("provider request builders", () => {
       providerId: "SM123",
     });
 
-    const [, init] = fetchMock.mock.calls[0]!;
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(
+      "https://api.twilio.com/2010-04-01/Accounts/AC123/Messages.json",
+    );
+    expect(init.headers).toMatchObject({
+      Authorization: `Basic ${Buffer.from("AC123:token", "binary").toString(
+        "base64",
+      )}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    });
     expect(String(init.body)).toContain("example.com");
+    expect(String(init.body)).toContain("To=%2B15551234567");
+    expect(String(init.body)).toContain("From=%2B15550000000");
     expect(String(init.body)).not.toContain("/watch");
     expect(String(init.body)).not.toContain("private=true");
+  });
+
+  it("requires Twilio SMS configuration before sending", async () => {
+    const missingTwilioContext: AlertContext = {
+      ...context,
+      settings: {
+        ...context.settings,
+        twilio: {
+          ...context.settings.twilio,
+          authToken: "",
+        },
+      },
+    };
+
+    await expect(
+      new TwilioSmsProvider().send(missingTwilioContext),
+    ).rejects.toThrow("Twilio SMS is not configured");
   });
 
   it("starts ElevenLabs call with event metadata only", async () => {
@@ -86,5 +118,22 @@ describe("provider request builders", () => {
     });
     expect(String(init.body)).not.toContain("/watch");
     expect(String(init.body)).not.toContain("private=true");
+  });
+
+  it("requires ElevenLabs call configuration before starting a call", async () => {
+    const missingElevenLabsContext: AlertContext = {
+      ...context,
+      settings: {
+        ...context.settings,
+        elevenLabs: {
+          ...context.settings.elevenLabs,
+          agentPhoneNumberId: "",
+        },
+      },
+    };
+
+    await expect(
+      new ElevenLabsCallProvider().start(missingElevenLabsContext),
+    ).rejects.toThrow("ElevenLabs call is not configured");
   });
 });
