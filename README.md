@@ -46,10 +46,16 @@ Load the extension in Chromium:
 
 1. Enable **Developer Mode**
 2. Click **Load unpacked**
-3. Select the `.output/chrome-mv3` path printed by `npm run setup`
+3. Select the `output/chrome-mv3` path printed by `npm run setup`
 
-After loading, open the Swan options page, configure your phone/provider
-settings, add tracked domains, and click **Send test alert**.
+After loading, Swan opens the full settings tab automatically on first install.
+If it does not, click the Swan extension icon to open setup. Configure your
+phone/provider settings, add tracked domains, and click **Send test alert**.
+
+Swan v0 detects configured domains only. It ships with a small seed list of
+NSFW domains, matches subdomains of tracked domains, and lets you add or disable
+rules in the options page. It does not inspect page content or run AI-based
+classification.
 
 Provider setup:
 
@@ -69,7 +75,7 @@ Run WXT in development mode:
 npm run dev
 ```
 
-Load `.output/chrome-mv3` through `chrome://extensions`.
+Load `output/chrome-mv3` through `chrome://extensions`.
 
 ## Build
 
@@ -77,7 +83,7 @@ Load `.output/chrome-mv3` through `chrome://extensions`.
 npm run build
 ```
 
-Load `.output/chrome-mv3` through `chrome://extensions`.
+Load `output/chrome-mv3` through `chrome://extensions`.
 
 ## Validate
 

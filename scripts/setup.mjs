@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const extensionDir = join(repoRoot, ".output", "chrome-mv3");
+const extensionDir = join(repoRoot, "output", "chrome-mv3");
 const manifestPath = join(extensionDir, "manifest.json");
 const noOpen = process.argv.includes("--no-open");
 

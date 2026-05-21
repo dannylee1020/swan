@@ -16,6 +16,7 @@
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.1",
     "@wxt-dev/module-react": "^1.2.2",
+    "lucide-react": "^1.16.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "wxt": "^0.20.11"

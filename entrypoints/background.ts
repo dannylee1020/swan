@@ -6,8 +6,8 @@ import { getEvents, getRules } from "../lib/storage";
 const coordinator = new AlertCoordinator();
 
 export default defineBackground(() => {
-  chrome.runtime.onInstalled.addListener(() => {
-    void getRules();
+  chrome.runtime.onInstalled.addListener((details) => {
+    void handleInstalled(details);
   });
 
   chrome.action.onClicked.addListener(() => {
@@ -40,6 +40,16 @@ export default defineBackground(() => {
     },
   );
 });
+
+async function handleInstalled(
+  details: chrome.runtime.InstalledDetails,
+): Promise<void> {
+  await getRules();
+
+  if (details.reason === "install") {
+    await chrome.runtime.openOptionsPage();
+  }
+}
 
 async function handleNavigation(url: string, tabId: number): Promise<void> {
   const match = findMatchingRule(url, await getRules());
