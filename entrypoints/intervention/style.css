@@ -1,0 +1,119 @@
+:root {
+  color: oklch(18% 0.02 190);
+  background: oklch(95% 0.014 190);
+  font-family:
+    Avenir Next, Avenir, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  min-height: 42px;
+  border: 1px solid oklch(38% 0.1 178);
+  border-radius: 8px;
+  padding: 0 16px;
+  background: oklch(38% 0.1 178);
+  color: oklch(98% 0.008 190);
+  font: inherit;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+button.secondary {
+  border-color: oklch(74% 0.025 190);
+  background: oklch(98% 0.008 190);
+  color: oklch(24% 0.02 190);
+}
+
+p,
+h1 {
+  margin: 0;
+}
+
+.screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.panel {
+  display: grid;
+  gap: 22px;
+  width: min(720px, 100%);
+  padding: clamp(24px, 5vw, 52px);
+  border: 1px solid oklch(81% 0.02 190);
+  border-radius: 8px;
+  background: oklch(98% 0.008 190);
+  box-shadow: 0 24px 80px color-mix(in oklch, oklch(20% 0.02 190), transparent 86%);
+}
+
+.eyebrow {
+  color: oklch(41% 0.09 178);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 620px;
+  font-size: clamp(2.2rem, 6vw, 4.6rem);
+  line-height: 0.96;
+  letter-spacing: 0;
+}
+
+.copy {
+  max-width: 58ch;
+  color: oklch(36% 0.025 190);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.notice {
+  padding: 12px 14px;
+  border: 1px solid oklch(79% 0.06 25);
+  border-radius: 8px;
+  background: oklch(94% 0.035 25);
+  color: oklch(31% 0.06 25);
+}
+
+.eventBox {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.eventBox div {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid oklch(84% 0.018 190);
+  border-radius: 8px;
+  background: oklch(96% 0.012 190);
+}
+
+.eventBox span {
+  color: oklch(46% 0.025 190);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .eventBox {
+    grid-template-columns: 1fr;
+  }
+}

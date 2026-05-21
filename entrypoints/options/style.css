@@ -1,0 +1,245 @@
+:root {
+  color: oklch(21% 0.02 190);
+  background: oklch(96% 0.012 190);
+  font-family:
+    Avenir Next, Avenir, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid oklch(72% 0.025 190);
+  border-radius: 8px;
+  background: oklch(98% 0.008 190);
+  color: oklch(24% 0.02 190);
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: oklch(50% 0.09 178);
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid oklch(76% 0.025 190);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: oklch(99% 0.006 190);
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: oklch(36% 0.025 190);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  max-width: 760px;
+  font-size: 2.5rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: 1.05rem;
+}
+
+.shell {
+  display: grid;
+  gap: 18px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.masthead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 24px;
+  align-items: end;
+  padding: 24px 0 16px;
+}
+
+.eyebrow {
+  margin-bottom: 10px;
+  color: oklch(41% 0.09 178);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.intro {
+  max-width: 660px;
+  margin-top: 14px;
+  color: oklch(38% 0.025 190);
+  line-height: 1.55;
+}
+
+.statusPanel {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid oklch(82% 0.02 190);
+  border-radius: 8px;
+  background: oklch(99% 0.006 190);
+}
+
+.status {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+}
+
+.status.on {
+  background: oklch(65% 0.16 155);
+}
+
+.status.off {
+  background: oklch(62% 0.15 25);
+}
+
+.notice {
+  padding: 12px 14px;
+  border: 1px solid oklch(79% 0.06 178);
+  border-radius: 8px;
+  background: oklch(94% 0.04 178);
+  color: oklch(27% 0.05 178);
+}
+
+.band {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid oklch(84% 0.018 190);
+  border-radius: 8px;
+  background: oklch(98% 0.008 190);
+}
+
+.sectionHeader {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+.grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+}
+
+.toggle input {
+  width: 18px;
+  min-height: 18px;
+}
+
+.primary {
+  padding-inline: 16px;
+  border-color: oklch(45% 0.11 178);
+  background: oklch(45% 0.11 178);
+  color: oklch(98% 0.008 190);
+  font-weight: 760;
+}
+
+.inlineForm {
+  display: flex;
+  gap: 8px;
+  min-width: min(420px, 100%);
+}
+
+.inlineForm button,
+.actions button {
+  padding-inline: 12px;
+}
+
+.ruleList,
+.eventList {
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border: 1px solid oklch(87% 0.014 190);
+  border-radius: 8px;
+  background: oklch(99% 0.006 190);
+}
+
+.row div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.row span {
+  color: oklch(47% 0.025 190);
+  font-size: 0.86rem;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .masthead,
+  .grid.two,
+  .grid.three {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionHeader,
+  .row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inlineForm {
+    min-width: 0;
+  }
+}
