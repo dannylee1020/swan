@@ -2,7 +2,14 @@
 
 Swan is a self-hosted browser extension that helps interrupt porn urges with immediate SMS and AI phone-call interventions.
 
-V0 is built for developers and technical users. You run the extension locally in Chromium and connect your own SMS/call providers.
+## Background
+
+Porn is addiction disguised as leisure. The common excuse that "everyone
+watches, so it does not matter," is bullshit. It matters a lot. Its damage is subtle: it
+slowly poisons attention, motivation, confidence, and the capacity for real
+love. Most people do not notice the cost because it rarely arrives as one
+dramatic collapse. It is a cunning pattern of death by a thousand cuts, quietly
+draining productivity and self-respect until the damage feels normal.
 
 ## What It Does
 
