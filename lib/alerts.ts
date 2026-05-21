@@ -1,5 +1,5 @@
 import { shouldAlert } from "./detection";
-import { RetellCallProvider } from "./providers/retell";
+import { ElevenLabsCallProvider } from "./providers/elevenlabs";
 import { TwilioSmsProvider } from "./providers/twilio";
 import { getEvents, getSettings, saveEvent, updateEvent } from "./storage";
 import type { CallProvider, SmsProvider, UrgeEvent } from "./types";
@@ -15,7 +15,7 @@ export class AlertCoordinator {
 
   constructor(deps: AlertCoordinatorDeps = {}) {
     this.smsProvider = deps.smsProvider ?? new TwilioSmsProvider();
-    this.callProvider = deps.callProvider ?? new RetellCallProvider();
+    this.callProvider = deps.callProvider ?? new ElevenLabsCallProvider();
   }
 
   async handle(event: UrgeEvent): Promise<UrgeEvent> {

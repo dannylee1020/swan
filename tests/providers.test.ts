@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { RetellCallProvider } from "../lib/providers/retell";
+import { ElevenLabsCallProvider } from "../lib/providers/elevenlabs";
 import { TwilioSmsProvider } from "../lib/providers/twilio";
 import type { AlertContext } from "../lib/types";
 
@@ -24,10 +24,10 @@ const context: AlertContext = {
       authToken: "token",
       fromNumber: "+15550000000",
     },
-    retell: {
-      apiKey: "retell-key",
+    elevenLabs: {
+      apiKey: "elevenlabs-key",
       agentId: "agent_123",
-      fromNumber: "+15550000000",
+      agentPhoneNumberId: "phnum_123",
     },
   },
 };
@@ -56,24 +56,35 @@ describe("provider request builders", () => {
     expect(String(init.body)).not.toContain("private=true");
   });
 
-  it("starts Retell call with event metadata only", async () => {
+  it("starts ElevenLabs call with event metadata only", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ call_id: "call_123" }),
+      json: () => Promise.resolve({ conversation_id: "conv_123" }),
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(new RetellCallProvider().start(context)).resolves.toEqual({
-      providerId: "call_123",
+    await expect(new ElevenLabsCallProvider().start(context)).resolves.toEqual({
+      providerId: "conv_123",
     });
 
-    const [, init] = fetchMock.mock.calls[0]!;
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(
+      "https://api.elevenlabs.io/v1/convai/twilio/outbound-call",
+    );
+    expect(init.headers).toMatchObject({
+      "xi-api-key": "elevenlabs-key",
+      "Content-Type": "application/json",
+    });
     const body = JSON.parse(String(init.body));
+    expect(body.agent_id).toBe("agent_123");
+    expect(body.agent_phone_number_id).toBe("phnum_123");
     expect(body.to_number).toBe("+15551234567");
-    expect(body.retell_llm_dynamic_variables).toEqual({
+    expect(body.conversation_initiation_client_data.dynamic_variables).toEqual({
       swan_event_id: "event:1",
       swan_detected_domain: "example.com",
       swan_detected_at: "2026-05-20T10:00:00.000Z",
     });
+    expect(String(init.body)).not.toContain("/watch");
+    expect(String(init.body)).not.toContain("private=true");
   });
 });

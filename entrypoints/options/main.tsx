@@ -273,17 +273,20 @@ function OptionsApp() {
       </section>
 
       <section className="band">
-        <h2>Retell AI Call</h2>
+        <h2>ElevenLabs AI Call</h2>
         <div className="grid three">
           <label>
             API key
             <input
               type="password"
-              value={settings.retell.apiKey}
+              value={settings.elevenLabs.apiKey}
               onChange={(event) =>
                 void persistSettings({
                   ...settings,
-                  retell: { ...settings.retell, apiKey: event.currentTarget.value },
+                  elevenLabs: {
+                    ...settings.elevenLabs,
+                    apiKey: event.currentTarget.value,
+                  },
                 })
               }
             />
@@ -291,26 +294,29 @@ function OptionsApp() {
           <label>
             Agent ID
             <input
-              value={settings.retell.agentId}
+              value={settings.elevenLabs.agentId}
               onChange={(event) =>
                 void persistSettings({
                   ...settings,
-                  retell: { ...settings.retell, agentId: event.currentTarget.value },
+                  elevenLabs: {
+                    ...settings.elevenLabs,
+                    agentId: event.currentTarget.value,
+                  },
                 })
               }
             />
           </label>
           <label>
-            From number
+            Agent phone number ID
             <input
-              value={settings.retell.fromNumber}
-              placeholder="+15557654321"
+              value={settings.elevenLabs.agentPhoneNumberId}
+              placeholder="phnum_..."
               onChange={(event) =>
                 void persistSettings({
                   ...settings,
-                  retell: {
-                    ...settings.retell,
-                    fromNumber: event.currentTarget.value,
+                  elevenLabs: {
+                    ...settings.elevenLabs,
+                    agentPhoneNumberId: event.currentTarget.value,
                   },
                 })
               }

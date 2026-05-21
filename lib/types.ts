@@ -30,10 +30,10 @@ export interface TwilioSettings {
   fromNumber: string;
 }
 
-export interface RetellSettings {
+export interface ElevenLabsSettings {
   apiKey: string;
   agentId: string;
-  fromNumber: string;
+  agentPhoneNumberId: string;
 }
 
 export interface UserSettings {
@@ -43,7 +43,7 @@ export interface UserSettings {
   smsEnabled: boolean;
   callEnabled: boolean;
   twilio: TwilioSettings;
-  retell: RetellSettings;
+  elevenLabs: ElevenLabsSettings;
 }
 
 export interface StorageShape {

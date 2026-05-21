@@ -32,9 +32,9 @@ export const defaultSettings: UserSettings = {
     authToken: "",
     fromNumber: "",
   },
-  retell: {
+  elevenLabs: {
     apiKey: "",
     agentId: "",
-    fromNumber: "",
+    agentPhoneNumberId: "",
   },
 };
