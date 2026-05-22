@@ -1,0 +1,87 @@
+# Install and Load
+
+Swan is self-hosted by building the extension locally and loading the generated Manifest V3 extension directory into a Chromium browser.
+
+## Clone the repository
+
+```bash
+git clone git@github.com:dannylee1020/swan.git
+cd swan
+```
+
+If you use HTTPS instead of SSH:
+
+```bash
+git clone https://github.com/dannylee1020/swan.git
+cd swan
+```
+
+## Run setup
+
+```bash
+npm run setup
+```
+
+The setup command is the recommended path for new users. It runs `npm install` only when dependencies are missing, builds Swan, and prints the absolute path to the extension output.
+
+::: tip
+Use `npm run setup -- --no-open` if you do not want the script to try opening `chrome://extensions`.
+:::
+
+## Manual commands
+
+If you prefer to run each step yourself:
+
+```bash
+npm install
+npm run build
+```
+
+Then load:
+
+```text
+output/chrome-mv3
+```
+
+through your browser's extension page.
+
+## Load unpacked extension
+
+1. Open `chrome://extensions`.
+2. Turn on **Developer Mode**.
+3. Click **Load unpacked**.
+4. Select the absolute `output/chrome-mv3` directory.
+5. Confirm Swan appears in the extensions list.
+
+## Open settings
+
+Swan should open the full settings tab on first install. You can also open it by clicking the Swan extension action icon.
+
+The settings page is where you configure:
+
+- Recipient phone number.
+- Twilio SMS credentials.
+- ElevenLabs AI call credentials.
+- Domain tracking rules.
+- Test alerts.
+- Recent event logs.
+
+## Rebuild after source changes
+
+When you pull a new version or change source code:
+
+```bash
+npm run build
+```
+
+Then open `chrome://extensions` and click the reload button on Swan.
+
+## Validate the checkout
+
+Use these checks before trusting a modified checkout:
+
+```bash
+npm run typecheck
+npm run test
+npm run build
+```

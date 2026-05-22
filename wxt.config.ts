@@ -5,7 +5,7 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifest: {
     name: "Swan",
-    description: "Local-first urge interruption for technical users.",
+    description: "Self-hosted urge intervention for technical users.",
     permissions: ["storage", "tabs", "webNavigation"],
     host_permissions: ["<all_urls>"],
     action: {

@@ -1,5 +1,7 @@
 # Provider Setup
 
+Swan needs provider credentials before real SMS or AI call interventions can run.
+
 Swan uses two provider paths:
 
 - Twilio sends SMS alerts directly.
@@ -18,6 +20,8 @@ Enter these in the Swan options page:
 - ElevenLabs API key.
 - ElevenLabs Agent ID.
 - ElevenLabs Agent phone number ID.
+
+Save the Twilio and ElevenLabs cards separately after entering values.
 
 ## 1. Configure Twilio for SMS
 
@@ -87,6 +91,10 @@ If either provider fails, check Twilio messaging logs and ElevenLabs call histor
 ## Security Note
 
 Swan v0 stores provider credentials in browser extension local storage. Treat this as self-hosted developer setup, not a managed production secret model. A managed version should move provider credentials to a backend.
+
+## After Provider Setup
+
+Return to [Test and verify](./guide/test-and-verify.md), send a test alert, and inspect the latest Swan log entry.
 
 ## References
 

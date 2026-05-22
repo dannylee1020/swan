@@ -65,7 +65,22 @@ Provider setup:
 4. Connect a phone number to that agent in ElevenLabs. If it is a Twilio number, import or verify it in ElevenLabs first.
 5. Add the ElevenLabs API key, Agent ID, and Agent phone number ID in Swan.
 
-For a step-by-step provider console walkthrough, see [Provider setup](docs/provider-setup.md).
+For the full self-hosting guide, run the docs site:
+
+```bash
+npm run docs:dev
+```
+
+Or start with [Quick start](docs/guide/quick-start.md) and [Provider setup](docs/provider-setup.md).
+
+Preview the built docs:
+
+```bash
+npm run docs:build
+npm run docs:preview
+```
+
+The preview runs at `http://127.0.0.1:5292`.
 
 ## Development
 
@@ -91,4 +106,5 @@ Load `output/chrome-mv3` through `chrome://extensions`.
 npm run test
 npm run typecheck
 npm run build
+npm run docs:build
 ```
