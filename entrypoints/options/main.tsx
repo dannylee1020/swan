@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import {
   AudioLines,
   Ban,
-  Bird,
   BookOpen,
   CheckCircle2,
   CircleAlert,
@@ -41,6 +40,8 @@ import "./style.css";
 type ActivePage = "general" | "domains" | "logs";
 type DomainFilter = "all" | "enabled" | "disabled" | "user" | "seed";
 type LogFilter = "all" | AlertStatus["state"];
+type SettingsCardId = "phone" | "twilio" | "elevenLabs";
+type SaveState = "idle" | "saving" | "saved";
 
 const navItems: Array<{ id: ActivePage; label: string; icon: LucideIcon }> = [
   { id: "general", label: "General", icon: Settings },
@@ -51,6 +52,7 @@ const navItems: Array<{ id: ActivePage; label: string; icon: LucideIcon }> = [
 function OptionsApp() {
   const [activePage, setActivePage] = useState<ActivePage>("general");
   const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [settingsDraft, setSettingsDraft] = useState<UserSettings | null>(null);
   const [rules, setRules] = useState<DetectionRule[]>([]);
   const [events, setEvents] = useState<UrgeEvent[]>([]);
   const [newDomain, setNewDomain] = useState("");
@@ -60,6 +62,11 @@ function OptionsApp() {
   const [logFilter, setLogFilter] = useState<LogFilter>("all");
   const [notice, setNotice] = useState("");
   const [testing, setTesting] = useState(false);
+  const [saveState, setSaveState] = useState<Record<SettingsCardId, SaveState>>({
+    phone: "idle",
+    twilio: "idle",
+    elevenLabs: "idle",
+  });
 
   useEffect(() => {
     void refresh();
@@ -138,13 +145,30 @@ function OptionsApp() {
       getEvents(),
     ]);
     setSettings(nextSettings);
+    setSettingsDraft(nextSettings);
     setRules(nextRules);
     setEvents(nextEvents);
+    setSaveState({ phone: "idle", twilio: "idle", elevenLabs: "idle" });
   }
 
-  async function persistSettings(next: UserSettings) {
-    setSettings(next);
-    await saveSettings(next);
+  function updateSettingsDraft(cardId: SettingsCardId, next: UserSettings) {
+    setSettingsDraft(next);
+    setSaveState((current) => ({ ...current, [cardId]: "idle" }));
+  }
+
+  async function saveSettingsCard(cardId: SettingsCardId) {
+    if (!settings || !settingsDraft) return;
+
+    setSaveState((current) => ({ ...current, [cardId]: "saving" }));
+    const nextSettings = mergeSettingsCard(settings, settingsDraft, cardId);
+    await saveSettings(nextSettings);
+    setSettings(nextSettings);
+    setSettingsDraft((currentDraft) =>
+      currentDraft
+        ? mergeSettingsCard(currentDraft, nextSettings, cardId)
+        : nextSettings,
+    );
+    setSaveState((current) => ({ ...current, [cardId]: "saved" }));
     setNotice("Settings saved locally.");
   }
 
@@ -209,7 +233,7 @@ function OptionsApp() {
     );
   }
 
-  if (!settings) {
+  if (!settings || !settingsDraft) {
     return <main className="loadingShell">Loading Swan...</main>;
   }
 
@@ -218,10 +242,8 @@ function OptionsApp() {
       <aside className="sidebar" aria-label="Swan settings navigation">
         <div className="brandBlock">
           <div className="brandMark">
-            <Bird size={22} aria-hidden="true" />
-            <h1>Swan Settings</h1>
+            <h1>Swan settings</h1>
           </div>
-          <p>v0.1.0 Active</p>
         </div>
 
         <nav className="navList">
@@ -263,13 +285,6 @@ function OptionsApp() {
               <Send size={15} aria-hidden="true" />
               <span>{testing ? "Testing..." : "Send test alert"}</span>
             </button>
-            <span className="divider" />
-            <button type="button" className="iconButton" aria-label="Help">
-              <CircleHelp size={18} aria-hidden="true" />
-            </button>
-            <button type="button" className="iconButton" aria-label="Settings">
-              <Settings size={18} aria-hidden="true" />
-            </button>
           </div>
         </header>
 
@@ -278,8 +293,11 @@ function OptionsApp() {
 
           {activePage === "general" ? (
             <GeneralPage
-              settings={settings}
-              onSettingsChange={persistSettings}
+              savedSettings={settings}
+              saveState={saveState}
+              settingsDraft={settingsDraft}
+              onSaveCard={saveSettingsCard}
+              onSettingsDraftChange={updateSettingsDraft}
             />
           ) : null}
 
@@ -319,12 +337,26 @@ function OptionsApp() {
 }
 
 function GeneralPage({
-  onSettingsChange,
-  settings,
+  onSaveCard,
+  onSettingsDraftChange,
+  savedSettings,
+  saveState,
+  settingsDraft,
 }: {
-  onSettingsChange: (settings: UserSettings) => Promise<void>;
-  settings: UserSettings;
+  onSaveCard: (cardId: SettingsCardId) => Promise<void>;
+  onSettingsDraftChange: (cardId: SettingsCardId, settings: UserSettings) => void;
+  savedSettings: UserSettings;
+  saveState: Record<SettingsCardId, SaveState>;
+  settingsDraft: UserSettings;
 }) {
+  const phoneDirty = isSettingsCardDirty(savedSettings, settingsDraft, "phone");
+  const twilioDirty = isSettingsCardDirty(savedSettings, settingsDraft, "twilio");
+  const elevenLabsDirty = isSettingsCardDirty(
+    savedSettings,
+    settingsDraft,
+    "elevenLabs",
+  );
+
   return (
     <>
       <PageHeader
@@ -334,15 +366,15 @@ function GeneralPage({
       />
 
       <section className="settingsGrid" aria-label="Swan configuration">
-        <SettingsCard icon={PhoneCall} title="Phone Configuration">
+        <SettingsCard icon={PhoneCall} title="Phone Configuration" tone="primary">
           <Field label="Recipient number">
             <input
               className="monoInput"
-              value={settings.phoneNumber}
+              value={settingsDraft.phoneNumber}
               placeholder="+1 (555) 000-0000"
               onChange={(event) =>
-                void onSettingsChange({
-                  ...settings,
+                onSettingsDraftChange("phone", {
+                  ...settingsDraft,
                   phoneNumber: event.currentTarget.value,
                 })
               }
@@ -351,25 +383,34 @@ function GeneralPage({
           <ToggleRow
             title="Send SMS"
             description="Primary notification channel"
-            checked={settings.smsEnabled}
+            checked={settingsDraft.smsEnabled}
             onChange={(checked) =>
-              void onSettingsChange({ ...settings, smsEnabled: checked })
+              onSettingsDraftChange("phone", {
+                ...settingsDraft,
+                smsEnabled: checked,
+              })
             }
           />
           <ToggleRow
             title="Start AI Call"
             description="Escalation for high-priority events"
-            checked={settings.callEnabled}
+            checked={settingsDraft.callEnabled}
             onChange={(checked) =>
-              void onSettingsChange({ ...settings, callEnabled: checked })
+              onSettingsDraftChange("phone", {
+                ...settingsDraft,
+                callEnabled: checked,
+              })
             }
           />
           <ToggleRow
             title="Enable monitoring"
             description="Watch configured domains in this browser"
-            checked={settings.enabled}
+            checked={settingsDraft.enabled}
             onChange={(checked) =>
-              void onSettingsChange({ ...settings, enabled: checked })
+              onSettingsDraftChange("phone", {
+                ...settingsDraft,
+                enabled: checked,
+              })
             }
           />
           <Field label="Cooldown minutes">
@@ -377,27 +418,32 @@ function GeneralPage({
               className="monoInput"
               type="number"
               min="1"
-              value={settings.cooldownMinutes}
+              value={settingsDraft.cooldownMinutes}
               onChange={(event) =>
-                void onSettingsChange({
-                  ...settings,
+                onSettingsDraftChange("phone", {
+                  ...settingsDraft,
                   cooldownMinutes: Number(event.currentTarget.value),
                 })
               }
             />
           </Field>
+          <SaveCardFooter
+            dirty={phoneDirty}
+            state={saveState.phone}
+            onSave={() => void onSaveCard("phone")}
+          />
         </SettingsCard>
 
         <SettingsCard icon={MessageSquare} title="Twilio SMS" tag="Default">
           <Field label="Account SID">
             <input
               className="monoInput"
-              value={settings.twilio.accountSid}
+              value={settingsDraft.twilio.accountSid}
               onChange={(event) =>
-                void onSettingsChange({
-                  ...settings,
+                onSettingsDraftChange("twilio", {
+                  ...settingsDraft,
                   twilio: {
-                    ...settings.twilio,
+                    ...settingsDraft.twilio,
                     accountSid: event.currentTarget.value,
                   },
                 })
@@ -408,12 +454,12 @@ function GeneralPage({
             <input
               className="monoInput"
               type="password"
-              value={settings.twilio.authToken}
+              value={settingsDraft.twilio.authToken}
               onChange={(event) =>
-                void onSettingsChange({
-                  ...settings,
+                onSettingsDraftChange("twilio", {
+                  ...settingsDraft,
                   twilio: {
-                    ...settings.twilio,
+                    ...settingsDraft.twilio,
                     authToken: event.currentTarget.value,
                   },
                 })
@@ -423,13 +469,13 @@ function GeneralPage({
           <Field label="From number">
             <input
               className="monoInput"
-              value={settings.twilio.fromNumber}
+              value={settingsDraft.twilio.fromNumber}
               placeholder="+1 (888) 000-0000"
               onChange={(event) =>
-                void onSettingsChange({
-                  ...settings,
+                onSettingsDraftChange("twilio", {
+                  ...settingsDraft,
                   twilio: {
-                    ...settings.twilio,
+                    ...settingsDraft.twilio,
                     fromNumber: event.currentTarget.value,
                   },
                 })
@@ -439,6 +485,11 @@ function GeneralPage({
           <p className="helperText">
             Twilio is the default SMS provider for Swan v0.
           </p>
+          <SaveCardFooter
+            dirty={twilioDirty}
+            state={saveState.twilio}
+            onSave={() => void onSaveCard("twilio")}
+          />
         </SettingsCard>
 
         <SettingsCard icon={AudioLines} title="ElevenLabs AI Call" tag="Default">
@@ -446,12 +497,12 @@ function GeneralPage({
             <input
               className="monoInput"
               type="password"
-              value={settings.elevenLabs.apiKey}
+              value={settingsDraft.elevenLabs.apiKey}
               onChange={(event) =>
-                void onSettingsChange({
-                  ...settings,
+                onSettingsDraftChange("elevenLabs", {
+                  ...settingsDraft,
                   elevenLabs: {
-                    ...settings.elevenLabs,
+                    ...settingsDraft.elevenLabs,
                     apiKey: event.currentTarget.value,
                   },
                 })
@@ -461,12 +512,12 @@ function GeneralPage({
           <Field label="Agent ID">
             <input
               className="monoInput"
-              value={settings.elevenLabs.agentId}
+              value={settingsDraft.elevenLabs.agentId}
               onChange={(event) =>
-                void onSettingsChange({
-                  ...settings,
+                onSettingsDraftChange("elevenLabs", {
+                  ...settingsDraft,
                   elevenLabs: {
-                    ...settings.elevenLabs,
+                    ...settingsDraft.elevenLabs,
                     agentId: event.currentTarget.value,
                   },
                 })
@@ -476,13 +527,13 @@ function GeneralPage({
           <Field label="Agent phone number ID">
             <input
               className="monoInput"
-              value={settings.elevenLabs.agentPhoneNumberId}
+              value={settingsDraft.elevenLabs.agentPhoneNumberId}
               placeholder="phnum_..."
               onChange={(event) =>
-                void onSettingsChange({
-                  ...settings,
+                onSettingsDraftChange("elevenLabs", {
+                  ...settingsDraft,
                   elevenLabs: {
-                    ...settings.elevenLabs,
+                    ...settingsDraft.elevenLabs,
                     agentPhoneNumberId: event.currentTarget.value,
                   },
                 })
@@ -493,6 +544,11 @@ function GeneralPage({
             Connect a phone number in ElevenLabs before using its phone number ID
             here.
           </p>
+          <SaveCardFooter
+            dirty={elevenLabsDirty}
+            state={saveState.elevenLabs}
+            onSave={() => void onSaveCard("elevenLabs")}
+          />
         </SettingsCard>
       </section>
     </>
@@ -542,11 +598,11 @@ function DomainTrackingPage({
         description="Manage the configured list Swan watches. Subdomains are matched automatically."
       />
 
-      <div className="metricGrid">
-        <MetricCard label="Total domains" value={stats.total} />
-        <MetricCard label="Enabled" value={stats.enabled} />
-        <MetricCard label="Custom" value={stats.custom} />
-        <MetricCard label="Seed" value={stats.seed} />
+      <div className="summaryStrip" aria-label="Domain summary">
+        <SummaryItem label="Total domains" value={stats.total} />
+        <SummaryItem label="Enabled" value={stats.enabled} />
+        <SummaryItem label="Custom" value={stats.custom} />
+        <SummaryItem label="Seed" value={stats.seed} />
       </div>
 
       <section className="dataPanel" aria-labelledby="tracked-domains">
@@ -729,14 +785,20 @@ function LogsPage({
         </button>
       </PageHeader>
 
-      <div className="metricGrid">
-        <MetricCard label="Events" value={stats.total} />
-        <MetricCard label="SMS success" value={stats.smsSuccess} />
-        <MetricCard label="SMS failed" value={stats.smsFailed} />
-        <MetricCard label="SMS skipped" value={stats.smsSkipped} />
-        <MetricCard label="Call success" value={stats.callSuccess} />
-        <MetricCard label="Call failed" value={stats.callFailed} />
-        <MetricCard label="Call skipped" value={stats.callSkipped} />
+      <div className="summaryStrip logSummary" aria-label="Log summary">
+        <SummaryItem label="Events" value={stats.total} />
+        <ChannelSummary
+          label="SMS"
+          success={stats.smsSuccess}
+          failed={stats.smsFailed}
+          skipped={stats.smsSkipped}
+        />
+        <ChannelSummary
+          label="Calls"
+          success={stats.callSuccess}
+          failed={stats.callFailed}
+          skipped={stats.callSkipped}
+        />
       </div>
 
       <section className="dataPanel" aria-labelledby="detection-logs">
@@ -772,7 +834,7 @@ function LogsPage({
         </div>
 
         <div className="tableWrap">
-          <table>
+          <table className="logsTable">
             <thead>
               <tr>
                 <th>Domain</th>
@@ -794,11 +856,17 @@ function LogsPage({
                   const rule = rulesById.get(event.ruleId);
                   return (
                     <tr key={event.id}>
-                      <td className="domainName">{event.domain}</td>
-                      <td>{new Date(event.timestamp).toLocaleString()}</td>
-                      <td>
+                      <td className="domainName" data-label="Domain">
+                        {event.domain}
+                      </td>
+                      <td data-label="Timestamp">
+                        {new Date(event.timestamp).toLocaleString()}
+                      </td>
+                      <td data-label="Rule">
                         <div className="ruleCell">
-                          <span className="domainName">{rule?.id ?? event.ruleId}</span>
+                          <span className="domainName">
+                            {rule?.id ?? event.ruleId}
+                          </span>
                           {rule ? (
                             <span className={`sourceChip ${rule.source}`}>
                               {rule.source}
@@ -806,10 +874,10 @@ function LogsPage({
                           ) : null}
                         </div>
                       </td>
-                      <td>
+                      <td data-label="SMS">
                         <StatusCell status={event.smsStatus} />
                       </td>
-                      <td>
+                      <td data-label="Call">
                         <StatusCell status={event.callStatus} />
                       </td>
                     </tr>
@@ -847,12 +915,52 @@ function PageHeader({
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: number }) {
+function SummaryItem({ label, value }: { label: string; value: number }) {
   return (
-    <div className="metricCard">
+    <div className="summaryItem">
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function ChannelSummary({
+  failed,
+  label,
+  skipped,
+  success,
+}: {
+  failed: number;
+  label: string;
+  skipped: number;
+  success: number;
+}) {
+  return (
+    <div className="channelSummary">
+      <span>{label}</span>
+      <div className="channelSummaryValues">
+        <StatusCount label="Success" state="success" value={success} />
+        <StatusCount label="Failed" state="failed" value={failed} />
+        <StatusCount label="Skipped" state="skipped" value={skipped} />
+      </div>
+    </div>
+  );
+}
+
+function StatusCount({
+  label,
+  state,
+  value,
+}: {
+  label: string;
+  state: AlertStatus["state"];
+  value: number;
+}) {
+  return (
+    <span className={`statusCount ${state}`}>
+      <strong>{value}</strong>
+      {label}
+    </span>
   );
 }
 
@@ -876,19 +984,54 @@ function FilterButton({
   );
 }
 
+function SaveCardFooter({
+  dirty,
+  onSave,
+  state,
+}: {
+  dirty: boolean;
+  onSave: () => void;
+  state: SaveState;
+}) {
+  const saving = state === "saving";
+  const saved = state === "saved" && !dirty;
+  const status = dirty ? "Unsaved changes" : saved ? "Saved" : "Saved";
+
+  return (
+    <div className="cardFooter">
+      <span className={dirty ? "saveState dirty" : "saveState"}>{status}</span>
+      <button
+        type="button"
+        className="secondaryButton"
+        disabled={saving || !dirty}
+        onClick={onSave}
+      >
+        <CheckCircle2 size={14} aria-hidden="true" />
+        <span>{saving ? "Saving..." : "Save"}</span>
+      </button>
+    </div>
+  );
+}
+
 function SettingsCard({
   children,
   icon: Icon,
   tag,
+  tone,
   title,
 }: {
   children: React.ReactNode;
   icon: LucideIcon;
   tag?: string;
+  tone?: "primary";
   title: string;
 }) {
   return (
-    <section className="settingsCard">
+    <section
+      className={
+        tone === "primary" ? "settingsCard primarySettingsCard" : "settingsCard"
+      }
+    >
       <div className="cardHeader">
         <div className="titleWithIcon">
           <Icon size={18} aria-hidden="true" />
@@ -1026,6 +1169,60 @@ function countChannelStatus(
   state: AlertStatus["state"],
 ): number {
   return events.filter((event) => event[channel].state === state).length;
+}
+
+function isSettingsCardDirty(
+  saved: UserSettings,
+  draft: UserSettings,
+  cardId: SettingsCardId,
+): boolean {
+  if (cardId === "phone") {
+    return (
+      saved.enabled !== draft.enabled ||
+      saved.phoneNumber !== draft.phoneNumber ||
+      saved.cooldownMinutes !== draft.cooldownMinutes ||
+      saved.smsEnabled !== draft.smsEnabled ||
+      saved.callEnabled !== draft.callEnabled
+    );
+  }
+
+  if (cardId === "twilio") {
+    return (
+      saved.twilio.accountSid !== draft.twilio.accountSid ||
+      saved.twilio.authToken !== draft.twilio.authToken ||
+      saved.twilio.fromNumber !== draft.twilio.fromNumber
+    );
+  }
+
+  return (
+    saved.elevenLabs.apiKey !== draft.elevenLabs.apiKey ||
+    saved.elevenLabs.agentId !== draft.elevenLabs.agentId ||
+    saved.elevenLabs.agentPhoneNumberId !==
+      draft.elevenLabs.agentPhoneNumberId
+  );
+}
+
+function mergeSettingsCard(
+  saved: UserSettings,
+  draft: UserSettings,
+  cardId: SettingsCardId,
+): UserSettings {
+  if (cardId === "phone") {
+    return {
+      ...saved,
+      enabled: draft.enabled,
+      phoneNumber: draft.phoneNumber,
+      cooldownMinutes: draft.cooldownMinutes,
+      smsEnabled: draft.smsEnabled,
+      callEnabled: draft.callEnabled,
+    };
+  }
+
+  if (cardId === "twilio") {
+    return { ...saved, twilio: draft.twilio };
+  }
+
+  return { ...saved, elevenLabs: draft.elevenLabs };
 }
 
 createRoot(document.getElementById("root")!).render(
