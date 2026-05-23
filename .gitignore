@@ -5,6 +5,8 @@ output/
 dist/
 *.log
 .DS_Store
+config.yaml
+public/swan-bootstrap.json
 memory/
 *.env
 todo.todo

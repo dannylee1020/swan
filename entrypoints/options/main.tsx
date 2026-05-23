@@ -18,8 +18,16 @@ import {
   Send,
   Settings,
   Trash2,
+  Upload,
   type LucideIcon,
 } from "lucide-react";
+import {
+  applyBootstrap,
+  parseSwanBootstrap,
+  summarizeBootstrap,
+  type BootstrapSummary,
+  type SwanBootstrap,
+} from "../../lib/bootstrap";
 import { normalizeDomain } from "../../lib/domain";
 import type { SwanMessage, SwanMessageResponse } from "../../lib/messages";
 import {
@@ -42,6 +50,11 @@ type DomainFilter = "all" | "enabled" | "disabled" | "user" | "seed";
 type LogFilter = "all" | AlertStatus["state"];
 type SettingsCardId = "phone" | "twilio" | "elevenLabs";
 type SaveState = "idle" | "saving" | "saved";
+type BootstrapInfo =
+  | { state: "checking" }
+  | { state: "missing" }
+  | { state: "available"; bootstrap: SwanBootstrap; summary: BootstrapSummary }
+  | { state: "error"; error: string };
 
 const navItems: Array<{ id: ActivePage; label: string; icon: LucideIcon }> = [
   { id: "general", label: "General", icon: Settings },
@@ -62,6 +75,10 @@ function OptionsApp() {
   const [logFilter, setLogFilter] = useState<LogFilter>("all");
   const [notice, setNotice] = useState("");
   const [testing, setTesting] = useState(false);
+  const [importingData, setImportingData] = useState(false);
+  const [bootstrapInfo, setBootstrapInfo] = useState<BootstrapInfo>({
+    state: "checking",
+  });
   const [saveState, setSaveState] = useState<Record<SettingsCardId, SaveState>>({
     phone: "idle",
     twilio: "idle",
@@ -70,6 +87,7 @@ function OptionsApp() {
 
   useEffect(() => {
     void refresh();
+    void loadBootstrapInfo();
   }, []);
 
   const enabledRules = useMemo(
@@ -149,6 +167,29 @@ function OptionsApp() {
     setRules(nextRules);
     setEvents(nextEvents);
     setSaveState({ phone: "idle", twilio: "idle", elevenLabs: "idle" });
+  }
+
+  async function loadBootstrapInfo() {
+    setBootstrapInfo({ state: "checking" });
+
+    try {
+      const bootstrap = await fetchBundledBootstrap();
+      if (!bootstrap) {
+        setBootstrapInfo({ state: "missing" });
+        return;
+      }
+      setBootstrapInfo({
+        state: "available",
+        bootstrap,
+        summary: summarizeBootstrap(bootstrap),
+      });
+    } catch (error) {
+      setBootstrapInfo({
+        state: "error",
+        error:
+          error instanceof Error ? error.message : "Could not load import data.",
+      });
+    }
   }
 
   function updateSettingsDraft(cardId: SettingsCardId, next: UserSettings) {
@@ -233,6 +274,45 @@ function OptionsApp() {
     );
   }
 
+  async function importBundledData() {
+    if (!settings) return;
+
+    setImportingData(true);
+    setNotice("Importing data from bundled config...");
+
+    try {
+      const bootstrap =
+        bootstrapInfo.state === "available"
+          ? bootstrapInfo.bootstrap
+          : await fetchBundledBootstrap();
+
+      if (!bootstrap) {
+        setBootstrapInfo({ state: "missing" });
+        setNotice("No bundled import data found. Add config.yaml and rebuild.");
+        return;
+      }
+
+      const result = applyBootstrap(settings, rules, bootstrap);
+      await Promise.all([saveSettings(result.settings), saveRules(result.rules)]);
+      setSettings(result.settings);
+      setSettingsDraft(result.settings);
+      setRules(result.rules);
+      setSaveState({ phone: "idle", twilio: "idle", elevenLabs: "idle" });
+      setBootstrapInfo({
+        state: "available",
+        bootstrap,
+        summary: summarizeBootstrap(bootstrap),
+      });
+      setNotice(
+        `Imported data from config.yaml. Added ${result.addedRules} domains and updated ${result.updatedRules}.`,
+      );
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Import failed.");
+    } finally {
+      setImportingData(false);
+    }
+  }
+
   if (!settings || !settingsDraft) {
     return <main className="loadingShell">Loading Swan...</main>;
   }
@@ -293,9 +373,12 @@ function OptionsApp() {
 
           {activePage === "general" ? (
             <GeneralPage
+              bootstrapInfo={bootstrapInfo}
+              importingData={importingData}
               savedSettings={settings}
               saveState={saveState}
               settingsDraft={settingsDraft}
+              onImportData={importBundledData}
               onSaveCard={saveSettingsCard}
               onSettingsDraftChange={updateSettingsDraft}
             />
@@ -337,12 +420,18 @@ function OptionsApp() {
 }
 
 function GeneralPage({
+  bootstrapInfo,
+  importingData,
+  onImportData,
   onSaveCard,
   onSettingsDraftChange,
   savedSettings,
   saveState,
   settingsDraft,
 }: {
+  bootstrapInfo: BootstrapInfo;
+  importingData: boolean;
+  onImportData: () => Promise<void>;
   onSaveCard: (cardId: SettingsCardId) => Promise<void>;
   onSettingsDraftChange: (cardId: SettingsCardId, settings: UserSettings) => void;
   savedSettings: UserSettings;
@@ -555,8 +644,63 @@ function GeneralPage({
             onSave={() => void onSaveCard("twilio")}
           />
         </SettingsCard>
+
+        <SettingsCard icon={Upload} title="Import data" tag="Config">
+          <BootstrapStatus info={bootstrapInfo} />
+          <p className="helperText">
+            Import the local config bundled from config.yaml during the latest
+            build.
+          </p>
+          <div className="cardFooter">
+            <span className="saveState">
+              {bootstrapInfo.state === "available"
+                ? "Ready"
+                : bootstrapInfo.state === "checking"
+                  ? "Checking"
+                  : "Unavailable"}
+            </span>
+            <button
+              type="button"
+              className="secondaryButton"
+              disabled={importingData || bootstrapInfo.state !== "available"}
+              onClick={() => void onImportData()}
+            >
+              <Upload size={14} aria-hidden="true" />
+              <span>{importingData ? "Importing..." : "Import data"}</span>
+            </button>
+          </div>
+        </SettingsCard>
       </section>
     </>
+  );
+}
+
+function BootstrapStatus({ info }: { info: BootstrapInfo }) {
+  if (info.state === "checking") {
+    return <p className="importStatus">Checking bundled config...</p>;
+  }
+
+  if (info.state === "missing") {
+    return (
+      <p className="importStatus">
+        No bundled config found. Add config.yaml and rebuild Swan.
+      </p>
+    );
+  }
+
+  if (info.state === "error") {
+    return <p className="importStatus error">{info.error}</p>;
+  }
+
+  return (
+    <div className="importSummary">
+      <span>{formatDate(info.summary.generatedAt)}</span>
+      <span>
+        {info.summary.hasSettings ? "settings" : "no settings"} /{" "}
+        {info.summary.trackedDomainCount} domains /{" "}
+        {info.summary.hasCredentials ? "credentials" : "no credentials"}
+      </span>
+    </div>
   );
 }
 
@@ -1228,6 +1372,14 @@ function mergeSettingsCard(
   }
 
   return { ...saved, elevenLabs: draft.elevenLabs };
+}
+
+async function fetchBundledBootstrap(): Promise<SwanBootstrap | null> {
+  const response = await fetch(chrome.runtime.getURL("/swan-bootstrap.json"), {
+    cache: "no-store",
+  });
+  if (!response.ok) return null;
+  return parseSwanBootstrap(await response.json());
 }
 
 createRoot(document.getElementById("root")!).render(

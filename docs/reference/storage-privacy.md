@@ -14,6 +14,10 @@ Swan stores these values in `chrome.storage.local`:
 
 These values are local to the installed extension in the browser profile.
 
+Swan can also bundle local import data from `config.yaml` during build. That
+file is a user-managed setup source, not runtime storage. After clicking
+**Import data**, Swan writes the imported values into `chrome.storage.local`.
+
 ## Provider data
 
 Swan sends only the data required to deliver an intervention through the configured providers:
@@ -36,6 +40,7 @@ Removing the extension from the browser can remove extension-local data for that
 ## Practical precautions
 
 - Keep your checkout private if it contains local notes or ignored files.
+- Keep `config.yaml` private; it can contain provider credentials.
 - Do not commit provider credentials.
 - Rotate Twilio and ElevenLabs credentials if they are exposed.
 - Use the provider dashboards to review message and call logs.

@@ -42,6 +42,8 @@ npm run setup
 
 This installs dependencies when needed, builds the extension, prints the
 absolute extension path, and opens `chrome://extensions` when possible.
+If you want repeatable local setup, copy `config.example.yaml` to `config.yaml`
+before running setup. Swan will bundle that local config as import data.
 
 Load the extension in Chromium:
 
@@ -52,6 +54,7 @@ Load the extension in Chromium:
 After loading, Swan opens the full settings tab automatically on first install.
 If it does not, click the Swan extension icon to open setup. Configure your
 phone/provider settings, add tracked domains, and click **Send test alert**.
+If you used `config.yaml`, click **Import data** on the General page first.
 
 Swan v0 detects configured domains only. It ships with a small seed list of
 NSFW domains, matches subdomains of tracked domains, and lets you add or disable

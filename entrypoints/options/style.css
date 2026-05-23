@@ -676,6 +676,34 @@ th {
   gap: 6px;
 }
 
+.importStatus,
+.importSummary {
+  padding: 10px;
+  border: 1px solid var(--outline-soft);
+  border-radius: var(--radius);
+  background: color-mix(in oklch, var(--surface-low) 74%, var(--surface));
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.importStatus.error {
+  border-color: color-mix(in srgb, var(--error) 32%, transparent);
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.importSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.importSummary span {
+  overflow-wrap: anywhere;
+}
+
 .tableWrap {
   overflow-x: auto;
 }

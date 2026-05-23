@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node scripts/setup.mjs",
     "setup": "node scripts/setup.mjs",
+    "predev": "node scripts/generate-bootstrap.mjs",
     "dev": "wxt",
+    "prebuild": "node scripts/generate-bootstrap.mjs",
     "build": "wxt build",
     "docs:build": "vitepress build docs",
     "docs:dev": "vitepress dev docs",
@@ -30,6 +32,7 @@
     "@types/react-dom": "^19.2.3",
     "typescript": "^5.9.3",
     "vitepress": "^2.0.0-alpha.17",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.15",
+    "yaml": "^2.9.0"
   }
 }

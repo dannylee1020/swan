@@ -28,6 +28,11 @@ The setup command is the recommended path for new users. It runs `npm install` o
 Use `npm run setup -- --no-open` if you do not want the script to try opening `chrome://extensions`.
 :::
 
+::: tip
+Copy `config.example.yaml` to `config.yaml` before setup if you want Swan to
+bundle local import data for phone, provider, and tracked-domain settings.
+:::
+
 ## Manual commands
 
 If you prefer to run each step yourself:
@@ -59,6 +64,7 @@ Swan should open the full settings tab on first install. You can also open it by
 
 The settings page is where you configure:
 
+- Bundled `config.yaml` data through **Import data** on General.
 - Recipient phone number.
 - ElevenLabs voice-call credentials.
 - Optional Twilio SMS credentials.

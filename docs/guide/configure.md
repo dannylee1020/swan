@@ -16,6 +16,21 @@ Open **Swan settings** and start with **General**.
 
 Click the Save button for the card after changing these values.
 
+## Import data
+
+The General page can import bundled setup data generated from a local
+`config.yaml` file.
+
+1. Copy `config.example.yaml` to `config.yaml`.
+2. Fill in the values you want to manage locally.
+3. Run `npm run setup` or `npm run build`.
+4. Load or reload the extension.
+5. Open **General** and click **Import data**.
+
+Import data merges configured settings and tracked domains into the current
+browser profile. It does not delete existing rules or logs. `config.yaml` is
+ignored by Git because it can contain provider credentials.
+
 ## ElevenLabs Voice Call card
 
 Enter:

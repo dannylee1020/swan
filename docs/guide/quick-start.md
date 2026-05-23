@@ -98,10 +98,14 @@ npm run setup
 The setup script:
 
 - Installs npm dependencies if `node_modules` is missing.
+- Generates bundled import data from `config.yaml` if that local file exists.
 - Runs the production extension build.
 - Verifies `output/chrome-mv3/manifest.json` exists.
 - Prints the exact extension directory to load in Chromium.
 - Tries to open `chrome://extensions`.
+
+Optional: copy `config.example.yaml` to `config.yaml` before setup if you want
+to keep phone, provider, and tracked-domain values in one local file.
 
 ## 3. Load Swan in Chromium
 
@@ -124,6 +128,10 @@ Open **Swan settings** and save each configuration group:
 | Twilio SMS | Optional Account SID, Auth Token, SMS From number |
 
 Use E.164 phone-number formatting, for example `+15551234567`.
+
+If you built with `config.yaml`, open **General** and click **Import data**
+before manually editing these cards. Import merges configured values and tracked
+domains into this browser profile.
 
 ## 5. Test the intervention loop
 

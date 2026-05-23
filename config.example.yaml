@@ -1,0 +1,19 @@
+phoneNumber: "+15551234567"
+cooldownMinutes: 10
+monitoringEnabled: true
+callEnabled: true
+smsEnabled: false
+
+elevenLabs:
+  apiKey: "your-elevenlabs-api-key"
+  agentId: "your-agent-id"
+  agentPhoneNumberId: "phnum_your_phone_number_id"
+
+twilio:
+  accountSid: "your-twilio-account-sid"
+  authToken: "your-twilio-auth-token"
+  fromNumber: "+15551234567"
+
+trackedDomains:
+  - pornhub.com
+  - xvideos.com
