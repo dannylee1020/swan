@@ -56,10 +56,14 @@ Check:
 - ElevenLabs API key has access to Conversational AI calls.
 - Agent ID is copied from the same ElevenLabs workspace as the API key.
 - Agent phone number ID is copied from ElevenLabs phone-number settings.
-- The phone number is connected or imported inside ElevenLabs.
+- The phone number is from a paid/upgraded Twilio account and is connected or imported inside ElevenLabs.
 - ElevenLabs call history shows the attempted outbound call.
 
 Do not enter the literal phone number in the Agent phone number ID field.
+
+If the call rings, plays the Twilio trial-account message, and then the agent
+is silent, upgrade the Twilio account and test the outbound call from
+ElevenLabs again before testing Swan.
 
 ## Logs show `skipped`
 

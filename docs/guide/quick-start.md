@@ -28,7 +28,7 @@ The script installs dependencies when needed, builds the extension, prints the a
   <div class="setup-card">
     <span class="eyebrow">Voice</span>
     <strong>ElevenLabs agent</strong>
-    <p>You need an API key, Agent ID, and ElevenLabs agent phone number ID.</p>
+    <p>You need an API key, Agent ID, ElevenLabs agent phone number ID, and a paid/upgraded Twilio number.</p>
   </div>
   <div class="setup-card">
     <span class="eyebrow">Optional SMS</span>
@@ -84,7 +84,8 @@ Install:
 - Node.js 20 or newer.
 - npm.
 - A Chromium-based browser that supports unpacked extensions.
-- An ElevenLabs account with a Conversational AI agent and connected phone number.
+- An ElevenLabs account with a Conversational AI agent.
+- A paid/upgraded Twilio phone number connected in ElevenLabs for AI calls.
 - Optional: a Twilio account with an SMS-capable phone number.
 
 ## 2. Build the extension

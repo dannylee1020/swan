@@ -445,6 +445,8 @@ function GeneralPage({
     settingsDraft,
     "elevenLabs",
   );
+  const importDisabled = importingData || bootstrapInfo.state !== "available";
+  const importTitle = getImportButtonTitle(bootstrapInfo);
 
   return (
     <>
@@ -452,70 +454,85 @@ function GeneralPage({
         eyebrow="General"
         title="Intervention settings"
         description="Configure the voice-first intervention Swan uses when a tracked domain is detected."
-      />
+      >
+        <button
+          type="button"
+          className="secondaryButton"
+          disabled={importDisabled}
+          title={importTitle}
+          onClick={() => void onImportData()}
+        >
+          <Upload size={14} aria-hidden="true" />
+          <span>{importingData ? "Importing..." : "Import data"}</span>
+        </button>
+      </PageHeader>
 
       <section className="settingsGrid" aria-label="Swan configuration">
         <SettingsCard icon={PhoneCall} title="Phone Configuration" tone="primary">
-          <Field label="Recipient number">
-            <input
-              className="monoInput"
-              value={settingsDraft.phoneNumber}
-              placeholder="+1 (555) 000-0000"
-              onChange={(event) =>
+          <div className="phoneSettingsFields">
+            <Field label="Recipient number">
+              <input
+                className="monoInput"
+                value={settingsDraft.phoneNumber}
+                placeholder="+1 (555) 000-0000"
+                onChange={(event) =>
+                  onSettingsDraftChange("phone", {
+                    ...settingsDraft,
+                    phoneNumber: event.currentTarget.value,
+                  })
+                }
+              />
+            </Field>
+            <Field label="Cooldown minutes">
+              <input
+                className="monoInput"
+                type="number"
+                min="1"
+                value={settingsDraft.cooldownMinutes}
+                onChange={(event) =>
+                  onSettingsDraftChange("phone", {
+                    ...settingsDraft,
+                    cooldownMinutes: Number(event.currentTarget.value),
+                  })
+                }
+              />
+            </Field>
+          </div>
+          <div className="phoneSettingsToggles">
+            <ToggleRow
+              title="Start voice call"
+              description="Standard intervention channel"
+              checked={settingsDraft.callEnabled}
+              onChange={(checked) =>
                 onSettingsDraftChange("phone", {
                   ...settingsDraft,
-                  phoneNumber: event.currentTarget.value,
+                  callEnabled: checked,
                 })
               }
             />
-          </Field>
-          <ToggleRow
-            title="Start voice call"
-            description="Standard intervention channel"
-            checked={settingsDraft.callEnabled}
-            onChange={(checked) =>
-              onSettingsDraftChange("phone", {
-                ...settingsDraft,
-                callEnabled: checked,
-              })
-            }
-          />
-          <ToggleRow
-            title="Send optional SMS"
-            description="Requires Twilio messaging setup"
-            checked={settingsDraft.smsEnabled}
-            onChange={(checked) =>
-              onSettingsDraftChange("phone", {
-                ...settingsDraft,
-                smsEnabled: checked,
-              })
-            }
-          />
-          <ToggleRow
-            title="Enable monitoring"
-            description="Watch configured domains in this browser"
-            checked={settingsDraft.enabled}
-            onChange={(checked) =>
-              onSettingsDraftChange("phone", {
-                ...settingsDraft,
-                enabled: checked,
-              })
-            }
-          />
-          <Field label="Cooldown minutes">
-            <input
-              className="monoInput"
-              type="number"
-              min="1"
-              value={settingsDraft.cooldownMinutes}
-              onChange={(event) =>
+            <ToggleRow
+              title="Enable monitoring"
+              description="Watch configured domains in this browser"
+              checked={settingsDraft.enabled}
+              onChange={(checked) =>
                 onSettingsDraftChange("phone", {
                   ...settingsDraft,
-                  cooldownMinutes: Number(event.currentTarget.value),
+                  enabled: checked,
                 })
               }
             />
-          </Field>
+            <ToggleRow
+              title="Send optional SMS"
+              description="Requires Twilio messaging setup"
+              checked={settingsDraft.smsEnabled}
+              onChange={(checked) =>
+                onSettingsDraftChange("phone", {
+                  ...settingsDraft,
+                  smsEnabled: checked,
+                })
+              }
+            />
+          </div>
           <SaveCardFooter
             dirty={phoneDirty}
             state={saveState.phone}
@@ -645,62 +662,8 @@ function GeneralPage({
           />
         </SettingsCard>
 
-        <SettingsCard icon={Upload} title="Import data" tag="Config">
-          <BootstrapStatus info={bootstrapInfo} />
-          <p className="helperText">
-            Import the local config bundled from config.yaml during the latest
-            build.
-          </p>
-          <div className="cardFooter">
-            <span className="saveState">
-              {bootstrapInfo.state === "available"
-                ? "Ready"
-                : bootstrapInfo.state === "checking"
-                  ? "Checking"
-                  : "Unavailable"}
-            </span>
-            <button
-              type="button"
-              className="secondaryButton"
-              disabled={importingData || bootstrapInfo.state !== "available"}
-              onClick={() => void onImportData()}
-            >
-              <Upload size={14} aria-hidden="true" />
-              <span>{importingData ? "Importing..." : "Import data"}</span>
-            </button>
-          </div>
-        </SettingsCard>
       </section>
     </>
-  );
-}
-
-function BootstrapStatus({ info }: { info: BootstrapInfo }) {
-  if (info.state === "checking") {
-    return <p className="importStatus">Checking bundled config...</p>;
-  }
-
-  if (info.state === "missing") {
-    return (
-      <p className="importStatus">
-        No bundled config found. Add config.yaml and rebuild Swan.
-      </p>
-    );
-  }
-
-  if (info.state === "error") {
-    return <p className="importStatus error">{info.error}</p>;
-  }
-
-  return (
-    <div className="importSummary">
-      <span>{formatDate(info.summary.generatedAt)}</span>
-      <span>
-        {info.summary.hasSettings ? "settings" : "no settings"} /{" "}
-        {info.summary.trackedDomainCount} domains /{" "}
-        {info.summary.hasCredentials ? "credentials" : "no credentials"}
-      </span>
-    </div>
   );
 }
 
@@ -1310,6 +1273,15 @@ function formatDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown";
   return date.toLocaleDateString();
+}
+
+function getImportButtonTitle(info: BootstrapInfo): string {
+  if (info.state === "checking") return "Checking bundled config...";
+  if (info.state === "missing") {
+    return "No bundled config found. Add config.yaml and rebuild Swan.";
+  }
+  if (info.state === "error") return info.error;
+  return "Import bundled config.yaml data.";
 }
 
 function countChannelStatus(

@@ -353,6 +353,8 @@ th {
 
 .pageHeaderActions {
   flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .summaryStrip {
@@ -445,6 +447,12 @@ th {
 .primarySettingsCard .cardBody {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
+}
+
+.phoneSettingsFields,
+.phoneSettingsToggles {
+  display: grid;
+  gap: 16px;
 }
 
 .primarySettingsCard .cardFooter {
@@ -674,34 +682,6 @@ th {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.importStatus,
-.importSummary {
-  padding: 10px;
-  border: 1px solid var(--outline-soft);
-  border-radius: var(--radius);
-  background: color-mix(in oklch, var(--surface-low) 74%, var(--surface));
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 18px;
-}
-
-.importStatus.error {
-  border-color: color-mix(in srgb, var(--error) 32%, transparent);
-  background: var(--error-soft);
-  color: var(--error);
-}
-
-.importSummary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: space-between;
-}
-
-.importSummary span {
-  overflow-wrap: anywhere;
 }
 
 .tableWrap {
@@ -978,6 +958,7 @@ tbody tr:hover {
   }
 
   .topbarActions,
+  .pageHeaderActions .secondaryButton,
   .primaryButton,
   .searchBox,
   .domainForm .secondaryButton {
@@ -985,6 +966,7 @@ tbody tr:hover {
   }
 
   .primaryButton,
+  .pageHeaderActions .secondaryButton,
   .domainForm .secondaryButton {
     justify-content: center;
   }

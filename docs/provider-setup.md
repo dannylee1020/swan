@@ -7,7 +7,11 @@ Swan uses two provider paths:
 - ElevenLabs starts AI phone calls through its native Twilio outbound-call integration.
 - Twilio can send optional SMS alerts directly when enabled.
 
-Do not create a Twilio Voice/TwiML app for Swan v0. If a Twilio phone number is used for calls, import or verify that number inside ElevenLabs and use the ElevenLabs phone number ID in Swan.
+Do not create a Twilio Voice/TwiML app for Swan v0. ElevenLabs voice calls
+need a paid/upgraded Twilio account. Trial Twilio accounts can ring and play
+the trial message, but the ElevenLabs agent may not connect afterward. Import
+or verify the Twilio number inside ElevenLabs and use the ElevenLabs phone
+number ID in Swan.
 
 ## Values Swan Needs
 
@@ -39,7 +43,7 @@ Save the ElevenLabs and Twilio cards separately after entering values.
 ## 3. Connect a Phone Number in ElevenLabs
 
 1. In ElevenLabs, open the Phone Numbers area for the Agents platform.
-2. Import or connect the Twilio number.
+2. Import or connect the paid/upgraded Twilio number.
 3. Enter:
    - A descriptive label
    - The Twilio phone number
@@ -51,6 +55,9 @@ Save the ElevenLabs and Twilio cards separately after entering values.
 7. In Swan, paste it into Agent phone number ID.
 
 Purchased Twilio numbers can support inbound and outbound calls. Verified caller IDs are outbound-only.
+For Swan testing, do not use a Twilio trial account for the ElevenLabs
+voice-call path. Upgrade Twilio first, then test the outbound call from
+ElevenLabs before testing Swan.
 
 ## Optional: Configure Twilio for SMS
 
@@ -84,6 +91,7 @@ If the call fails, check ElevenLabs call history before changing Swan configurat
 - SMS fails: confirm the Twilio Auth Token, Account SID, SMS-capable From number, and recipient number.
 - SMS is skipped: confirm the Send optional SMS toggle is enabled.
 - SMS fails on a trial account: verify the recipient number in Twilio.
+- Call rings but the agent is silent after the Twilio trial message: upgrade Twilio and re-test the outbound call from ElevenLabs.
 - Call fails: confirm the phone number was imported or verified in ElevenLabs and use the ElevenLabs phone number ID, not the literal phone number.
 - Call fails immediately: confirm the ElevenLabs API key, Agent ID, and Agent phone number ID all belong to the same ElevenLabs workspace.
 - No inbound behavior: verified caller IDs are outbound-only.

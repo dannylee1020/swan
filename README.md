@@ -24,12 +24,14 @@ draining productivity and self-respect until the damage feels normal.
 - Node.js
 - npm
 - Chromium-based browser
-- ElevenLabs account, Conversational AI agent, and connected phone number for AI calls
+- ElevenLabs account, Conversational AI agent, and paid/upgraded Twilio phone number for AI calls
 - Optional: Twilio account and phone number for SMS alerts
 
 Swan starts AI calls through ElevenLabs' native Twilio outbound-call
-integration, so any Twilio number used for calls
-must also be imported or verified in ElevenLabs and linked to the agent.
+integration, so the Twilio account used for calls must be paid/upgraded.
+Trial Twilio accounts can ring but may stop after the trial message instead of
+connecting the ElevenLabs agent. The Twilio number must also be imported or
+verified in ElevenLabs and linked to the agent.
 If you enable optional SMS, Swan sends texts directly through Twilio.
 
 ## Run
@@ -65,7 +67,7 @@ Provider setup:
 
 1. Enter your recipient phone number.
 2. Create an ElevenLabs Conversational AI agent.
-3. Connect a phone number to that agent in ElevenLabs. If it is a Twilio number, import or verify it in ElevenLabs first.
+3. Connect a paid/upgraded Twilio phone number to that agent in ElevenLabs.
 4. Add the ElevenLabs API key, Agent ID, and Agent phone number ID in Swan.
 5. Optional: add Twilio Account SID, Auth token, and SMS From number, then enable SMS.
 
