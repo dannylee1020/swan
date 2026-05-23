@@ -28,10 +28,14 @@ Save the ElevenLabs and Twilio cards separately after entering values.
 ## 1. Create an ElevenLabs Agent
 
 1. Open ElevenLabs and create a Conversational AI agent.
-2. Give the agent an initial message suitable for an intervention call, for example:
-   `Swan detected a risky browsing moment. Step away from the device and talk this through.`
-3. Configure the agent voice and conversation behavior.
-4. Copy the Agent ID.
+2. Configure the Swan [agent prompt and knowledge base](./agent/).
+3. Paste the [system prompt](./agent/easypeasy-system-prompt.md) into the agent
+   instructions or system prompt field.
+4. Upload the [Swan Recovery Playbook](./agent/swan-recovery-playbook.md) as
+   the agent knowledge base.
+5. Configure the agent voice and conversation behavior.
+6. Run a direct ElevenLabs test call.
+7. Copy the Agent ID.
 
 ## 2. Create an ElevenLabs API Key
 

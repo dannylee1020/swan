@@ -36,6 +36,7 @@ export default defineConfig({
         items: [
           { text: "Settings", link: "/guide/configure" },
           { text: "Provider setup", link: "/provider-setup" },
+          { text: "Agent prompt", link: "/agent/" },
           { text: "Domain tracking", link: "/guide/domain-tracking" },
         ],
       },

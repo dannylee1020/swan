@@ -134,6 +134,11 @@ If you built with `config.yaml`, open **General** and click **Import data**
 before manually editing these cards. Import merges configured values and tracked
 domains into this browser profile.
 
+Before the first Swan test alert, configure the ElevenLabs
+[agent prompt and knowledge base](../agent/). Paste the Swan system prompt into
+the agent instructions, set the first message, and upload the recovery playbook
+as the agent knowledge base.
+
 ## 5. Test the intervention loop
 
 1. Click **Send test alert** in Swan settings.
