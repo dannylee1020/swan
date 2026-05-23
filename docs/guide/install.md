@@ -60,8 +60,8 @@ Swan should open the full settings tab on first install. You can also open it by
 The settings page is where you configure:
 
 - Recipient phone number.
-- Twilio SMS credentials.
-- ElevenLabs AI call credentials.
+- ElevenLabs voice-call credentials.
+- Optional Twilio SMS credentials.
 - Domain tracking rules.
 - Test alerts.
 - Recent event logs.

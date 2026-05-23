@@ -14,15 +14,15 @@ In `chrome://extensions`, confirm:
 ## Send a test alert
 
 1. Open Swan settings.
-2. Confirm monitoring, SMS, and call toggles are enabled.
+2. Confirm monitoring and the voice-call toggle are enabled.
 3. Confirm the recipient number is saved.
-4. Confirm Twilio and ElevenLabs credentials are saved.
+4. Confirm ElevenLabs credentials are saved.
 5. Click **Send test alert**.
 
 Expected result:
 
-- The SMS arrives from the configured Twilio From number.
 - The call arrives from the ElevenLabs-connected phone number.
+- If SMS is enabled and Twilio is configured, the SMS arrives from the configured Twilio From number.
 - A new log entry appears in Swan.
 
 ## Verify logs

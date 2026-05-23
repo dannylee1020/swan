@@ -26,14 +26,14 @@ The script installs dependencies when needed, builds the extension, prints the a
     <p>Use Chrome, Brave, Arc, Edge, or another browser that can load unpacked Manifest V3 extensions.</p>
   </div>
   <div class="setup-card">
-    <span class="eyebrow">SMS</span>
-    <strong>Twilio account</strong>
-    <p>You need an Account SID, Auth Token, and SMS-capable From number.</p>
-  </div>
-  <div class="setup-card">
     <span class="eyebrow">Voice</span>
     <strong>ElevenLabs agent</strong>
     <p>You need an API key, Agent ID, and ElevenLabs agent phone number ID.</p>
+  </div>
+  <div class="setup-card">
+    <span class="eyebrow">Optional SMS</span>
+    <strong>Twilio account</strong>
+    <p>Only needed if you want Swan to send text alerts in addition to calls.</p>
   </div>
 </div>
 
@@ -58,7 +58,7 @@ The script installs dependencies when needed, builds the extension, prints the a
     <span>3</span>
     <div>
       <strong>Configure Swan settings.</strong>
-      <p>Enter the recipient number, Twilio SMS credentials, and ElevenLabs call credentials in the Swan options page.</p>
+      <p>Enter the recipient number and ElevenLabs call credentials in the Swan options page.</p>
     </div>
   </li>
   <li>
@@ -72,7 +72,7 @@ The script installs dependencies when needed, builds the extension, prints the a
     <span>5</span>
     <div>
       <strong>Send a test alert.</strong>
-      <p>Use the Send test alert button, confirm the SMS and call arrive, then review the Logs page.</p>
+      <p>Use the Send test alert button, confirm the call arrives, then review the Logs page.</p>
     </div>
   </li>
 </ol>
@@ -84,8 +84,8 @@ Install:
 - Node.js 20 or newer.
 - npm.
 - A Chromium-based browser that supports unpacked extensions.
-- A Twilio account with an SMS-capable phone number.
 - An ElevenLabs account with a Conversational AI agent and connected phone number.
+- Optional: a Twilio account with an SMS-capable phone number.
 
 ## 2. Build the extension
 
@@ -119,18 +119,18 @@ Open **Swan settings** and save each configuration group:
 
 | Group | Required values |
 | --- | --- |
-| Phone Configuration | Recipient phone number, Send SMS toggle, Start AI Call toggle, monitoring toggle, cooldown minutes |
-| Twilio SMS | Account SID, Auth Token, SMS From number |
-| ElevenLabs AI Call | API key, Agent ID, Agent phone number ID |
+| Phone Configuration | Recipient phone number, Start voice call toggle, Send optional SMS toggle, monitoring toggle, cooldown minutes |
+| ElevenLabs Voice Call | API key, Agent ID, Agent phone number ID |
+| Twilio SMS | Optional Account SID, Auth Token, SMS From number |
 
 Use E.164 phone-number formatting, for example `+15551234567`.
 
 ## 5. Test the intervention loop
 
 1. Click **Send test alert** in Swan settings.
-2. Confirm an SMS arrives from the Twilio From number.
-3. Confirm an AI call arrives from the ElevenLabs-connected number.
-4. Open **Logs** and verify the latest event has SMS and call statuses.
+2. Confirm an AI call arrives from the ElevenLabs-connected number.
+3. If SMS is enabled, confirm an SMS arrives from the Twilio From number.
+4. Open **Logs** and verify the latest event has call and SMS statuses.
 
 ## 6. Add a domain
 

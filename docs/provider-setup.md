@@ -1,11 +1,11 @@
 # Provider Setup
 
-Swan needs provider credentials before real SMS or AI call interventions can run.
+Swan needs voice-call provider credentials before real interventions can run.
 
 Swan uses two provider paths:
 
-- Twilio sends SMS alerts directly.
 - ElevenLabs starts AI phone calls through its native Twilio outbound-call integration.
+- Twilio can send optional SMS alerts directly when enabled.
 
 Do not create a Twilio Voice/TwiML app for Swan v0. If a Twilio phone number is used for calls, import or verify that number inside ElevenLabs and use the ElevenLabs phone number ID in Swan.
 
@@ -14,30 +14,14 @@ Do not create a Twilio Voice/TwiML app for Swan v0. If a Twilio phone number is 
 Enter these in the Swan options page:
 
 - Recipient phone number: your phone number in E.164 format, for example `+15551234567`.
-- Twilio Account SID.
-- Twilio Auth token.
-- Twilio SMS From number.
 - ElevenLabs API key.
 - ElevenLabs Agent ID.
 - ElevenLabs Agent phone number ID.
+- Optional SMS: Twilio Account SID, Auth token, and SMS From number.
 
-Save the Twilio and ElevenLabs cards separately after entering values.
+Save the ElevenLabs and Twilio cards separately after entering values.
 
-## 1. Configure Twilio for SMS
-
-1. Create or log into a Twilio account.
-2. Buy or configure a Twilio phone number that supports SMS.
-3. If you are using a Twilio trial account, verify the recipient phone number before testing Swan.
-4. In the Twilio Console, copy your Account SID and Auth Token.
-5. Copy the SMS-capable Twilio phone number in E.164 format.
-6. In Swan, enter:
-   - Account SID
-   - Auth token
-   - From number
-
-Swan sends SMS with Twilio's Messages API using `To`, `From`, and `Body`.
-
-## 2. Create an ElevenLabs Agent
+## 1. Create an ElevenLabs Agent
 
 1. Open ElevenLabs and create a Conversational AI agent.
 2. Give the agent an initial message suitable for an intervention call, for example:
@@ -45,14 +29,14 @@ Swan sends SMS with Twilio's Messages API using `To`, `From`, and `Body`.
 3. Configure the agent voice and conversation behavior.
 4. Copy the Agent ID.
 
-## 3. Create an ElevenLabs API Key
+## 2. Create an ElevenLabs API Key
 
 1. In ElevenLabs, open the API keys area.
 2. Create an API key with access to Conversational AI calls.
 3. Copy the key immediately and store it somewhere safe.
 4. In Swan, paste it into the ElevenLabs API key field.
 
-## 4. Connect a Phone Number in ElevenLabs
+## 3. Connect a Phone Number in ElevenLabs
 
 1. In ElevenLabs, open the Phone Numbers area for the Agents platform.
 2. Import or connect the Twilio number.
@@ -68,21 +52,37 @@ Swan sends SMS with Twilio's Messages API using `To`, `From`, and `Body`.
 
 Purchased Twilio numbers can support inbound and outbound calls. Verified caller IDs are outbound-only.
 
-## 5. Test Swan
+## Optional: Configure Twilio for SMS
+
+1. Create or log into a Twilio account.
+2. Buy or configure a Twilio phone number that supports SMS.
+3. If you are using a Twilio trial account, verify the recipient phone number before testing Swan.
+4. In the Twilio Console, copy your Account SID and Auth Token.
+5. Copy the SMS-capable Twilio phone number in E.164 format.
+6. In Swan, enter:
+   - Account SID
+   - Auth token
+   - From number
+
+Swan sends SMS with Twilio's Messages API using `To`, `From`, and `Body`.
+For US messaging, Twilio may require messaging compliance setup such as A2P 10DLC before production SMS delivery works reliably.
+
+## 4. Test Swan
 
 1. Open the Swan options page.
 2. Enter your recipient phone number.
-3. Confirm Send SMS and Start AI call are enabled.
+3. Confirm Start voice call is enabled.
 4. Click Send test alert.
-5. Confirm the SMS arrives from the Twilio number.
-6. Confirm the AI call arrives from the ElevenLabs-connected number.
+5. Confirm the AI call arrives from the ElevenLabs-connected number.
+6. If SMS is enabled, confirm the SMS arrives from the Twilio number.
 7. Check Swan recent events for SMS and call status.
 
-If either provider fails, check Twilio messaging logs and ElevenLabs call history before changing Swan configuration.
+If the call fails, check ElevenLabs call history before changing Swan configuration. If optional SMS fails, check Twilio messaging logs.
 
 ## Troubleshooting
 
 - SMS fails: confirm the Twilio Auth Token, Account SID, SMS-capable From number, and recipient number.
+- SMS is skipped: confirm the Send optional SMS toggle is enabled.
 - SMS fails on a trial account: verify the recipient number in Twilio.
 - Call fails: confirm the phone number was imported or verified in ElevenLabs and use the ElevenLabs phone number ID, not the literal phone number.
 - Call fails immediately: confirm the ElevenLabs API key, Agent ID, and Agent phone number ID all belong to the same ElevenLabs workspace.

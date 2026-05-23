@@ -8,13 +8,23 @@ Open **Swan settings** and start with **General**.
 
 | Setting | What to enter |
 | --- | --- |
-| Recipient number | The phone number that should receive SMS and AI calls. Use E.164 format, for example `+15551234567`. |
-| Send SMS | Keep enabled if Twilio should send a text message for detections and test alerts. |
-| Start AI Call | Keep enabled if ElevenLabs should start a call for detections and test alerts. |
+| Recipient number | The phone number that should receive voice calls and optional SMS alerts. Use E.164 format, for example `+15551234567`. |
+| Start voice call | Keep enabled if ElevenLabs should start a call for detections and test alerts. |
+| Send optional SMS | Enable only if Twilio should send a text message for detections and test alerts. SMS is off by default. |
 | Enable monitoring | Keep enabled to watch configured domains in this browser. |
 | Cooldown minutes | Minimum time before Swan sends another intervention for the same browsing pattern. |
 
 Click the Save button for the card after changing these values.
+
+## ElevenLabs Voice Call card
+
+Enter:
+
+- API key.
+- Agent ID.
+- Agent phone number ID.
+
+The Agent phone number ID is not the literal phone number. It is the ElevenLabs phone-number identifier created after connecting or importing a number inside ElevenLabs.
 
 ## Twilio SMS card
 
@@ -24,17 +34,7 @@ Enter:
 - Auth Token.
 - From number.
 
-The From number must be SMS-capable. Trial Twilio accounts usually require the recipient phone number to be verified before SMS delivery works.
-
-## ElevenLabs AI Call card
-
-Enter:
-
-- API key.
-- Agent ID.
-- Agent phone number ID.
-
-The Agent phone number ID is not the literal phone number. It is the ElevenLabs phone-number identifier created after connecting or importing a number inside ElevenLabs.
+The From number must be SMS-capable. SMS is optional and off by default. Trial Twilio accounts usually require the recipient phone number to be verified before SMS delivery works.
 
 ## Domain Tracking page
 

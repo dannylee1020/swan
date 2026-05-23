@@ -9,8 +9,8 @@ Swan v0 is a browser-first, self-hosted Chromium extension.
 3. Swan checks the domain against enabled rules.
 4. A match creates an urge event in local extension storage.
 5. Cooldown logic decides whether to send alerts.
-6. Twilio sends the SMS alert when enabled and configured.
-7. ElevenLabs starts the AI phone call when enabled and configured.
+6. ElevenLabs starts the AI phone call when enabled and configured.
+7. Twilio sends an optional SMS alert when enabled and configured.
 8. The browser tab redirects to Swan's intervention page.
 9. The options page shows settings, domain rules, and event logs.
 
@@ -33,10 +33,10 @@ Swan keeps external delivery behind provider interfaces:
 - `SmsProvider` sends SMS alerts.
 - `CallProvider` starts AI calls.
 
-The current default implementations are:
+The current implementations are:
 
-- Twilio for SMS.
-- ElevenLabs for AI calls.
+- ElevenLabs for standard AI voice calls.
+- Twilio for optional SMS.
 
 ## What Swan does not run
 

@@ -42,6 +42,7 @@ Click the Swan extension icon from the browser toolbar. If it is hidden, open th
 
 Check:
 
+- Send optional SMS is enabled in Swan settings. SMS is off by default.
 - Recipient phone number uses E.164 format, for example `+15551234567`.
 - Twilio Account SID and Auth Token are correct.
 - Twilio From number supports SMS.
@@ -66,8 +67,8 @@ Swan skipped a channel when it was disabled or missing required configuration.
 
 Review:
 
-- Send SMS toggle.
-- Start AI Call toggle.
+- Send optional SMS toggle.
+- Start voice call toggle.
 - Recipient phone number.
 - Twilio settings.
 - ElevenLabs settings.

@@ -25,7 +25,7 @@ export const defaultSettings: UserSettings = {
   enabled: true,
   phoneNumber: "",
   cooldownMinutes: 10,
-  smsEnabled: true,
+  smsEnabled: false,
   callEnabled: true,
   twilio: {
     accountSid: "",

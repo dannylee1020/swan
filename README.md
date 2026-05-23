@@ -1,6 +1,6 @@
 # Swan
 
-Swan is a self-hosted browser extension that helps interrupt porn urges with immediate SMS and AI phone-call interventions.
+Swan is a self-hosted browser extension that helps interrupt porn urges with immediate AI phone-call interventions and optional SMS alerts.
 
 ## Background
 
@@ -14,8 +14,8 @@ draining productivity and self-respect until the damage feels normal.
 ## What It Does
 
 - Monitors browser navigation for configured NSFW domains
-- Triggers an SMS alert
 - Starts an AI phone call
+- Optionally sends an SMS alert
 - Redirects the browser to an intervention page
 - Stores settings, rules, and event history in browser local storage
 
@@ -24,12 +24,13 @@ draining productivity and self-respect until the damage feels normal.
 - Node.js
 - npm
 - Chromium-based browser
-- Twilio account and phone number for SMS alerts
 - ElevenLabs account, Conversational AI agent, and connected phone number for AI calls
+- Optional: Twilio account and phone number for SMS alerts
 
-Swan uses Twilio directly for SMS. It starts AI calls through ElevenLabs'
-native Twilio outbound-call integration, so any Twilio number used for calls
+Swan starts AI calls through ElevenLabs' native Twilio outbound-call
+integration, so any Twilio number used for calls
 must also be imported or verified in ElevenLabs and linked to the agent.
+If you enable optional SMS, Swan sends texts directly through Twilio.
 
 ## Run
 
@@ -60,10 +61,10 @@ classification.
 Provider setup:
 
 1. Enter your recipient phone number.
-2. Add Twilio Account SID, Auth token, and SMS From number.
-3. Create an ElevenLabs Conversational AI agent.
-4. Connect a phone number to that agent in ElevenLabs. If it is a Twilio number, import or verify it in ElevenLabs first.
-5. Add the ElevenLabs API key, Agent ID, and Agent phone number ID in Swan.
+2. Create an ElevenLabs Conversational AI agent.
+3. Connect a phone number to that agent in ElevenLabs. If it is a Twilio number, import or verify it in ElevenLabs first.
+4. Add the ElevenLabs API key, Agent ID, and Agent phone number ID in Swan.
+5. Optional: add Twilio Account SID, Auth token, and SMS From number, then enable SMS.
 
 For the full self-hosting guide, run the docs site:
 

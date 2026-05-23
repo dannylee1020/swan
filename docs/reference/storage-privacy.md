@@ -7,8 +7,8 @@ Swan v0 is built for self-hosted technical users. It does not send data to a Swa
 Swan stores these values in `chrome.storage.local`:
 
 - User settings.
-- Twilio credentials.
 - ElevenLabs credentials.
+- Optional Twilio SMS credentials.
 - Domain rules.
 - Event history.
 
@@ -18,8 +18,8 @@ These values are local to the installed extension in the browser profile.
 
 Swan sends only the data required to deliver an intervention through the configured providers:
 
-- Twilio receives the recipient number, From number, and SMS body.
 - ElevenLabs receives the recipient number, agent configuration identifiers, and minimal event metadata for the call.
+- If SMS is enabled, Twilio receives the recipient number, From number, and SMS body.
 
 Provider consoles may retain logs according to their own policies.
 

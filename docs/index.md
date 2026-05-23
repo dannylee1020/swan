@@ -6,11 +6,11 @@ description: What Swan is, what it does, and how the self-hosted extension works
 
 # Swan
 
-A self-hosted Chromium extension that interrupts risky browsing moments with immediate SMS and AI phone-call intervention.
+A self-hosted Chromium extension that interrupts risky browsing moments with immediate AI phone-call intervention and optional SMS alerts.
 
 ## What Swan does
 
-Swan watches browser navigation for NSFW domains you configure. When you navigate to one of the sites, swan calls or texts you immediately to intervene and break you out of the urge.
+Swan watches browser navigation for NSFW domains you configure. When you navigate to one of the sites, Swan calls you immediately to intervene and break you out of the urge. SMS can be enabled as an extra alert channel.
 
 The goal is not passive blocking or broad surveillance. Swan is built around a narrow intervention loop: detect the urge moment, interrupt quickly, and make the next action harder to ignore.
 
@@ -19,8 +19,8 @@ The goal is not passive blocking or broad surveillance. Swan is built around a n
 - The extension runs in a Chromium browser profile.
 - Detection uses configured domain rules and top-level navigation events.
 - Settings, rules, and logs live in `chrome.storage.local`.
-- SMS delivery uses your Twilio account and phone number.
 - AI calls use your ElevenLabs Conversational AI agent and connected phone number.
+- Optional SMS delivery uses your Twilio account and phone number.
 - Swan v0 does not run a hosted backend, proxy, DNS filter, localhost daemon, or page-content classifier.
 
 ## Who it is for
@@ -33,5 +33,5 @@ It is designed intentionally small: one browser extension, user-managed provider
 
 - [Quick start](./guide/quick-start.md) gives the full setup path from checkout to test alert.
 - [Install and load](./guide/install.md) covers the browser extension loading steps in detail.
-- [Provider setup](./provider-setup.md) walks through Twilio and ElevenLabs.
+- [Provider setup](./provider-setup.md) walks through ElevenLabs and optional Twilio SMS.
 - [Troubleshooting](./troubleshooting.md) covers the common failure modes.

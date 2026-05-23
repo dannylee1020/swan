@@ -362,7 +362,7 @@ function GeneralPage({
       <PageHeader
         eyebrow="General"
         title="Intervention settings"
-        description="Configure the core behavior Swan uses when a tracked domain is detected."
+        description="Configure the voice-first intervention Swan uses when a tracked domain is detected."
       />
 
       <section className="settingsGrid" aria-label="Swan configuration">
@@ -381,24 +381,24 @@ function GeneralPage({
             />
           </Field>
           <ToggleRow
-            title="Send SMS"
-            description="Primary notification channel"
-            checked={settingsDraft.smsEnabled}
-            onChange={(checked) =>
-              onSettingsDraftChange("phone", {
-                ...settingsDraft,
-                smsEnabled: checked,
-              })
-            }
-          />
-          <ToggleRow
-            title="Start AI Call"
-            description="Escalation for high-priority events"
+            title="Start voice call"
+            description="Standard intervention channel"
             checked={settingsDraft.callEnabled}
             onChange={(checked) =>
               onSettingsDraftChange("phone", {
                 ...settingsDraft,
                 callEnabled: checked,
+              })
+            }
+          />
+          <ToggleRow
+            title="Send optional SMS"
+            description="Requires Twilio messaging setup"
+            checked={settingsDraft.smsEnabled}
+            onChange={(checked) =>
+              onSettingsDraftChange("phone", {
+                ...settingsDraft,
+                smsEnabled: checked,
               })
             }
           />
@@ -434,65 +434,11 @@ function GeneralPage({
           />
         </SettingsCard>
 
-        <SettingsCard icon={MessageSquare} title="Twilio SMS" tag="Default">
-          <Field label="Account SID">
-            <input
-              className="monoInput"
-              value={settingsDraft.twilio.accountSid}
-              onChange={(event) =>
-                onSettingsDraftChange("twilio", {
-                  ...settingsDraft,
-                  twilio: {
-                    ...settingsDraft.twilio,
-                    accountSid: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <Field label="Auth token">
-            <input
-              className="monoInput"
-              type="password"
-              value={settingsDraft.twilio.authToken}
-              onChange={(event) =>
-                onSettingsDraftChange("twilio", {
-                  ...settingsDraft,
-                  twilio: {
-                    ...settingsDraft.twilio,
-                    authToken: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <Field label="From number">
-            <input
-              className="monoInput"
-              value={settingsDraft.twilio.fromNumber}
-              placeholder="+1 (888) 000-0000"
-              onChange={(event) =>
-                onSettingsDraftChange("twilio", {
-                  ...settingsDraft,
-                  twilio: {
-                    ...settingsDraft.twilio,
-                    fromNumber: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <p className="helperText">
-            Twilio is the default SMS provider for Swan v0.
-          </p>
-          <SaveCardFooter
-            dirty={twilioDirty}
-            state={saveState.twilio}
-            onSave={() => void onSaveCard("twilio")}
-          />
-        </SettingsCard>
-
-        <SettingsCard icon={AudioLines} title="ElevenLabs AI Call" tag="Default">
+        <SettingsCard
+          icon={AudioLines}
+          title="ElevenLabs Voice Call"
+          tag="Standard"
+        >
           <Field label="API key">
             <input
               className="monoInput"
@@ -548,6 +494,65 @@ function GeneralPage({
             dirty={elevenLabsDirty}
             state={saveState.elevenLabs}
             onSave={() => void onSaveCard("elevenLabs")}
+          />
+        </SettingsCard>
+
+        <SettingsCard icon={MessageSquare} title="Twilio SMS" tag="Optional">
+          <Field label="Account SID">
+            <input
+              className="monoInput"
+              value={settingsDraft.twilio.accountSid}
+              onChange={(event) =>
+                onSettingsDraftChange("twilio", {
+                  ...settingsDraft,
+                  twilio: {
+                    ...settingsDraft.twilio,
+                    accountSid: event.currentTarget.value,
+                  },
+                })
+              }
+            />
+          </Field>
+          <Field label="Auth token">
+            <input
+              className="monoInput"
+              type="password"
+              value={settingsDraft.twilio.authToken}
+              onChange={(event) =>
+                onSettingsDraftChange("twilio", {
+                  ...settingsDraft,
+                  twilio: {
+                    ...settingsDraft.twilio,
+                    authToken: event.currentTarget.value,
+                  },
+                })
+              }
+            />
+          </Field>
+          <Field label="From number">
+            <input
+              className="monoInput"
+              value={settingsDraft.twilio.fromNumber}
+              placeholder="+1 (888) 000-0000"
+              onChange={(event) =>
+                onSettingsDraftChange("twilio", {
+                  ...settingsDraft,
+                  twilio: {
+                    ...settingsDraft.twilio,
+                    fromNumber: event.currentTarget.value,
+                  },
+                })
+              }
+            />
+          </Field>
+          <p className="helperText">
+            SMS is off by default. Enable it only after your Twilio messaging
+            setup is ready.
+          </p>
+          <SaveCardFooter
+            dirty={twilioDirty}
+            state={saveState.twilio}
+            onSave={() => void onSaveCard("twilio")}
           />
         </SettingsCard>
       </section>
