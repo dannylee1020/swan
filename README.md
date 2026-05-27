@@ -1,40 +1,43 @@
 # Swan
 
-Swan is a self-hosted browser extension that helps interrupt porn urges with immediate AI phone-call interventions and optional SMS alerts.
+Swan is a self-hosted browser extension that helps you break out of the porn cycle by calling you at the moment of urge.
+
+It is built for people who want a transparent recovery-support tool they can inspect, run from source, and connect to their own provider accounts.
 
 ## Background
 
-Porn is addiction disguised as leisure. The common excuse that "everyone
-watches, so it does not matter," is bullshit. It matters a lot. Its damage is subtle: it
-slowly poisons attention, motivation, confidence, and the capacity for real
-love. Most people do not notice the cost because it rarely arrives as one
-dramatic collapse. It is a cunning pattern of death by a thousand cuts, quietly
-draining productivity and self-respect until the damage feels normal.
+Porn is addiction disguised as leisure. The common excuse that "everyone watches, so it does not matter," is bullshit. It matters a lot. Its damage is subtle: it slowly poisons attention, motivation, confidence, and the capacity for real love. Most people do not notice the cost because it rarely arrives as one dramatic collapse. It is a cunning pattern of death by a thousand cuts, quietly draining productivity and self-respect until the damage feels normal.
 
-## What It Does
+## What Swan Does
 
 - Monitors browser navigation for configured NSFW domains
-- Starts an AI phone call
+- Starts an AI phone call when a tracked domain is opened
 - Optionally sends an SMS alert
 - Redirects the browser to an intervention page
-- Stores settings, rules, and event history in browser local storage
+- Stores settings, domain rules, and event history in browser local storage
+
+Swan is not a passive blocker. The core loop is narrow: detect the risky moment, interrupt quickly, and make the next action harder to ignore.
+
+## How It Works
+
+- Swan runs as a source-loaded Chromium Manifest V3 extension.
+- Detection uses configured domain rules and top-level navigation events.
+- AI calls use your ElevenLabs Conversational AI agent and connected phone number.
+- Optional SMS alerts use your Twilio account and phone number.
+- Swan v0 does not run a Swan-hosted backend, proxy, DNS filter, localhost daemon, or page-content classifier.
 
 ## Requirements
 
-- Node.js
+- Node.js 20 or newer
 - npm
 - Chromium-based browser
-- ElevenLabs account, Conversational AI agent, and paid/upgraded Twilio phone number for AI calls
-- Optional: Twilio account and phone number for SMS alerts
+- ElevenLabs account and Conversational AI agent
+- Paid/upgraded Twilio phone number connected to the ElevenLabs agent for AI calls
+- Optional: Twilio account and SMS-capable phone number for SMS alerts
 
-Swan starts AI calls through ElevenLabs' native Twilio outbound-call
-integration, so the Twilio account used for calls must be paid/upgraded.
-Trial Twilio accounts can ring but may stop after the trial message instead of
-connecting the ElevenLabs agent. The Twilio number must also be imported or
-verified in ElevenLabs and linked to the agent.
-If you enable optional SMS, Swan sends texts directly through Twilio.
+Swan starts AI calls through ElevenLabs' native Twilio outbound-call integration. Trial Twilio accounts can ring but may stop after the trial message instead of connecting the ElevenLabs agent. Use a paid/upgraded Twilio number, import or verify it in ElevenLabs, and link it to the Swan agent.
 
-## Run
+## Quick Start
 
 Prepare Swan:
 
@@ -42,10 +45,9 @@ Prepare Swan:
 npm run setup
 ```
 
-This installs dependencies when needed, builds the extension, prints the
-absolute extension path, and opens `chrome://extensions` when possible.
-If you want repeatable local setup, copy `config.example.yaml` to `config.yaml`
-before running setup. Swan will bundle that local config as import data.
+This installs dependencies when needed, builds the extension, prints the absolute extension path, and opens `chrome://extensions` when possible.
+
+If you want repeatable local setup, copy `config.example.yaml` to `config.yaml` before running setup. Swan will bundle that local config as import data, which you can later apply from the General page.
 
 Load the extension in Chromium:
 
@@ -53,40 +55,41 @@ Load the extension in Chromium:
 2. Click **Load unpacked**
 3. Select the `output/chrome-mv3` path printed by `npm run setup`
 
-After loading, Swan opens the full settings tab automatically on first install.
-If it does not, click the Swan extension icon to open setup. Configure your
-phone/provider settings, add tracked domains, and click **Send test alert**.
-If you used `config.yaml`, click **Import data** on the General page first.
+After loading, Swan opens the settings tab automatically on first install. If it does not, click the Swan extension icon. Configure your phone and provider settings, add tracked domains, and click **Send test alert**.
 
-Swan v0 detects configured domains only. It ships with a small seed list of
-NSFW domains, matches subdomains of tracked domains, and lets you add or disable
-rules in the options page. It does not inspect page content or run AI-based
-classification.
+Start with:
 
-Provider setup:
+- [Quick start](docs/guide/quick-start.md)
+- [Provider setup](docs/provider-setup.md)
+- [Test and verify](docs/guide/test-and-verify.md)
 
-1. Enter your recipient phone number.
-2. Create an ElevenLabs Conversational AI agent.
-3. Connect a paid/upgraded Twilio phone number to that agent in ElevenLabs.
-4. Add the ElevenLabs API key, Agent ID, and Agent phone number ID in Swan.
-5. Optional: add Twilio Account SID, Auth token, and SMS From number, then enable SMS.
+## Provider Setup
 
-For the full self-hosting guide, run the docs site:
+Swan needs these values in the options page:
 
-```bash
-npm run docs:dev
-```
+- Recipient phone number in E.164 format, for example `+15551234567`
+- ElevenLabs API key
+- ElevenLabs Agent ID
+- ElevenLabs Agent phone number ID
+- Optional SMS: Twilio Account SID, Auth token, and SMS From number
 
-Or start with [Quick start](docs/guide/quick-start.md) and [Provider setup](docs/provider-setup.md).
+Use [Provider setup](docs/provider-setup.md) for the full ElevenLabs and Twilio walkthrough. Configure and test the ElevenLabs agent before relying on Swan interventions.
 
-Preview the built docs:
+## Limitations
 
-```bash
-npm run docs:build
-npm run docs:preview
-```
+- Swan v0 detects configured domains only.
+- It ships with a small seed list of NSFW domains and matches subdomains of tracked domains.
+- It does not inspect page content, classify images or videos, install DNS rules, run a proxy, or block at the operating-system level.
+- It is source-loaded from your local checkout, not distributed as an official Chrome Web Store extension.
+- It is recovery-support software, not medical advice, therapy, or clinical treatment.
 
-The preview runs at `http://127.0.0.1:5292`.
+## Privacy and Costs
+
+Settings, rules, provider credentials, and logs are stored in browser extension local storage. Treat Swan v0 as self-hosted developer software, not a managed production secret store.
+
+Swan does not send data to a Swan-hosted backend. Alert delivery sends the minimum needed request data to the providers you configure: ElevenLabs for AI calls and Twilio for optional SMS. Those providers may store call, message, billing, and diagnostic records according to their own policies.
+
+The software is open source, but phone calls and SMS are not free to operate. You bring and pay for your own ElevenLabs and Twilio accounts.
 
 ## Development
 
@@ -98,13 +101,32 @@ npm run dev
 
 Load `output/chrome-mv3` through `chrome://extensions`.
 
-## Build
+Build the extension:
 
 ```bash
 npm run build
 ```
 
-Load `output/chrome-mv3` through `chrome://extensions`.
+Run the docs site:
+
+```bash
+npm run docs:dev
+```
+
+Preview the built docs:
+
+```bash
+npm run docs:build
+npm run docs:preview
+```
+
+The preview runs at `http://127.0.0.1:5292`.
+
+## Contributing
+
+Swan is early. Useful contributions include setup feedback, safer default domain rules, provider reliability notes, documentation fixes, and issues that describe where the self-hosted flow is confusing.
+
+If you try Swan locally, open an issue with what worked, what failed, and which browser/provider setup you used.
 
 ## Validate
 
