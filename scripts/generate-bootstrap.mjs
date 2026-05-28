@@ -10,6 +10,12 @@ const publicDir = join(repoRoot, "public");
 const bootstrapPath = join(publicDir, "swan-bootstrap.json");
 
 export async function main() {
+  if (process.argv.includes("--release")) {
+    await removeStaleBootstrap();
+    console.log("Release build requested. Skipping Swan bootstrap generation.");
+    return;
+  }
+
   if (!existsSync(configPath)) {
     await removeStaleBootstrap();
     console.log("No config.yaml found. Skipping Swan bootstrap generation.");

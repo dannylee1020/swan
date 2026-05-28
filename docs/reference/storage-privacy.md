@@ -1,6 +1,6 @@
 # Storage and Privacy
 
-Swan v0 is built for self-hosted technical users. It does not send data to a Swan-operated backend.
+Swan v0 does not send data to a Swan-operated backend. The downloadable extension and source-loaded builds use the same local-storage and bring-your-own-provider model.
 
 ## Local extension storage
 
@@ -26,6 +26,16 @@ Swan sends only the data required to deliver an intervention through the configu
 - If SMS is enabled, Twilio receives the recipient number, From number, and SMS body.
 
 Provider consoles may retain logs according to their own policies.
+
+## Extension permissions
+
+Swan requests the minimum browser permissions needed for the current product:
+
+- `storage` stores settings, domain rules, provider credentials, and event history locally.
+- `webNavigation` observes top-level navigation so Swan can match configured domains.
+- Host access for ElevenLabs and Twilio API endpoints lets Swan start user-configured calls and optional SMS alerts.
+
+Swan does not request broad provider access to a Swan-hosted server because no Swan-hosted server exists in v0.
 
 ## Credential handling
 

@@ -1,6 +1,8 @@
 # Quick Start
 
-This is the shortest path from a fresh checkout to a working Swan extension.
+This is the shortest path to a working Swan extension.
+
+If you have a Chrome Web Store beta link, install from that link first, then jump to [Configure the options page](#_4-configure-the-options-page). If you are building from source, use the full path below.
 
 ## Quick command
 
@@ -23,7 +25,7 @@ The script installs dependencies when needed, builds the extension, prints the a
   <div class="setup-card">
     <span class="eyebrow">Browser</span>
     <strong>Chromium-based browser</strong>
-    <p>Use Chrome, Brave, Arc, Edge, or another browser that can load unpacked Manifest V3 extensions.</p>
+    <p>Use Chrome for the Web Store beta, or another Chromium-based browser that can load unpacked Manifest V3 extensions from source.</p>
   </div>
   <div class="setup-card">
     <span class="eyebrow">Voice</span>
@@ -43,15 +45,15 @@ The script installs dependencies when needed, builds the extension, prints the a
   <li>
     <span>1</span>
     <div>
-      <strong>Clone and build Swan.</strong>
-      <p>Run <code>npm run setup</code>, then keep the printed extension path available.</p>
+      <strong>Install or build Swan.</strong>
+      <p>Use the Chrome Web Store beta link when available, or run <code>npm run setup</code> from a source checkout.</p>
     </div>
   </li>
   <li>
     <span>2</span>
     <div>
-      <strong>Load the extension.</strong>
-      <p>Open <code>chrome://extensions</code>, enable Developer Mode, click Load unpacked, and select <code>output/chrome-mv3</code>.</p>
+      <strong>Open the extension.</strong>
+      <p>For Web Store installs, click the Swan toolbar icon. For source installs, load <code>output/chrome-mv3</code> from <code>chrome://extensions</code>.</p>
     </div>
   </li>
   <li>
@@ -79,16 +81,22 @@ The script installs dependencies when needed, builds the extension, prints the a
 
 ## 1. Install prerequisites
 
-Install:
+For Chrome Web Store beta installs, you need:
 
-- Node.js 20 or newer.
-- npm.
-- A Chromium-based browser that supports unpacked extensions.
+- Chrome.
 - An ElevenLabs account with a Conversational AI agent.
 - A paid/upgraded Twilio phone number connected in ElevenLabs for AI calls.
 - Optional: a Twilio account with an SMS-capable phone number.
 
+For source-loaded installs, also install:
+
+- Node.js 20 or newer.
+- npm.
+- A Chromium-based browser that supports unpacked extensions.
+
 ## 2. Build the extension
+
+Skip this section for Chrome Web Store beta installs.
 
 From the repository root:
 
@@ -109,6 +117,8 @@ Optional: copy `config.example.yaml` to `config.yaml` before setup if you want
 to keep phone, provider, and tracked-domain values in one local file.
 
 ## 3. Load Swan in Chromium
+
+Skip this section for Chrome Web Store beta installs.
 
 1. Open `chrome://extensions`.
 2. Enable **Developer Mode**.

@@ -1,6 +1,6 @@
 # Architecture
 
-Swan v0 is a browser-first, self-hosted Chromium extension.
+Swan v0 is a browser-first Chromium extension. It can be installed from a packaged build or loaded from source, but both paths use the same local extension runtime.
 
 ## Runtime flow
 
@@ -49,4 +49,4 @@ Swan v0 does not include:
 - Page-content classification.
 - OS-level blocking.
 
-The self-hosted unit is the browser extension loaded from your local checkout.
+The runtime unit is the browser extension. There is no Swan-operated backend in v0; source-loaded installs and Chrome Web Store installs use the same provider and local-storage boundaries.

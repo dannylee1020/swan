@@ -1,8 +1,8 @@
 # Swan
 
-Swan is a self-hosted browser extension that helps you break out of the porn cycle by calling you at the moment of urge.
+Swan is a browser extension that helps you break out of the porn cycle by calling you at the moment of urge.
 
-It is built for people who want a transparent recovery-support tool they can inspect, run from source, and connect to their own provider accounts.
+It is built for people who want a transparent recovery-support tool they can inspect, install, and connect to their own provider accounts.
 
 ## Background
 
@@ -20,7 +20,7 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 ## How It Works
 
-- Swan runs as a source-loaded Chromium Manifest V3 extension.
+- Swan runs as a Chromium Manifest V3 extension.
 - Detection uses configured domain rules and top-level navigation events.
 - AI calls use your ElevenLabs Conversational AI agent and connected phone number.
 - Optional SMS alerts use your Twilio account and phone number.
@@ -38,6 +38,8 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 Swan starts AI calls through ElevenLabs' native Twilio outbound-call integration. Trial Twilio accounts can ring but may stop after the trial message instead of connecting the ElevenLabs agent. Use a paid/upgraded Twilio number, import or verify it in ElevenLabs, and link it to the Swan agent.
 
 ## Quick Start
+
+The first downloadable release is planned as an unlisted Chrome Web Store beta. Until that release link is available, or if you want to inspect and modify Swan yourself, build it from source:
 
 Prepare Swan:
 
@@ -60,6 +62,7 @@ After loading, Swan opens the settings tab automatically on first install. If it
 Start with:
 
 - [Quick start](docs/guide/quick-start.md)
+- [Install Swan](docs/guide/install.md)
 - [Provider setup](docs/provider-setup.md)
 - [Test and verify](docs/guide/test-and-verify.md)
 
@@ -80,7 +83,7 @@ Use [Provider setup](docs/provider-setup.md) for the full ElevenLabs and Twilio 
 - Swan v0 detects configured domains only.
 - It ships with a small seed list of NSFW domains and matches subdomains of tracked domains.
 - It does not inspect page content, classify images or videos, install DNS rules, run a proxy, or block at the operating-system level.
-- It is source-loaded from your local checkout, not distributed as an official Chrome Web Store extension.
+- The Chrome Web Store path is an unlisted beta release target; source-loaded installation remains the development and audit path.
 - It is recovery-support software, not medical advice, therapy, or clinical treatment.
 
 ## Privacy and Costs
@@ -124,7 +127,7 @@ The preview runs at `http://127.0.0.1:5292`.
 
 ## Contributing
 
-Swan is early. Useful contributions include setup feedback, safer default domain rules, provider reliability notes, documentation fixes, and issues that describe where the self-hosted flow is confusing.
+Swan is early. Useful contributions include setup feedback, safer default domain rules, provider reliability notes, documentation fixes, and issues that describe where the install or provider setup flow is confusing.
 
 If you try Swan locally, open an issue with what worked, what failed, and which browser/provider setup you used.
 
@@ -135,4 +138,11 @@ npm run test
 npm run typecheck
 npm run build
 npm run docs:build
+```
+
+For Chrome Web Store packaging, use the release-safe commands:
+
+```bash
+npm run build:store
+npm run zip:store
 ```

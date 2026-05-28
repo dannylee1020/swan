@@ -10,10 +10,12 @@
     "dev": "wxt",
     "prebuild": "node scripts/generate-bootstrap.mjs",
     "build": "wxt build",
+    "build:store": "node scripts/generate-bootstrap.mjs --release && wxt build",
     "docs:build": "vitepress build docs",
     "docs:dev": "vitepress dev docs",
     "docs:preview": "vitepress preview docs --host 127.0.0.1 --port 5292",
     "zip": "wxt zip",
+    "zip:store": "node scripts/generate-bootstrap.mjs --release && wxt zip",
     "prepare": "wxt prepare",
     "test": "wxt prepare && vitest run",
     "typecheck": "wxt prepare && tsc --noEmit"

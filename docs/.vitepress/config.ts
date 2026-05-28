@@ -20,6 +20,7 @@ export default defineConfig({
       { text: "Guide", link: "/guide/quick-start" },
       { text: "Providers", link: "/provider-setup" },
       { text: "Troubleshooting", link: "/troubleshooting" },
+      { text: "Privacy", link: "/privacy" },
       { text: "GitHub", link: "https://github.com/dannylee1020/swan" },
     ],
     sidebar: [
@@ -28,7 +29,7 @@ export default defineConfig({
         items: [
           { text: "Introduction", link: "/" },
           { text: "Quick start", link: "/guide/quick-start" },
-          { text: "Install and load", link: "/guide/install" },
+          { text: "Install Swan", link: "/guide/install" },
         ],
       },
       {
@@ -53,6 +54,8 @@ export default defineConfig({
         items: [
           { text: "Architecture", link: "/reference/architecture" },
           { text: "Storage and privacy", link: "/reference/storage-privacy" },
+          { text: "Privacy policy", link: "/privacy" },
+          { text: "Chrome Web Store release", link: "/release/chrome-web-store" },
         ],
       },
     ],

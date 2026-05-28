@@ -1,12 +1,12 @@
 ---
 layout: doc
 title: Introduction
-description: What Swan is, what it does, and how the self-hosted extension works.
+description: What Swan is, what it does, and how the browser extension works.
 ---
 
 # Swan
 
-A self-hosted Chromium extension that interrupts risky browsing moments with immediate AI phone-call intervention and optional SMS alerts.
+A Chromium extension that interrupts risky browsing moments with immediate AI phone-call intervention and optional SMS alerts.
 
 ## What Swan does
 
@@ -32,6 +32,7 @@ It is designed intentionally small: one browser extension, user-managed provider
 ## Start using Swan
 
 - [Quick start](./guide/quick-start.md) gives the full setup path from checkout to test alert.
-- [Install and load](./guide/install.md) covers the browser extension loading steps in detail.
+- [Install Swan](./guide/install.md) covers the Chrome Web Store beta path and source-loaded install.
 - [Provider setup](./provider-setup.md) walks through ElevenLabs and optional Twilio SMS.
 - [Troubleshooting](./troubleshooting.md) covers the common failure modes.
+- [Privacy policy](./privacy.md) explains local storage, provider data, and permissions.

@@ -1,6 +1,25 @@
-# Install and Load
+# Install Swan
 
-Swan is self-hosted by building the extension locally and loading the generated Manifest V3 extension directory into a Chromium browser.
+Swan can be installed from the Chrome Web Store beta when a release link is available. Developers and users who want to inspect or modify the extension can still build and load it from source.
+
+## Chrome Web Store beta
+
+The first downloadable release is intended to ship as an unlisted Chrome Web Store beta. Unlisted means Swan can be installed by link, but it is not discoverable through store search.
+
+After installing from the beta link:
+
+1. Click the Swan extension icon.
+2. Open the settings page.
+3. Configure your recipient phone number.
+4. Add ElevenLabs voice-call credentials.
+5. Optional: add Twilio SMS credentials and enable SMS.
+6. Click **Send test alert** before relying on Swan.
+
+Swan does not include bundled provider credentials. You still bring your own ElevenLabs account and optional Twilio account.
+
+## Build from source
+
+Use this path if you are developing Swan, auditing the extension, or installing before a Chrome Web Store beta link is available.
 
 ## Clone the repository
 
@@ -16,7 +35,7 @@ git clone https://github.com/dannylee1020/swan.git
 cd swan
 ```
 
-## Run setup
+### Run setup
 
 ```bash
 npm run setup
@@ -33,7 +52,7 @@ Copy `config.example.yaml` to `config.yaml` before setup if you want Swan to
 bundle local import data for phone, provider, and tracked-domain settings.
 :::
 
-## Manual commands
+### Manual commands
 
 If you prefer to run each step yourself:
 
@@ -50,7 +69,7 @@ output/chrome-mv3
 
 through your browser's extension page.
 
-## Load unpacked extension
+### Load unpacked extension
 
 1. Open `chrome://extensions`.
 2. Turn on **Developer Mode**.
