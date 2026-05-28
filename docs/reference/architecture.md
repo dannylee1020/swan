@@ -49,4 +49,4 @@ Swan v0 does not include:
 - Page-content classification.
 - OS-level blocking.
 
-The runtime unit is the browser extension. There is no Swan-operated backend in v0; source-loaded installs and Chrome Web Store installs use the same provider and local-storage boundaries.
+The runtime unit is the browser extension. There is no Swan-operated backend in v0; the loaded extension uses the same provider and local-storage boundaries in every browser profile.

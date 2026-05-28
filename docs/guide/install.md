@@ -1,25 +1,6 @@
 # Install Swan
 
-Swan can be installed from the Chrome Web Store beta when a release link is available. Developers and users who want to inspect or modify the extension can still build and load it from source.
-
-## Chrome Web Store beta
-
-The first downloadable release is intended to ship as an unlisted Chrome Web Store beta. Unlisted means Swan can be installed by link, but it is not discoverable through store search.
-
-After installing from the beta link:
-
-1. Click the Swan extension icon.
-2. Open the settings page.
-3. Configure your recipient phone number.
-4. Add ElevenLabs voice-call credentials.
-5. Optional: add Twilio SMS credentials and enable SMS.
-6. Click **Send test alert** before relying on Swan.
-
-Swan does not include bundled provider credentials. You still bring your own ElevenLabs account and optional Twilio account.
-
-## Build from source
-
-Use this path if you are developing Swan, auditing the extension, or installing before a Chrome Web Store beta link is available.
+Swan currently installs by building a local extension folder and loading it in a Chromium-based browser.
 
 ## Clone the repository
 

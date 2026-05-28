@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   title: "Swan",
   description:
-    "Self-hosted browser intervention docs for installing, configuring, and running Swan.",
+    "Browser intervention docs for installing, configuring, and running Swan.",
   appearance: true,
   cleanUrls: true,
   lastUpdated: true,
@@ -55,7 +55,6 @@ export default defineConfig({
           { text: "Architecture", link: "/reference/architecture" },
           { text: "Storage and privacy", link: "/reference/storage-privacy" },
           { text: "Privacy policy", link: "/privacy" },
-          { text: "Chrome Web Store release", link: "/release/chrome-web-store" },
         ],
       },
     ],
@@ -67,7 +66,7 @@ export default defineConfig({
       label: "On this page",
     },
     footer: {
-      message: "Self-hosted browser intervention for technical users.",
+      message: "Open source browser intervention software.",
       copyright: "Swan is open source software.",
     },
   },

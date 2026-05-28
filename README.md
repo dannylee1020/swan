@@ -4,10 +4,6 @@ Swan is a browser extension that helps you break out of the porn cycle by callin
 
 It is built for people who want a transparent recovery-support tool they can inspect, install, and connect to their own provider accounts.
 
-## Background
-
-Porn is addiction disguised as leisure. The common excuse that "everyone watches, so it does not matter," is bullshit. It matters a lot. Its damage is subtle: it slowly poisons attention, motivation, confidence, and the capacity for real love. Most people do not notice the cost because it rarely arrives as one dramatic collapse. It is a cunning pattern of death by a thousand cuts, quietly draining productivity and self-respect until the damage feels normal.
-
 ## What Swan Does
 
 - Monitors browser navigation for configured NSFW domains
@@ -38,8 +34,6 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 Swan starts AI calls through ElevenLabs' native Twilio outbound-call integration. Trial Twilio accounts can ring but may stop after the trial message instead of connecting the ElevenLabs agent. Use a paid/upgraded Twilio number, import or verify it in ElevenLabs, and link it to the Swan agent.
 
 ## Quick Start
-
-The first downloadable release is planned as an unlisted Chrome Web Store beta. Until that release link is available, or if you want to inspect and modify Swan yourself, build it from source:
 
 Prepare Swan:
 
@@ -83,12 +77,12 @@ Use [Provider setup](docs/provider-setup.md) for the full ElevenLabs and Twilio 
 - Swan v0 detects configured domains only.
 - It ships with a small seed list of NSFW domains and matches subdomains of tracked domains.
 - It does not inspect page content, classify images or videos, install DNS rules, run a proxy, or block at the operating-system level.
-- The Chrome Web Store path is an unlisted beta release target; source-loaded installation remains the development and audit path.
+- Swan currently installs by loading a local extension build in a Chromium-based browser.
 - It is recovery-support software, not medical advice, therapy, or clinical treatment.
 
 ## Privacy and Costs
 
-Settings, rules, provider credentials, and logs are stored in browser extension local storage. Treat Swan v0 as self-hosted developer software, not a managed production secret store.
+Settings, rules, provider credentials, and logs are stored in browser extension local storage. Treat Swan v0 as browser-local software that uses provider accounts you control, not a managed production secret store.
 
 Swan does not send data to a Swan-hosted backend. Alert delivery sends the minimum needed request data to the providers you configure: ElevenLabs for AI calls and Twilio for optional SMS. Those providers may store call, message, billing, and diagnostic records according to their own policies.
 
@@ -138,11 +132,4 @@ npm run test
 npm run typecheck
 npm run build
 npm run docs:build
-```
-
-For Chrome Web Store packaging, use the release-safe commands:
-
-```bash
-npm run build:store
-npm run zip:store
 ```

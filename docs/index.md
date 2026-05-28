@@ -32,7 +32,7 @@ It is designed intentionally small: one browser extension, user-managed provider
 ## Start using Swan
 
 - [Quick start](./guide/quick-start.md) gives the full setup path from checkout to test alert.
-- [Install Swan](./guide/install.md) covers the Chrome Web Store beta path and source-loaded install.
+- [Install Swan](./guide/install.md) covers the local extension install path.
 - [Provider setup](./provider-setup.md) walks through ElevenLabs and optional Twilio SMS.
 - [Troubleshooting](./troubleshooting.md) covers the common failure modes.
 - [Privacy policy](./privacy.md) explains local storage, provider data, and permissions.

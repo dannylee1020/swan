@@ -102,7 +102,7 @@ If the call fails, check ElevenLabs call history before changing Swan configurat
 
 ## Security Note
 
-Swan v0 stores provider credentials in browser extension local storage. Treat this as self-hosted developer setup, not a managed production secret model. A managed version should move provider credentials to a backend.
+Swan v0 stores provider credentials in browser extension local storage. Treat this as browser-local software connected to your own provider accounts, not a managed production secret model.
 
 ## After Provider Setup
 

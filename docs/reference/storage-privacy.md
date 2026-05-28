@@ -1,6 +1,6 @@
 # Storage and Privacy
 
-Swan v0 does not send data to a Swan-operated backend. The downloadable extension and source-loaded builds use the same local-storage and bring-your-own-provider model.
+Swan v0 does not send data to a Swan-operated backend. The loaded extension uses local browser storage and provider accounts you control.
 
 ## Local extension storage
 
@@ -39,7 +39,7 @@ Swan does not request broad provider access to a Swan-hosted server because no S
 
 ## Credential handling
 
-Provider credentials are stored in browser extension local storage in v0. This is acceptable for a self-hosted developer setup, but it is not a managed production secret model.
+Provider credentials are stored in browser extension local storage in v0. Treat this as browser-local software connected to your own provider accounts, not a managed production secret model.
 
 Use a separate browser profile if you want to isolate Swan from day-to-day browsing state.
 

@@ -1,21 +1,6 @@
 # Update Swan
 
-How you update Swan depends on how it was installed.
-
-## Chrome Web Store install
-
-Chrome normally updates Web Store extensions automatically. To check manually:
-
-1. Open `chrome://extensions`.
-2. Turn on **Developer Mode**.
-3. Click **Update**.
-4. Open Swan settings and confirm your settings are still present.
-
-Removing and reinstalling the extension can clear extension-local data for that browser profile. Keep provider credentials somewhere safe before removing Swan.
-
-## Source-loaded install
-
-If Swan was loaded from a local checkout, update by pulling the repository, rebuilding, and reloading the unpacked extension.
+Update Swan by pulling the repository, rebuilding the extension, and reloading the unpacked extension in your browser.
 
 ### Pull latest changes
 
