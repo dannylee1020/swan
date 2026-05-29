@@ -55,10 +55,10 @@ After loading, Swan opens the settings tab automatically on first install. If it
 
 Start with:
 
-- [Quick start](docs/guide/quick-start.md)
-- [Install Swan](docs/guide/install.md)
-- [Provider setup](docs/provider-setup.md)
-- [Test and verify](docs/guide/test-and-verify.md)
+- [Quick start](docs/docs/guide/quick-start.md)
+- [Install Swan](docs/docs/guide/install.md)
+- [Provider setup](docs/docs/provider-setup.md)
+- [Test and verify](docs/docs/guide/test-and-verify.md)
 
 ## Provider Setup
 
@@ -70,7 +70,7 @@ Swan needs these values in the options page:
 - ElevenLabs Agent phone number ID
 - Optional SMS: Twilio Account SID, Auth token, and SMS From number
 
-Use [Provider setup](docs/provider-setup.md) for the full ElevenLabs and Twilio walkthrough. Configure and test the ElevenLabs agent before relying on Swan interventions.
+Use [Provider setup](docs/docs/provider-setup.md) for the full ElevenLabs and Twilio walkthrough. Configure and test the ElevenLabs agent before relying on Swan interventions.
 
 ## Limitations
 

@@ -17,47 +17,50 @@ export default defineConfig({
       provider: "local",
     },
     nav: [
-      { text: "Guide", link: "/guide/quick-start" },
-      { text: "Providers", link: "/provider-setup" },
-      { text: "Troubleshooting", link: "/troubleshooting" },
-      { text: "Privacy", link: "/privacy" },
+      { text: "Docs", link: "/docs/" },
+      { text: "Guide", link: "/docs/guide/quick-start" },
+      { text: "Providers", link: "/docs/provider-setup" },
+      { text: "Troubleshooting", link: "/docs/troubleshooting" },
+      { text: "Privacy", link: "/docs/privacy" },
       { text: "GitHub", link: "https://github.com/dannylee1020/swan" },
     ],
-    sidebar: [
-      {
-        text: "Start",
-        items: [
-          { text: "Introduction", link: "/" },
-          { text: "Quick start", link: "/guide/quick-start" },
-          { text: "Install Swan", link: "/guide/install" },
-        ],
-      },
-      {
-        text: "Configure",
-        items: [
-          { text: "Settings", link: "/guide/configure" },
-          { text: "Provider setup", link: "/provider-setup" },
-          { text: "Agent prompt", link: "/agent/" },
-          { text: "Domain tracking", link: "/guide/domain-tracking" },
-        ],
-      },
-      {
-        text: "Operate",
-        items: [
-          { text: "Test and verify", link: "/guide/test-and-verify" },
-          { text: "Troubleshooting", link: "/troubleshooting" },
-          { text: "Update Swan", link: "/guide/update" },
-        ],
-      },
-      {
-        text: "Reference",
-        items: [
-          { text: "Architecture", link: "/reference/architecture" },
-          { text: "Storage and privacy", link: "/reference/storage-privacy" },
-          { text: "Privacy policy", link: "/privacy" },
-        ],
-      },
-    ],
+    sidebar: {
+      "/docs/": [
+        {
+          text: "Start",
+          items: [
+            { text: "Introduction", link: "/docs/" },
+            { text: "Quick start", link: "/docs/guide/quick-start" },
+            { text: "Install Swan", link: "/docs/guide/install" },
+          ],
+        },
+        {
+          text: "Configure",
+          items: [
+            { text: "Settings", link: "/docs/guide/configure" },
+            { text: "Provider setup", link: "/docs/provider-setup" },
+            { text: "Agent prompt", link: "/docs/agent/" },
+            { text: "Domain tracking", link: "/docs/guide/domain-tracking" },
+          ],
+        },
+        {
+          text: "Operate",
+          items: [
+            { text: "Test and verify", link: "/docs/guide/test-and-verify" },
+            { text: "Troubleshooting", link: "/docs/troubleshooting" },
+            { text: "Update Swan", link: "/docs/guide/update" },
+          ],
+        },
+        {
+          text: "Reference",
+          items: [
+            { text: "Architecture", link: "/docs/reference/architecture" },
+            { text: "Storage and privacy", link: "/docs/reference/storage-privacy" },
+            { text: "Privacy policy", link: "/docs/privacy" },
+          ],
+        },
+      ],
+    },
     socialLinks: [
       { icon: "github", link: "https://github.com/dannylee1020/swan" },
     ],

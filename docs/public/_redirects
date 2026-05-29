@@ -1,0 +1,9 @@
+/guide /docs/guide/quick-start 301
+/guide/* /docs/guide/:splat 301
+/agent /docs/agent/ 301
+/agent/* /docs/agent/:splat 301
+/reference /docs/reference/architecture 301
+/reference/* /docs/reference/:splat 301
+/provider-setup /docs/provider-setup 301
+/troubleshooting /docs/troubleshooting 301
+/privacy /docs/privacy 301
