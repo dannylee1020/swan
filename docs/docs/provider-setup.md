@@ -35,9 +35,10 @@ Save the ElevenLabs and Twilio cards separately after entering values. The Twili
    instructions or system prompt field.
 4. Upload the [Swan Recovery Playbook](./agent/swan-recovery-playbook.md) as
    the agent knowledge base.
-5. Configure the agent voice and conversation behavior.
-6. Run a direct ElevenLabs test call.
-7. Copy the Agent ID.
+5. Add the End Call system tool from the agent setup guide.
+6. Configure the agent voice and conversation behavior.
+7. Run a direct ElevenLabs test call.
+8. Copy the Agent ID.
 
 ## 2. Create an ElevenLabs API Key
 
