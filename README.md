@@ -1,13 +1,13 @@
 # Swan
 
-Swan is a browser extension that helps you break out of the porn cycle by calling you at the moment of urge.
+Swan is a browser extension that helps you break out of the porn addiction cycle by calling you at the moment of urge.
 
 It is built for people who want a transparent recovery-support tool they can inspect, install, and connect to their own provider accounts.
 
 ## What Swan Does
 
 - Monitors browser navigation for configured NSFW domains
-- Starts an AI phone call when a tracked domain is opened
+- Starts a phone call when a tracked domain is opened
 - Optionally sends an SMS alert
 - Redirects the browser to an intervention page
 - Stores settings, domain rules, and event history in browser local storage
@@ -27,11 +27,11 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 - Node.js 20 or newer
 - npm
 - Chromium-based browser
-- ElevenLabs account and Conversational AI agent
-- Paid/upgraded Twilio phone number connected to the ElevenLabs agent for AI calls
-- Optional: Twilio account and SMS-capable phone number for SMS alerts
+- Conversational voice AI agent provider (ships with Elevenlabs by default)
+- Phone infrastructure provider (ships with Twilio by default)
+- Optional: SMS alerts
 
-Swan starts AI calls through ElevenLabs' native Twilio outbound-call integration. Trial Twilio accounts can ring but may stop after the trial message instead of connecting the ElevenLabs agent. Use a paid/upgraded Twilio number, import or verify it in ElevenLabs, and link it to the Swan agent.
+Swan initiates calls through ElevenLabs' native Twilio outbound-call integration. Trial Twilio accounts can ring but may stop after the trial message instead of connecting the ElevenLabs agent. Use a paid/upgraded Twilio number, import or verify it in ElevenLabs, and link it to the Swan agent.
 
 ## Quick Start
 
