@@ -15,6 +15,11 @@ elevenLabs:
   apiKey: "eleven-key"
   agentId: "agent-id"
   agentPhoneNumberId: "phnum_123"
+twilio:
+  accountSid: "AC123"
+  apiKeySid: "SK123"
+  clientSecret: "secret"
+  fromNumber: "+15550000000"
 trackedDomains:
   - https://www.example.com/path
   - example.com
@@ -41,6 +46,12 @@ trackedDomains:
             apiKey: "eleven-key",
             agentId: "agent-id",
             agentPhoneNumberId: "phnum_123",
+          },
+          twilio: {
+            accountSid: "AC123",
+            apiKeySid: "SK123",
+            clientSecret: "secret",
+            fromNumber: "+15550000000",
           },
         },
         trackedDomains: ["example.com"],

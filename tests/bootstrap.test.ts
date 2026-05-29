@@ -57,6 +57,7 @@ describe("bootstrap import", () => {
           phoneNumber: "+15551234567",
           smsEnabled: true,
           elevenLabs: { apiKey: "eleven-key" },
+          twilio: { accountSid: "AC123", apiKeySid: "SK123" },
         },
         trackedDomains: ["example.com", "new.example"],
       },
@@ -73,6 +74,8 @@ describe("bootstrap import", () => {
     expect(result.settings.smsEnabled).toBe(true);
     expect(result.settings.callEnabled).toBe(true);
     expect(result.settings.elevenLabs.apiKey).toBe("eleven-key");
+    expect(result.settings.twilio.accountSid).toBe("AC123");
+    expect(result.settings.twilio.apiKeySid).toBe("SK123");
     expect(result.addedRules).toBe(1);
     expect(result.updatedRules).toBe(1);
     expect(result.rules.map((rule) => [rule.domain, rule.enabled])).toEqual([

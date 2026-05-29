@@ -9,7 +9,7 @@ function getBrowserStorage(): chrome.storage.StorageArea {
 
 export async function getSettings(): Promise<UserSettings> {
   const result = await getBrowserStorage().get("settings");
-  return { ...defaultSettings, ...(result.settings ?? {}) };
+  return normalizeSettings(result.settings);
 }
 
 export async function saveSettings(settings: UserSettings): Promise<void> {
@@ -57,4 +57,37 @@ export async function getStorageSnapshot(): Promise<StorageShape> {
     getEvents(),
   ]);
   return { settings, rules, events };
+}
+
+function normalizeSettings(input: unknown): UserSettings {
+  const saved = isRecord(input) ? input : {};
+  const savedTwilio = isRecord(saved.twilio) ? saved.twilio : {};
+  const savedElevenLabs = isRecord(saved.elevenLabs) ? saved.elevenLabs : {};
+
+  return {
+    ...defaultSettings,
+    ...saved,
+    twilio: {
+      ...defaultSettings.twilio,
+      ...savedTwilio,
+      apiKeySid: readString(savedTwilio.apiKeySid),
+      clientSecret:
+        readString(savedTwilio.clientSecret) ||
+        readString(savedTwilio.apiKeySecret) ||
+        readString(savedTwilio.authToken),
+      fromNumber: readString(savedTwilio.fromNumber),
+    },
+    elevenLabs: {
+      ...defaultSettings.elevenLabs,
+      ...savedElevenLabs,
+    },
+  };
+}
+
+function readString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

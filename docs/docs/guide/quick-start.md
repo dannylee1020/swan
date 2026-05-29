@@ -10,7 +10,13 @@ Run the setup script from the repository root:
 npm run setup
 ```
 
-The script installs dependencies when needed, builds the extension, prints the absolute `output/chrome-mv3` path, and tries to open `chrome://extensions`.
+The script installs dependencies when needed, builds the Chromium extension, prints the absolute `output/chrome-mv3` path, and tries to open `chrome://extensions`.
+
+For Firefox Desktop developer testing, use:
+
+```bash
+npm run setup:firefox
+```
 
 ## Requirements
 
@@ -22,13 +28,13 @@ The script installs dependencies when needed, builds the extension, prints the a
   </div>
   <div class="setup-card">
     <span class="eyebrow">Browser</span>
-    <strong>Chromium-based browser</strong>
-    <p>Use a Chromium-based browser that can load unpacked Manifest V3 extensions.</p>
+    <strong>Chromium or Firefox Desktop</strong>
+    <p>Use Chromium for the default local install, or Firefox Desktop for temporary developer loading.</p>
   </div>
   <div class="setup-card">
     <span class="eyebrow">Voice</span>
     <strong>ElevenLabs agent</strong>
-    <p>You need an API key, Agent ID, ElevenLabs agent phone number ID, and a paid/upgraded Twilio number.</p>
+    <p>You need an API key, Agent ID, and ElevenLabs agent phone number ID. The callable number is connected inside ElevenLabs.</p>
   </div>
   <div class="setup-card">
     <span class="eyebrow">Optional SMS</span>
@@ -51,7 +57,7 @@ The script installs dependencies when needed, builds the extension, prints the a
     <span>2</span>
     <div>
       <strong>Open the extension.</strong>
-      <p>Load the unpacked extension folder from <code>chrome://extensions</code>, then open Swan from the toolbar icon.</p>
+      <p>Load the built extension from <code>chrome://extensions</code> in Chromium or <code>about:debugging</code> in Firefox.</p>
     </div>
   </li>
   <li>
@@ -81,10 +87,10 @@ The script installs dependencies when needed, builds the extension, prints the a
 
 - Node.js 20 or newer.
 - npm.
-- A Chromium-based browser that supports unpacked extensions.
+- A Chromium-based browser that supports unpacked extensions, or Firefox Desktop for temporary add-on loading.
 - An ElevenLabs account with a Conversational AI agent.
 - A paid/upgraded Twilio phone number connected in ElevenLabs for AI calls.
-- Optional: a Twilio account with an SMS-capable phone number.
+- Optional: Twilio Messaging setup with an SMS-capable phone number.
 
 ## 2. Build the extension
 
@@ -116,6 +122,18 @@ to keep phone, provider, and tracked-domain values in one local file.
 
 After first install, Swan opens its settings page automatically. If it does not, click the Swan extension icon.
 
+## Firefox Desktop developer path
+
+From the repository root:
+
+```bash
+npm run setup:firefox
+```
+
+Then open `about:debugging#/runtime/this-firefox` in Firefox, click **Load Temporary Add-on**, and select `output/firefox-mv2/manifest.json`.
+
+Temporary Firefox add-ons are removed when Firefox restarts. See [Install in Firefox](./install-firefox.md) for the full path.
+
 ## 4. Configure the options page
 
 Open **Swan settings** and save each configuration group:
@@ -124,7 +142,7 @@ Open **Swan settings** and save each configuration group:
 | --- | --- |
 | Phone Configuration | Recipient phone number, Start voice call toggle, Send optional SMS toggle, monitoring toggle, cooldown minutes |
 | ElevenLabs Voice Call | API key, Agent ID, Agent phone number ID |
-| Twilio SMS | Optional Account SID, Auth Token, SMS From number |
+| Twilio SMS | Optional direct SMS only: Account SID, API Key SID, client secret, SMS From number |
 
 Use E.164 phone-number formatting, for example `+15551234567`.
 

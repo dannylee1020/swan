@@ -3,7 +3,7 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   outDir: "output",
   modules: ["@wxt-dev/module-react"],
-  manifest: {
+  manifest: ({ browser }) => ({
     name: "Swan",
     description: "Adult-site urge intervention with AI phone calls.",
     permissions: ["storage", "webNavigation"],
@@ -26,5 +26,21 @@ export default defineConfig({
         128: "icons/icon-128.png",
       },
     },
-  },
+    ...(browser === "firefox"
+      ? {
+          browser_specific_settings: {
+            gecko: {
+              data_collection_permissions: {
+                required: [
+                  "personallyIdentifyingInfo",
+                  "authenticationInfo",
+                  "personalCommunications",
+                  "browsingActivity",
+                ],
+              },
+            },
+          },
+        }
+      : {}),
+  }),
 });

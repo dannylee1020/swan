@@ -75,7 +75,8 @@ export function summarizeBootstrap(bootstrap: SwanBootstrap): BootstrapSummary {
         settings?.elevenLabs?.agentId ||
         settings?.elevenLabs?.agentPhoneNumberId ||
         settings?.twilio?.accountSid ||
-        settings?.twilio?.authToken ||
+        settings?.twilio?.apiKeySid ||
+        settings?.twilio?.clientSecret ||
         settings?.twilio?.fromNumber,
     ),
     trackedDomainCount: bootstrap.data.trackedDomains?.length ?? 0,
@@ -190,10 +191,17 @@ function readBootstrapSettings(input: unknown): BootstrapSettings | undefined {
 
   const twilio = readProviderSettings(input.twilio, [
     "accountSid",
-    "authToken",
+    "apiKeySid",
+    "clientSecret",
     "fromNumber",
-  ]);
-  if (twilio) settings.twilio = twilio;
+  ]) ?? {};
+  if (isRecord(input.twilio) && typeof input.twilio.apiKeySecret === "string") {
+    twilio.clientSecret ??= input.twilio.apiKeySecret;
+  }
+  if (isRecord(input.twilio) && typeof input.twilio.authToken === "string") {
+    twilio.clientSecret ??= input.twilio.authToken;
+  }
+  if (Object.keys(twilio).length > 0) settings.twilio = twilio;
 
   return Object.keys(settings).length > 0 ? settings : undefined;
 }

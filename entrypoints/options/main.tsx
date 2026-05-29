@@ -523,7 +523,7 @@ function GeneralPage({
             />
             <ToggleRow
               title="Send optional SMS"
-              description="Requires Twilio messaging setup"
+              description="Requires separate Twilio messaging setup"
               checked={settingsDraft.smsEnabled}
               onChange={(checked) =>
                 onSettingsDraftChange("phone", {
@@ -593,8 +593,8 @@ function GeneralPage({
             />
           </Field>
           <p className="helperText">
-            Connect a phone number in ElevenLabs before using its phone number ID
-            here.
+            Connect or import a phone number inside ElevenLabs first. Swan does
+            not need Twilio credentials for voice calls.
           </p>
           <SaveCardFooter
             dirty={elevenLabsDirty}
@@ -619,17 +619,32 @@ function GeneralPage({
               }
             />
           </Field>
-          <Field label="Auth token">
+          <Field label="API key SID">
             <input
               className="monoInput"
-              type="password"
-              value={settingsDraft.twilio.authToken}
+              value={settingsDraft.twilio.apiKeySid}
               onChange={(event) =>
                 onSettingsDraftChange("twilio", {
                   ...settingsDraft,
                   twilio: {
                     ...settingsDraft.twilio,
-                    authToken: event.currentTarget.value,
+                    apiKeySid: event.currentTarget.value,
+                  },
+                })
+              }
+            />
+          </Field>
+          <Field label="Client secret">
+            <input
+              className="monoInput"
+              type="password"
+              value={settingsDraft.twilio.clientSecret}
+              onChange={(event) =>
+                onSettingsDraftChange("twilio", {
+                  ...settingsDraft,
+                  twilio: {
+                    ...settingsDraft.twilio,
+                    clientSecret: event.currentTarget.value,
                   },
                 })
               }
@@ -652,8 +667,8 @@ function GeneralPage({
             />
           </Field>
           <p className="helperText">
-            SMS is off by default. Enable it only after your Twilio messaging
-            setup is ready.
+            These credentials are only for optional direct SMS. Voice calls use
+            ElevenLabs and work without this card.
           </p>
           <SaveCardFooter
             dirty={twilioDirty}
@@ -1310,7 +1325,8 @@ function isSettingsCardDirty(
   if (cardId === "twilio") {
     return (
       saved.twilio.accountSid !== draft.twilio.accountSid ||
-      saved.twilio.authToken !== draft.twilio.authToken ||
+      saved.twilio.apiKeySid !== draft.twilio.apiKeySid ||
+      saved.twilio.clientSecret !== draft.twilio.clientSecret ||
       saved.twilio.fromNumber !== draft.twilio.fromNumber
     );
   }

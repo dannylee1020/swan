@@ -21,7 +21,8 @@ const context: AlertContext = {
     callEnabled: true,
     twilio: {
       accountSid: "AC123",
-      authToken: "token",
+      apiKeySid: "SK123",
+      clientSecret: "secret",
       fromNumber: "+15550000000",
     },
     elevenLabs: {
@@ -59,7 +60,7 @@ describe("provider request builders", () => {
       "https://api.twilio.com/2010-04-01/Accounts/AC123/Messages.json",
     );
     expect(init.headers).toMatchObject({
-      Authorization: `Basic ${Buffer.from("AC123:token", "binary").toString(
+      Authorization: `Basic ${Buffer.from("SK123:secret", "binary").toString(
         "base64",
       )}`,
       "Content-Type": "application/x-www-form-urlencoded",
@@ -78,7 +79,7 @@ describe("provider request builders", () => {
         ...context.settings,
         twilio: {
           ...context.settings.twilio,
-          authToken: "",
+          clientSecret: "",
         },
       },
     };

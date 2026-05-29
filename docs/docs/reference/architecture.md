@@ -1,18 +1,60 @@
 # Architecture
 
-Swan v0 is a browser-first Chromium extension. It can be installed from a packaged build or loaded from source, but both paths use the same local extension runtime.
+Swan Core v0 is a browser-local extension. It watches configured domains, starts an immediate phone intervention through user-provided providers, records the result locally, and redirects the tab to an intervention page.
+
+Chromium is the primary local install target. Firefox Desktop has a developer testing path. Both targets use the same core extension architecture.
+
+## System map
+
+```text
+User setup
+  npm run setup / npm run setup:firefox
+    -> optional config.yaml becomes bundled swan-bootstrap.json
+    -> WXT builds the extension output
+    -> user loads Swan in the browser
+
+User configuration
+  Swan options page
+    -> phone number, cooldown, monitoring toggle
+    -> ElevenLabs call credentials
+    -> optional Twilio SMS credentials
+    -> seed and custom tracked domains
+    -> chrome.storage.local
+
+Detection loop
+  User opens a top-level HTTP(S) page
+    -> background service worker receives navigation event
+    -> URL is normalized to a domain
+    -> enabled exact/subdomain rules are checked
+    -> no match: page loads normally
+    -> match: urge event is created
+    -> cooldown and enabled checks run
+    -> ElevenLabs call and optional Twilio SMS are attempted
+    -> event status is saved locally
+    -> tab redirects to the intervention page
+    -> intervention page shows detected domain and alert status
+```
 
 ## Runtime flow
 
-1. The background service worker listens to top-level navigation events.
-2. The URL is normalized to a domain.
-3. Swan checks the domain against enabled rules.
-4. A match creates an urge event in local extension storage.
-5. Cooldown logic decides whether to send alerts.
-6. ElevenLabs starts the AI phone call when enabled and configured.
-7. Twilio sends an optional SMS alert when enabled and configured.
-8. The browser tab redirects to Swan's intervention page.
-9. The options page shows settings, domain rules, and event logs.
+1. The background service worker listens to top-level `webNavigation` events.
+2. The visited URL is normalized to a domain.
+3. Swan checks enabled rules for exact-domain or subdomain matches.
+4. A match creates an urge event with domain-level metadata.
+5. Swan reads settings and recent events from `chrome.storage.local`.
+6. Disabled monitoring or active cooldown saves a skipped event.
+7. Allowed alerts run enabled channels in parallel.
+8. ElevenLabs starts the standard AI phone call when configured.
+9. Twilio sends optional SMS when enabled and configured.
+10. Provider success, failure, or skipped status is saved locally.
+11. The tab redirects to Swan's intervention page.
+12. The intervention page asks the background worker for the saved event and displays the result.
+
+## Setup and configuration
+
+Swan can be configured directly in the options page. Technical users can also create an ignored local `config.yaml` before build or setup. During build, Swan can generate a bundled `public/swan-bootstrap.json`; the extension imports that data only when the user clicks **Import data** in the General settings page.
+
+The extension does not read local files or environment variables at runtime.
 
 ## Project shape
 
@@ -25,6 +67,17 @@ Swan v0 is a browser-first Chromium extension. It can be installed from a packag
 | Detection logic | `lib/detection.ts`, `lib/domain.ts`, `lib/defaults.ts` |
 | Alert orchestration | `lib/alerts.ts` |
 | Providers | `lib/providers/twilio.ts`, `lib/providers/elevenlabs.ts` |
+| Build/setup helpers | `scripts/setup.mjs`, `scripts/targets.mjs`, `scripts/generate-bootstrap.mjs` |
+
+## Local data
+
+Swan stores runtime data in `chrome.storage.local`:
+
+- Settings and provider credentials.
+- Seed and user domain rules.
+- Detection event history.
+
+Events store the normalized domain, matched rule id, timestamp, and call/SMS statuses. Swan does not store full page URLs for provider alerts.
 
 ## Provider boundary
 
@@ -37,6 +90,8 @@ The current implementations are:
 
 - ElevenLabs for standard AI voice calls.
 - Twilio for optional SMS.
+
+ElevenLabs receives the recipient number, agent identifiers, and minimal event metadata needed to start the call. Twilio receives the recipient number, from number, and a domain-only SMS body when SMS is enabled.
 
 ## What Swan does not run
 

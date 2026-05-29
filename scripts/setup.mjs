@@ -1,12 +1,27 @@
 import { existsSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { getTarget, resolveTargetPaths, targets } from "./targets.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const extensionDir = join(repoRoot, "output", "chrome-mv3");
-const manifestPath = join(extensionDir, "manifest.json");
 const noOpen = process.argv.includes("--no-open");
+const targetId = readOption("target") ?? readOption("browser") ?? "chromium";
+const target = getTarget(targetId);
+
+if (!target) {
+  throw new Error(
+    `Unknown browser target "${targetId}". Use one of: ${Object.keys(targets).join(", ")}`,
+  );
+}
+
+const { extensionDir, manifestPath } = resolveTargetPaths(repoRoot, target);
+
+function readOption(name) {
+  const prefix = `--${name}=`;
+  const option = process.argv.find((arg) => arg.startsWith(prefix));
+  return option ? option.slice(prefix.length) : undefined;
+}
 
 function run(command, args) {
   const result = spawnSync(command, args, {
@@ -28,16 +43,15 @@ function npmCommand() {
   return process.platform === "win32" ? "npm.cmd" : "npm";
 }
 
-function openExtensionsPage() {
-  if (noOpen) return;
+function openTargetPage() {
+  if (noOpen || !target.autoOpen) return;
 
-  const url = "chrome://extensions";
   const opener =
     process.platform === "darwin"
-      ? ["open", [url]]
+      ? ["open", [target.openUrl]]
       : process.platform === "win32"
-        ? ["cmd", ["/c", "start", "", url]]
-        : ["xdg-open", [url]];
+        ? ["cmd", ["/c", "start", "", target.openUrl]]
+        : ["xdg-open", [target.openUrl]];
 
   const result = spawnSync(opener[0], opener[1], {
     cwd: repoRoot,
@@ -46,37 +60,36 @@ function openExtensionsPage() {
   });
 
   if (result.error || result.status !== 0) {
-    console.log(`Could not open ${url} automatically. Open it manually.`);
+    console.log(`Could not open ${target.openUrl} automatically. Open it manually.`);
   }
 }
 
-console.log("Preparing Swan...");
+console.log(`Preparing Swan for ${target.label}...`);
 
-if (!existsSync(join(repoRoot, "node_modules"))) {
+if (!existsSync(resolve(repoRoot, "node_modules"))) {
   console.log("Installing dependencies...");
   run(npmCommand(), ["install"]);
 }
 
 console.log("Building extension...");
-run(npmCommand(), ["run", "build"]);
+run(npmCommand(), ["run", target.buildScript]);
 
 if (!existsSync(manifestPath)) {
   throw new Error(`Build did not create ${manifestPath}`);
 }
 
 console.log("");
-console.log("Swan is ready to load in Chromium.");
+console.log(target.readyMessage);
 console.log("");
 console.log(`Extension path: ${extensionDir}`);
+console.log(`Manifest path: ${manifestPath}`);
 console.log("");
 console.log("Install steps:");
-console.log("1. Open chrome://extensions");
-console.log("2. Enable Developer Mode");
-console.log("3. Click Load unpacked");
-console.log(`4. Select ${extensionDir}`);
-console.log("5. Open Swan options and configure providers");
+for (const step of target.installSteps(extensionDir, manifestPath)) {
+  console.log(step);
+}
 console.log("");
 console.log("Provider guide: docs/provider-setup.md");
 console.log("");
 
-openExtensionsPage();
+openTargetPage();

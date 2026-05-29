@@ -11,6 +11,12 @@ npm install
 npm run build
 ```
 
+For Firefox Desktop setup, use:
+
+```bash
+npm run build:firefox
+```
+
 If TypeScript or WXT generated types are missing, run:
 
 ```bash
@@ -21,12 +27,18 @@ Then retry the build.
 
 ## Browser cannot load the extension
 
-Confirm:
+For Chromium, confirm:
 
 - You selected `output/chrome-mv3`, not the repository root.
 - `output/chrome-mv3/manifest.json` exists.
 - Developer Mode is enabled.
 - The browser supports Manifest V3 extensions.
+
+For Firefox Desktop, confirm:
+
+- You selected `output/firefox-mv2/manifest.json`, not the output directory.
+- The add-on was loaded from `about:debugging#/runtime/this-firefox`.
+- Firefox has not restarted since loading the temporary add-on.
 
 Rebuild if the output directory is missing:
 
@@ -40,11 +52,14 @@ Click the Swan extension icon from the browser toolbar. If it is hidden, open th
 
 ## SMS does not arrive
 
+Skip this section if you only use voice calls. Twilio SMS settings are not
+required for the ElevenLabs voice-call path.
+
 Check:
 
 - Send optional SMS is enabled in Swan settings. SMS is off by default.
 - Recipient phone number uses E.164 format, for example `+15551234567`.
-- Twilio Account SID and Auth Token are correct.
+- Twilio Account SID, API Key SID, and client secret are correct.
 - Twilio From number supports SMS.
 - Trial-account recipient numbers are verified in Twilio.
 - Twilio Messaging logs show the attempted message.
@@ -105,3 +120,5 @@ Swan stores credentials in `chrome.storage.local` for the installed extension. R
 ## Need a clean reset
 
 Remove Swan from `chrome://extensions`, rebuild if needed, then load `output/chrome-mv3` again. This can clear extension-local settings for that profile.
+
+For Firefox Desktop, remove Swan from `about:debugging#/runtime/this-firefox`, rebuild with `npm run build:firefox`, then load `output/firefox-mv2/manifest.json` again.

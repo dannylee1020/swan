@@ -19,7 +19,7 @@ Swan stores these values in `chrome.storage.local`:
 - Extension settings.
 - Recipient phone number.
 - ElevenLabs API key, Agent ID, and Agent phone number ID.
-- Optional Twilio Account SID, Auth Token, and SMS From number.
+- Optional Twilio Account SID, API Key SID, client secret, and SMS From number, only when direct SMS is configured.
 - Domain tracking rules.
 - Detection event history and provider delivery status.
 
@@ -30,7 +30,7 @@ This data stays in the installed browser profile unless you export it, remove th
 Swan sends data only when an alert is triggered or when you click **Send test alert**:
 
 - ElevenLabs receives the recipient number, agent identifiers, and minimal event metadata needed to start the call.
-- Twilio receives the recipient number, SMS From number, and alert message body when optional SMS is enabled.
+- Twilio receives the recipient number, SMS From number, and alert message body only when optional SMS is enabled.
 
 ElevenLabs and Twilio may keep call, SMS, billing, diagnostic, and compliance records under their own policies. Swan does not control those provider records.
 

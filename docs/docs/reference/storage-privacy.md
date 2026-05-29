@@ -8,7 +8,7 @@ Swan stores these values in `chrome.storage.local`:
 
 - User settings.
 - ElevenLabs credentials.
-- Optional Twilio SMS credentials.
+- Optional Twilio SMS credentials, only when direct SMS is configured.
 - Domain rules.
 - Event history.
 
@@ -23,7 +23,7 @@ file is a user-managed setup source, not runtime storage. After clicking
 Swan sends only the data required to deliver an intervention through the configured providers:
 
 - ElevenLabs receives the recipient number, agent configuration identifiers, and minimal event metadata for the call.
-- If SMS is enabled, Twilio receives the recipient number, From number, and SMS body.
+- If SMS is enabled, Twilio receives the recipient number, From number, and SMS body. Voice calls do not use Twilio credentials stored in Swan.
 
 Provider consoles may retain logs according to their own policies.
 

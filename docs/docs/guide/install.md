@@ -1,6 +1,17 @@
 # Install Swan
 
-Swan currently installs by building a local extension folder and loading it in a Chromium-based browser.
+Swan installs from a local source checkout. The same extension source builds for Chromium and Firefox Desktop, but each browser uses a different development loading flow.
+
+## Browser support
+
+| Browser target | Status | Build output | Loading method |
+| --- | --- | --- | --- |
+| Chromium-based browsers | Supported local install | `output/chrome-mv3` | Load unpacked directory from `chrome://extensions` |
+| Firefox Desktop | Developer support | `output/firefox-mv2` | Load temporary add-on from `about:debugging` |
+| Firefox-derived browsers | Best effort | Browser-dependent | Smoke test before relying on it |
+| Tor Browser | Unsupported | Not applicable | Extra add-ons are not recommended |
+
+Firefox support is currently for local development and testing. Signed AMO distribution and persistent Firefox installs are separate release work.
 
 ## Clone the repository
 
@@ -16,51 +27,16 @@ git clone https://github.com/dannylee1020/swan.git
 cd swan
 ```
 
-### Run setup
+## Choose an install path
 
-```bash
-npm run setup
-```
+- [Install in Chromium](./install-chromium.md) if you want the default Swan local install.
+- [Install in Firefox Desktop](./install-firefox.md) if you want to test the Firefox build.
 
-The setup command is the recommended path for new users. It runs `npm install` only when dependencies are missing, builds Swan, and prints the absolute path to the extension output.
-
-::: tip
-Use `npm run setup -- --no-open` if you do not want the script to try opening `chrome://extensions`.
-:::
-
-::: tip
-Copy `config.example.yaml` to `config.yaml` before setup if you want Swan to
-bundle local import data for phone, provider, and tracked-domain settings.
-:::
-
-### Manual commands
-
-If you prefer to run each step yourself:
-
-```bash
-npm install
-npm run build
-```
-
-Then load:
-
-```text
-output/chrome-mv3
-```
-
-through your browser's extension page.
-
-### Load unpacked extension
-
-1. Open `chrome://extensions`.
-2. Turn on **Developer Mode**.
-3. Click **Load unpacked**.
-4. Select the absolute `output/chrome-mv3` directory.
-5. Confirm Swan appears in the extensions list.
+Copy `config.example.yaml` to `config.yaml` before setup if you want Swan to bundle local import data for phone, provider, and tracked-domain settings.
 
 ## Open settings
 
-Swan should open the full settings tab on first install. You can also open it by clicking the Swan extension action icon.
+Swan should open the full settings tab on first install in Chromium. In Firefox, open Swan from the extension toolbar after temporary loading.
 
 The settings page is where you configure:
 
@@ -72,16 +48,6 @@ The settings page is where you configure:
 - Test alerts.
 - Recent event logs.
 
-## Rebuild after source changes
-
-When you pull a new version or change source code:
-
-```bash
-npm run build
-```
-
-Then open `chrome://extensions` and click the reload button on Swan.
-
 ## Validate the checkout
 
 Use these checks before trusting a modified checkout:
@@ -90,4 +56,5 @@ Use these checks before trusting a modified checkout:
 npm run typecheck
 npm run test
 npm run build
+npm run build:firefox
 ```

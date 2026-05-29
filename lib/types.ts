@@ -26,7 +26,8 @@ export interface UrgeEvent {
 
 export interface TwilioSettings {
   accountSid: string;
-  authToken: string;
+  apiKeySid: string;
+  clientSecret: string;
   fromNumber: string;
 }
 

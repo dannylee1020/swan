@@ -2,6 +2,9 @@ phoneNumber: "+15551234567"
 cooldownMinutes: 10
 monitoringEnabled: true
 callEnabled: true
+
+# SMS is optional. Voice calls only need the ElevenLabs values below; Twilio
+# credentials here are used only when smsEnabled is true.
 smsEnabled: false
 
 elevenLabs:
@@ -9,11 +12,13 @@ elevenLabs:
   agentId: "your-agent-id"
   agentPhoneNumberId: "phnum_your_phone_number_id"
 
+# Optional direct SMS provider settings.
 twilio:
   accountSid: "your-twilio-account-sid"
-  authToken: "your-twilio-auth-token"
+  apiKeySid: "your-twilio-api-key-sid"
+  clientSecret: "your-twilio-client-secret"
   fromNumber: "+15551234567"
 
 trackedDomains:
-  - pornhub.com
-  - xvideos.com
+  - example.com
+  - nsfw.com

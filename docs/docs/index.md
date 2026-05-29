@@ -6,7 +6,7 @@ description: What Swan is, what it does, and how the browser extension works.
 
 # Swan
 
-A Chromium extension that interrupts risky browsing moments with immediate AI phone-call intervention and optional SMS alerts.
+A browser extension that interrupts risky browsing moments with immediate AI phone-call intervention and optional SMS alerts. Chromium is the default target; Firefox Desktop has a temporary developer install path.
 
 ## What Swan does
 
@@ -16,7 +16,7 @@ The goal is not passive blocking or broad surveillance. Swan is built around a n
 
 ## How it works
 
-- The extension runs in a Chromium browser profile.
+- The extension runs in a local browser profile.
 - Detection uses configured domain rules and top-level navigation events.
 - Settings, rules, and logs live in `chrome.storage.local`.
 - AI calls use your ElevenLabs Conversational AI agent and connected phone number.

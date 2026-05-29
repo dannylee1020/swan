@@ -4,12 +4,18 @@ Use this page after installation and provider setup.
 
 ## Check extension loading
 
-In `chrome://extensions`, confirm:
+In Chromium, open `chrome://extensions` and confirm:
 
 - Swan is enabled.
 - Developer Mode remains on.
 - The extension path points at `output/chrome-mv3`.
 - No manifest or runtime errors are visible on the extension card.
+
+In Firefox Desktop, open `about:debugging#/runtime/this-firefox` and confirm:
+
+- Swan appears under temporary extensions.
+- The temporary add-on points at `output/firefox-mv2/manifest.json`.
+- No manifest or runtime errors are visible.
 
 ## Send a test alert
 
@@ -54,3 +60,5 @@ npm run build
 ```
 
 Then reload Swan from `chrome://extensions`.
+
+For Firefox Desktop, rebuild with `npm run build:firefox`, then reload the temporary add-on from `about:debugging`.

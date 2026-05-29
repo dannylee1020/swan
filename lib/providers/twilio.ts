@@ -2,8 +2,8 @@ import type { AlertContext, SmsProvider, ProviderResult } from "../types";
 
 export class TwilioSmsProvider implements SmsProvider {
   async send({ event, settings }: AlertContext): Promise<ProviderResult> {
-    const { accountSid, authToken, fromNumber } = settings.twilio;
-    if (!settings.phoneNumber || !accountSid || !authToken || !fromNumber) {
+    const { accountSid, apiKeySid, clientSecret, fromNumber } = settings.twilio;
+    if (!settings.phoneNumber || !accountSid || !apiKeySid || !clientSecret || !fromNumber) {
       throw new Error("Twilio SMS is not configured");
     }
 
@@ -18,7 +18,7 @@ export class TwilioSmsProvider implements SmsProvider {
       {
         method: "POST",
         headers: {
-          Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+          Authorization: `Basic ${btoa(`${apiKeySid}:${clientSecret}`)}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body,

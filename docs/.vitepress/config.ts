@@ -32,6 +32,8 @@ export default defineConfig({
             { text: "Introduction", link: "/docs/" },
             { text: "Quick start", link: "/docs/guide/quick-start" },
             { text: "Install Swan", link: "/docs/guide/install" },
+            { text: "Install in Chromium", link: "/docs/guide/install-chromium" },
+            { text: "Install in Firefox", link: "/docs/guide/install-firefox" },
           ],
         },
         {

@@ -56,9 +56,12 @@ export function buildBootstrapFromConfig(config, generatedAt = new Date()) {
 
   const twilio = readProviderBlock(config, "twilio", [
     "accountSid",
-    "authToken",
+    "apiKeySid",
+    "clientSecret",
     "fromNumber",
   ]);
+  assignStringAlias(config.twilio, "apiKeySecret", twilio, "clientSecret");
+  assignStringAlias(config.twilio, "authToken", twilio, "clientSecret");
   if (Object.keys(twilio).length > 0) settings.twilio = twilio;
 
   const trackedDomains = readTrackedDomains(config);
@@ -123,6 +126,11 @@ function assignString(source, sourceKey, target, targetKey = sourceKey) {
     throw new Error(`${sourceKey} must be a string.`);
   }
   target[targetKey] = value;
+}
+
+function assignStringAlias(source, sourceKey, target, targetKey) {
+  if (!isRecord(source) || target[targetKey] != null) return;
+  assignString(source, sourceKey, target, targetKey);
 }
 
 function assignNumber(source, sourceKey, target, targetKey = sourceKey) {

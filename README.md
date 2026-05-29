@@ -16,22 +16,22 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 ## How It Works
 
-- Swan runs as a Chromium Manifest V3 extension.
+- Swan runs as a local browser extension. Chromium is the default target; Firefox Desktop has a temporary developer install path.
 - Detection uses configured domain rules and top-level navigation events.
-- AI calls use your ElevenLabs Conversational AI agent and connected phone number.
-- Optional SMS alerts use your Twilio account and phone number.
+- AI calls use your ElevenLabs Conversational AI agent and the phone number connected inside ElevenLabs.
+- Optional SMS alerts use Twilio directly only when SMS is enabled.
 - Swan v0 does not run a Swan-hosted backend, proxy, DNS filter, localhost daemon, or page-content classifier.
 
 ## Requirements
 
 - Node.js 20 or newer
 - npm
-- Chromium-based browser
-- Conversational voice AI agent provider (ships with Elevenlabs by default)
-- Phone infrastructure provider (ships with Twilio by default)
-- Optional: SMS alerts
+- Chromium-based browser, or Firefox Desktop for developer testing
+- ElevenLabs account for the voice-call provider
+- Twilio phone number connected inside ElevenLabs for calls
+- Optional: Twilio Messaging setup for SMS alerts
 
-Swan initiates calls through ElevenLabs' native Twilio outbound-call integration. Trial Twilio accounts can ring but may stop after the trial message instead of connecting the ElevenLabs agent. Use a paid/upgraded Twilio number, import or verify it in ElevenLabs, and link it to the Swan agent.
+Swan initiates voice calls through ElevenLabs' outbound-call API. Twilio is part of the phone number setup inside ElevenLabs, but Swan does not need Twilio credentials to start voice calls. Direct Twilio credentials are only used for optional SMS alerts.
 
 ## Quick Start
 
@@ -41,7 +41,7 @@ Prepare Swan:
 npm run setup
 ```
 
-This installs dependencies when needed, builds the extension, prints the absolute extension path, and opens `chrome://extensions` when possible.
+This installs dependencies when needed, builds the Chromium extension, prints the absolute extension path, and opens `chrome://extensions` when possible.
 
 If you want repeatable local setup, copy `config.example.yaml` to `config.yaml` before running setup. Swan will bundle that local config as import data, which you can later apply from the General page.
 
@@ -50,6 +50,14 @@ Load the extension in Chromium:
 1. Enable **Developer Mode**
 2. Click **Load unpacked**
 3. Select the `output/chrome-mv3` path printed by `npm run setup`
+
+For Firefox Desktop developer testing:
+
+```bash
+npm run setup:firefox
+```
+
+Then open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**, and select `output/firefox-mv2/manifest.json`.
 
 After loading, Swan opens the settings tab automatically on first install. If it does not, click the Swan extension icon. Configure your phone and provider settings, add tracked domains, and click **Send test alert**.
 
@@ -68,23 +76,23 @@ Swan needs these values in the options page:
 - ElevenLabs API key
 - ElevenLabs Agent ID
 - ElevenLabs Agent phone number ID
-- Optional SMS: Twilio Account SID, Auth token, and SMS From number
+- Optional SMS only: Twilio Account SID, API Key SID, client secret, and SMS From number
 
-Use [Provider setup](docs/docs/provider-setup.md) for the full ElevenLabs and Twilio walkthrough. Configure and test the ElevenLabs agent before relying on Swan interventions.
+Use [Provider setup](docs/docs/provider-setup.md) for the full ElevenLabs walkthrough and optional Twilio SMS setup. Configure and test the ElevenLabs agent before relying on Swan interventions.
 
 ## Limitations
 
 - Swan v0 detects configured domains only.
 - It ships with a small seed list of NSFW domains and matches subdomains of tracked domains.
 - It does not inspect page content, classify images or videos, install DNS rules, run a proxy, or block at the operating-system level.
-- Swan currently installs by loading a local extension build in a Chromium-based browser.
+- Swan currently installs by loading a local extension build. Chromium uses an unpacked directory; Firefox Desktop uses a temporary add-on during developer testing.
 - It is recovery-support software, not medical advice, therapy, or clinical treatment.
 
 ## Privacy and Costs
 
 Settings, rules, provider credentials, and logs are stored in browser extension local storage. Treat Swan v0 as browser-local software that uses provider accounts you control, not a managed production secret store.
 
-Swan does not send data to a Swan-hosted backend. Alert delivery sends the minimum needed request data to the providers you configure: ElevenLabs for AI calls and Twilio for optional SMS. Those providers may store call, message, billing, and diagnostic records according to their own policies.
+Swan does not send data to a Swan-hosted backend. Alert delivery sends the minimum needed request data to the providers you configure: ElevenLabs for AI calls and Twilio only for optional SMS. Those providers may store call, message, billing, and diagnostic records according to their own policies.
 
 The software is open source, but phone calls and SMS are not free to operate. You bring and pay for your own ElevenLabs and Twilio accounts.
 
@@ -96,7 +104,15 @@ Run WXT in development mode:
 npm run dev
 ```
 
-Load `output/chrome-mv3` through `chrome://extensions`.
+Load the generated `output/chrome-mv3-dev` directory through `chrome://extensions`.
+
+Run the Firefox development target:
+
+```bash
+npm run dev:firefox
+```
+
+Load the generated `output/firefox-mv2-dev/manifest.json` through `about:debugging`.
 
 Build the extension:
 
@@ -104,20 +120,11 @@ Build the extension:
 npm run build
 ```
 
-Run the docs site:
+Build the Firefox extension:
 
 ```bash
-npm run docs:dev
+npm run build:firefox
 ```
-
-Preview the built docs:
-
-```bash
-npm run docs:build
-npm run docs:preview
-```
-
-The preview runs at `http://127.0.0.1:5292`.
 
 ## Contributing
 
@@ -131,5 +138,6 @@ If you try Swan locally, open an issue with what worked, what failed, and which 
 npm run test
 npm run typecheck
 npm run build
+npm run build:firefox
 npm run docs:build
 ```
