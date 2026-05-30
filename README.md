@@ -16,11 +16,9 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 ## How It Works
 
-- Swan runs as a local browser extension. Chromium is the first-class v0 target; Firefox Desktop is available for manual developer testing and may require extra reload/rebuild steps.
+- Swan runs as a local browser extension.
 - Detection uses configured domain rules and top-level navigation events.
-- AI calls use your ElevenLabs Conversational AI agent and the phone number connected inside ElevenLabs.
-- Optional SMS alerts use Twilio directly only when SMS is enabled.
-- Swan v0 does not run a Swan-hosted backend, proxy, DNS filter, localhost daemon, or page-content classifier.
+- Makes the call when listed domain is detected, interrupts the lust at the moment and prevents the addiction cycle.
 
 ## Requirements
 
