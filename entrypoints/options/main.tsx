@@ -21,6 +21,7 @@ import {
   Upload,
   type LucideIcon,
 } from "lucide-react";
+import { browser } from "wxt/browser";
 import {
   applyBootstrap,
   parseSwanBootstrap,
@@ -260,7 +261,7 @@ function OptionsApp() {
     setTesting(true);
     setNotice("Sending test alert...");
 
-    const response = await chrome.runtime.sendMessage<
+    const response = await browser.runtime.sendMessage<
       SwanMessage,
       SwanMessageResponse
     >({ type: "SWAN_TEST_ALERT" });
@@ -542,7 +543,7 @@ function GeneralPage({
 
         <SettingsCard
           icon={AudioLines}
-          title="ElevenLabs Voice Call"
+          title="ElevenLabs Voice Agent"
           tag="Standard"
         >
           <Field label="API key">
@@ -603,7 +604,7 @@ function GeneralPage({
           />
         </SettingsCard>
 
-        <SettingsCard icon={MessageSquare} title="Twilio SMS" tag="Optional">
+        <SettingsCard icon={MessageSquare} title="Twilio">
           <Field label="Account SID">
             <input
               className="monoInput"
@@ -1363,7 +1364,7 @@ function mergeSettingsCard(
 }
 
 async function fetchBundledBootstrap(): Promise<SwanBootstrap | null> {
-  const response = await fetch(chrome.runtime.getURL("/swan-bootstrap.json"), {
+  const response = await fetch("/swan-bootstrap.json", {
     cache: "no-store",
   });
   if (!response.ok) return null;

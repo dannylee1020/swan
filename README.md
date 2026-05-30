@@ -16,7 +16,7 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 ## How It Works
 
-- Swan runs as a local browser extension. Chromium is the default target; Firefox Desktop has a temporary developer install path.
+- Swan runs as a local browser extension. Chromium is the first-class v0 target; Firefox Desktop is available for manual developer testing and may require extra reload/rebuild steps.
 - Detection uses configured domain rules and top-level navigation events.
 - AI calls use your ElevenLabs Conversational AI agent and the phone number connected inside ElevenLabs.
 - Optional SMS alerts use Twilio directly only when SMS is enabled.
@@ -26,7 +26,8 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 - Node.js 20 or newer
 - npm
-- Chromium-based browser, or Firefox Desktop for developer testing
+- Chromium-based browser for the default local install
+- Optional: Firefox Desktop for manual developer testing
 - ElevenLabs account for the voice-call provider
 - Twilio phone number connected inside ElevenLabs for calls
 - Optional: Twilio Messaging setup for SMS alerts
@@ -51,13 +52,13 @@ Load the extension in Chromium:
 2. Click **Load unpacked**
 3. Select the `output/chrome-mv3` path printed by `npm run setup`
 
-For Firefox Desktop developer testing:
+Firefox is not a first-class v0 install path. If you want to test it manually:
 
 ```bash
 npm run setup:firefox
 ```
 
-Then open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**, and select `output/firefox-mv2/manifest.json`.
+Then open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**, and select `output/firefox-mv2/manifest.json`. Firefox temporary add-ons are removed when Firefox restarts, so this path may require more manual work than Chromium.
 
 After loading, Swan opens the settings tab automatically on first install. If it does not, click the Swan extension icon. Configure your phone and provider settings, add tracked domains, and click **Send test alert**.
 
@@ -85,7 +86,7 @@ Use [Provider setup](docs/docs/provider-setup.md) for the full ElevenLabs walkth
 - Swan v0 detects configured domains only.
 - It ships with a small seed list of NSFW domains and matches subdomains of tracked domains.
 - It does not inspect page content, classify images or videos, install DNS rules, run a proxy, or block at the operating-system level.
-- Swan currently installs by loading a local extension build. Chromium uses an unpacked directory; Firefox Desktop uses a temporary add-on during developer testing.
+- Swan currently installs by loading a local extension build. Chromium is the supported v0 path. Firefox Desktop uses a temporary developer add-on and is not first-class supported in this version.
 - It is recovery-support software, not medical advice, therapy, or clinical treatment.
 
 ## Privacy and Costs
@@ -113,6 +114,8 @@ npm run dev:firefox
 ```
 
 Load the generated `output/firefox-mv2-dev/manifest.json` through `about:debugging`.
+
+Firefox support is experimental in v0. Use it for compatibility testing, not as the primary install path.
 
 Build the extension:
 

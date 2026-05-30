@@ -1,17 +1,17 @@
 # Install Swan
 
-Swan installs from a local source checkout. The same extension source builds for Chromium and Firefox Desktop, but each browser uses a different development loading flow.
+Swan installs from a local source checkout. Chromium is the first-class v0 install path. The same source can build for Firefox Desktop, but Firefox is experimental developer support and requires more manual loading.
 
 ## Browser support
 
 | Browser target | Status | Build output | Loading method |
 | --- | --- | --- | --- |
-| Chromium-based browsers | Supported local install | `output/chrome-mv3` | Load unpacked directory from `chrome://extensions` |
-| Firefox Desktop | Developer support | `output/firefox-mv2` | Load temporary add-on from `about:debugging` |
+| Chromium-based browsers | First-class v0 local install | `output/chrome-mv3` | Load unpacked directory from `chrome://extensions` |
+| Firefox Desktop | Experimental developer support | `output/firefox-mv2` | Load temporary add-on from `about:debugging` |
 | Firefox-derived browsers | Best effort | Browser-dependent | Smoke test before relying on it |
 | Tor Browser | Unsupported | Not applicable | Extra add-ons are not recommended |
 
-Firefox support is currently for local development and testing. Signed AMO distribution and persistent Firefox installs are separate release work.
+Firefox is not first-class supported in this version. Temporary Firefox add-ons are removed when Firefox restarts, and signed AMO distribution for persistent installs is separate release work.
 
 ## Clone the repository
 
@@ -29,8 +29,8 @@ cd swan
 
 ## Choose an install path
 
-- [Install in Chromium](./install-chromium.md) if you want the default Swan local install.
-- [Install in Firefox Desktop](./install-firefox.md) if you want to test the Firefox build.
+- [Install in Chromium](./install-chromium.md) if you want the supported Swan v0 local install.
+- [Install in Firefox Desktop](./install-firefox.md) if you want to manually test the experimental Firefox build.
 
 Copy `config.example.yaml` to `config.yaml` before setup if you want Swan to bundle local import data for phone, provider, and tracked-domain settings.
 

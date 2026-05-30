@@ -1,8 +1,8 @@
 # Install in Firefox Desktop
 
-Firefox support is currently for local development and testing. It uses WXT's Firefox Manifest V2 build and Firefox's temporary add-on loader.
+Firefox support is experimental in Swan v0. Chromium is the first-class install path; use Firefox only if you are comfortable with manual developer loading.
 
-Temporary add-ons are removed when Firefox restarts. Signed AMO distribution and persistent Firefox installs are not part of this local setup path.
+This path uses WXT's Firefox Manifest V2 build and Firefox's temporary add-on loader. Temporary add-ons are removed when Firefox restarts. Signed AMO distribution and persistent Firefox installs are not part of this local setup path.
 
 ## Run setup
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { browser } from "wxt/browser";
 import type { SwanMessage, SwanMessageResponse } from "../../lib/messages";
 import type { UrgeEvent } from "../../lib/types";
 import "./style.css";
@@ -22,7 +23,7 @@ function InterventionApp() {
       return;
     }
 
-    const response = await chrome.runtime.sendMessage<
+    const response = await browser.runtime.sendMessage<
       SwanMessage,
       SwanMessageResponse
     >({ type: "SWAN_GET_EVENT", eventId });
@@ -71,7 +72,7 @@ function InterventionApp() {
           <button
             type="button"
             className="secondary"
-            onClick={() => void chrome.runtime.openOptionsPage()}
+            onClick={() => void browser.runtime.openOptionsPage()}
           >
             Open setup
           </button>

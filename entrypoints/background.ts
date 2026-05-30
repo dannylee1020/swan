@@ -1,3 +1,4 @@
+import { browser, type Browser } from "wxt/browser";
 import { AlertCoordinator } from "../lib/alerts";
 import { createUrgeEvent, findMatchingRule } from "../lib/detection";
 import type { SwanMessage, SwanMessageResponse } from "../lib/messages";
@@ -6,21 +7,21 @@ import { getEvents, getRules } from "../lib/storage";
 const coordinator = new AlertCoordinator();
 
 export default defineBackground(() => {
-  chrome.runtime.onInstalled.addListener((details) => {
+  browser.runtime.onInstalled.addListener((details) => {
     void handleInstalled(details);
   });
 
-  chrome.action.onClicked.addListener(() => {
-    void chrome.runtime.openOptionsPage();
+  getExtensionActionApi()?.onClicked.addListener(() => {
+    void browser.runtime.openOptionsPage();
   });
 
-  chrome.webNavigation.onCommitted.addListener((details) => {
+  browser.webNavigation.onCommitted.addListener((details) => {
     if (details.frameId !== 0 || !details.url.startsWith("http")) return;
 
     void handleNavigation(details.url, details.tabId);
   });
 
-  chrome.runtime.onMessage.addListener(
+  browser.runtime.onMessage.addListener(
     (
       message: SwanMessage,
       _sender,
@@ -42,12 +43,12 @@ export default defineBackground(() => {
 });
 
 async function handleInstalled(
-  details: chrome.runtime.InstalledDetails,
+  details: Browser.runtime.InstalledDetails,
 ): Promise<void> {
   await getRules();
 
   if (details.reason === "install") {
-    await chrome.runtime.openOptionsPage();
+    await browser.runtime.openOptionsPage();
   }
 }
 
@@ -58,8 +59,8 @@ async function handleNavigation(url: string, tabId: number): Promise<void> {
   const event = createUrgeEvent(match.domain, match.rule.id);
   await coordinator.handle(event);
 
-  await chrome.tabs.update(tabId, {
-    url: chrome.runtime.getURL(`/intervention.html?eventId=${event.id}`),
+  await browser.tabs.update(tabId, {
+    url: browser.runtime.getURL(`/intervention.html?eventId=${event.id}`),
   });
 }
 
@@ -80,4 +81,19 @@ async function getEvent(eventId: string): Promise<SwanMessageResponse> {
   const event = (await getEvents()).find((candidate) => candidate.id === eventId);
   if (!event) return { ok: false, error: "Event not found" };
   return { ok: true, event };
+}
+
+type ExtensionActionApi = {
+  onClicked: {
+    addListener(listener: () => void): void;
+  };
+};
+
+function getExtensionActionApi(): ExtensionActionApi | undefined {
+  const extensionBrowser = browser as typeof browser & {
+    action?: ExtensionActionApi;
+    browserAction?: ExtensionActionApi;
+  };
+
+  return extensionBrowser.action ?? extensionBrowser.browserAction;
 }

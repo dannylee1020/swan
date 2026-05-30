@@ -4,7 +4,20 @@ import { AlertCoordinator } from "../lib/alerts";
 import { defaultSettings } from "../lib/defaults";
 import type { CallProvider, SmsProvider, UrgeEvent } from "../lib/types";
 
-const storage = new Map<string, unknown>();
+const storage = vi.hoisted(() => new Map<string, unknown>());
+
+vi.mock("wxt/browser", () => ({
+  browser: {
+    storage: {
+      local: {
+        get: vi.fn(async (key: string) => ({ [key]: storage.get(key) })),
+        set: vi.fn(async (items: Record<string, unknown>) => {
+          Object.entries(items).forEach(([key, value]) => storage.set(key, value));
+        }),
+      },
+    },
+  },
+}));
 
 const event: UrgeEvent = {
   id: "event:voice-only",
@@ -19,20 +32,10 @@ const event: UrgeEvent = {
 describe("alert coordination", () => {
   beforeEach(() => {
     storage.clear();
-    vi.stubGlobal("chrome", {
-      storage: {
-        local: {
-          get: vi.fn(async (key: string) => ({ [key]: storage.get(key) })),
-          set: vi.fn(async (items: Record<string, unknown>) => {
-            Object.entries(items).forEach(([key, value]) => storage.set(key, value));
-          }),
-        },
-      },
-    });
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("starts voice calls without Twilio SMS settings when SMS is disabled", async () => {

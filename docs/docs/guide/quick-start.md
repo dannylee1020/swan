@@ -12,7 +12,7 @@ npm run setup
 
 The script installs dependencies when needed, builds the Chromium extension, prints the absolute `output/chrome-mv3` path, and tries to open `chrome://extensions`.
 
-For Firefox Desktop developer testing, use:
+Firefox is not the first-class v0 path. For manual Firefox Desktop developer testing, use:
 
 ```bash
 npm run setup:firefox
@@ -28,8 +28,8 @@ npm run setup:firefox
   </div>
   <div class="setup-card">
     <span class="eyebrow">Browser</span>
-    <strong>Chromium or Firefox Desktop</strong>
-    <p>Use Chromium for the default local install, or Firefox Desktop for temporary developer loading.</p>
+    <strong>Chromium-based browser</strong>
+    <p>Use Chromium for the supported v0 local install. Firefox Desktop is available only for manual developer testing.</p>
   </div>
   <div class="setup-card">
     <span class="eyebrow">Voice</span>
@@ -57,7 +57,7 @@ npm run setup:firefox
     <span>2</span>
     <div>
       <strong>Open the extension.</strong>
-      <p>Load the built extension from <code>chrome://extensions</code> in Chromium or <code>about:debugging</code> in Firefox.</p>
+      <p>Load the built extension from <code>chrome://extensions</code> in Chromium. Firefox testing uses <code>about:debugging</code> and temporary add-on loading.</p>
     </div>
   </li>
   <li>
@@ -87,7 +87,8 @@ npm run setup:firefox
 
 - Node.js 20 or newer.
 - npm.
-- A Chromium-based browser that supports unpacked extensions, or Firefox Desktop for temporary add-on loading.
+- A Chromium-based browser that supports unpacked extensions.
+- Optional: Firefox Desktop for manual temporary add-on loading.
 - An ElevenLabs account with a Conversational AI agent.
 - A paid/upgraded Twilio phone number connected in ElevenLabs for AI calls.
 - Optional: Twilio Messaging setup with an SMS-capable phone number.
@@ -123,6 +124,8 @@ to keep phone, provider, and tracked-domain values in one local file.
 After first install, Swan opens its settings page automatically. If it does not, click the Swan extension icon.
 
 ## Firefox Desktop developer path
+
+Firefox support is experimental in Swan v0. It is useful for compatibility testing, but it may require rebuilding and reloading from `about:debugging`, especially after browser restarts.
 
 From the repository root:
 

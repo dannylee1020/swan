@@ -1,10 +1,11 @@
+import { browser, type Browser } from "wxt/browser";
 import { defaultSettings, seedRules } from "./defaults";
 import type { DetectionRule, StorageShape, UrgeEvent, UserSettings } from "./types";
 
 const EVENTS_LIMIT = 100;
 
-function getBrowserStorage(): chrome.storage.StorageArea {
-  return chrome.storage.local;
+function getBrowserStorage(): Browser.storage.StorageArea {
+  return browser.storage.local;
 }
 
 export async function getSettings(): Promise<UserSettings> {
