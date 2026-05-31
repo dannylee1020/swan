@@ -18,13 +18,13 @@ Firefox is not first-class supported in this version. Temporary Firefox add-ons 
 macOS or Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
+curl -fsSL https://swan-oss.com/install.sh | bash
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+irm https://swan-oss.com/install.ps1 | iex
 ```
 
 The installer downloads `swan-chromium.zip` from the latest GitHub Release, extracts it into a stable local directory, verifies `manifest.json`, and prints the folder to load in Chromium.

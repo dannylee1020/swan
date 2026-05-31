@@ -36,13 +36,13 @@ Swan initiates voice calls through ElevenLabs' outbound-call API. Twilio is part
 Install the latest Chromium release on macOS or Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
+curl -fsSL https://swan-oss.com/install.sh | bash
 ```
 
 Install the latest Chromium release on Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+irm https://swan-oss.com/install.ps1 | iex
 ```
 
 The installer downloads the latest GitHub Release, extracts it into a stable local folder, prints the extension path, and opens `chrome://extensions` when possible.
@@ -69,10 +69,10 @@ After loading, Swan opens the settings tab automatically on first install. If it
 
 Start with:
 
-- [Quick start](docs/docs/guide/quick-start.md)
-- [Install Swan](docs/docs/guide/install.md)
-- [Provider setup](docs/docs/provider-setup.md)
-- [Test and verify](docs/docs/guide/test-and-verify.md)
+- [Quick start](https://swan-oss.com/docs/guide/quick-start)
+- [Install Swan](https://swan-oss.com/docs/guide/install)
+- [Provider setup](https://swan-oss.com/docs/provider-setup)
+- [Test and verify](https://swan-oss.com/docs/guide/test-and-verify)
 
 ## Provider Setup
 
@@ -84,7 +84,7 @@ Swan needs these values in the options page:
 - ElevenLabs Agent phone number ID
 - Optional SMS only: Twilio Account SID, API Key SID, client secret, and SMS From number
 
-Use [Provider setup](docs/docs/provider-setup.md) for the full ElevenLabs walkthrough and optional Twilio SMS setup. Configure and test the ElevenLabs agent before relying on Swan interventions.
+Use [Provider setup](https://swan-oss.com/docs/provider-setup) for the full ElevenLabs walkthrough and optional Twilio SMS setup. Configure and test the ElevenLabs agent before relying on Swan interventions.
 
 ## Limitations
 

@@ -7,13 +7,13 @@ Update Swan by rerunning the installer, then reloading the unpacked extension in
 macOS or Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
+curl -fsSL https://swan-oss.com/install.sh | bash
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+irm https://swan-oss.com/install.ps1 | iex
 ```
 
 Then reload Swan:

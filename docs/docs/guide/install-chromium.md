@@ -7,13 +7,13 @@ Chromium is Swan's default release install target.
 macOS or Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
+curl -fsSL https://swan-oss.com/install.sh | bash
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+irm https://swan-oss.com/install.ps1 | iex
 ```
 
 The installer downloads the latest `swan-chromium.zip` release asset, extracts it into a stable local directory, verifies `manifest.json`, prints the absolute extension path, and tries to open `chrome://extensions`.

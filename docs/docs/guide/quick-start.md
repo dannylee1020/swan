@@ -7,13 +7,13 @@ This is the shortest path to a working Swan extension.
 Install the latest Chromium release on macOS or Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
+curl -fsSL https://swan-oss.com/install.sh | bash
 ```
 
 Install the latest Chromium release on Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+irm https://swan-oss.com/install.ps1 | iex
 ```
 
 The installer downloads the latest GitHub Release, extracts the Chromium extension into a stable local folder, prints the absolute extension path, and tries to open `chrome://extensions`.
@@ -103,13 +103,13 @@ npm run setup:firefox
 macOS or Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
+curl -fsSL https://swan-oss.com/install.sh | bash
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+irm https://swan-oss.com/install.ps1 | iex
 ```
 
 The installer:
