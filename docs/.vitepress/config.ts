@@ -31,9 +31,7 @@ export default defineConfig({
           items: [
             { text: "Introduction", link: "/docs/" },
             { text: "Quick start", link: "/docs/guide/quick-start" },
-            { text: "Install Swan", link: "/docs/guide/install" },
-            { text: "Install in Chromium", link: "/docs/guide/install-chromium" },
-            { text: "Install in Firefox", link: "/docs/guide/install-firefox" },
+            { text: "Install", link: "/docs/guide/install" },
           ],
         },
         {
@@ -57,8 +55,7 @@ export default defineConfig({
           text: "Reference",
           items: [
             { text: "Architecture", link: "/docs/reference/architecture" },
-            { text: "Storage and privacy", link: "/docs/reference/storage-privacy" },
-            { text: "Privacy policy", link: "/docs/privacy" },
+            { text: "Privacy", link: "/docs/privacy" },
           ],
         },
       ],

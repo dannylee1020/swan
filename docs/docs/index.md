@@ -31,8 +31,8 @@ It is designed intentionally small: one browser extension, user-managed provider
 
 ## Start using Swan
 
-- [Quick start](./guide/quick-start.md) gives the release install path from download to test alert.
-- [Install Swan](./guide/install.md) covers the release installer and source build paths.
+- [Quick start](./guide/quick-start.md) gives the shortest path from install to test alert.
+- [Install](./guide/install.md) covers source builds, browser support, and experimental Firefox setup.
 - [Provider setup](./provider-setup.md) walks through ElevenLabs and optional Twilio SMS.
 - [Troubleshooting](./troubleshooting.md) covers the common failure modes.
-- [Privacy policy](./privacy.md) explains local storage, provider data, and permissions.
+- [Privacy](./privacy.md) explains local storage, provider data, permissions, and user control.

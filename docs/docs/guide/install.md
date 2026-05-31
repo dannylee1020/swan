@@ -1,6 +1,6 @@
 # Install Swan
 
-Swan installs as an unpacked Chromium extension from a local folder. The recommended path downloads the latest GitHub Release asset and prepares that folder for you. Source builds are still available for development.
+Swan installs as an unpacked browser extension from a local folder. The recommended path downloads the latest Chromium release and prepares that folder for you. Source builds and experimental Firefox testing are also available.
 
 ## Browser support
 
@@ -13,7 +13,7 @@ Swan installs as an unpacked Chromium extension from a local folder. The recomme
 
 Firefox is not first-class supported in this version. Temporary Firefox add-ons are removed when Firefox restarts, and signed AMO distribution for persistent installs is separate release work.
 
-## Install latest release
+## Install Chromium release
 
 macOS or Linux:
 
@@ -54,10 +54,33 @@ npm run setup
 
 Copy `config.example.yaml` to `config.yaml` before setup if you want Swan to bundle local import data for phone, provider, and tracked-domain settings.
 
-## Other install paths
+## Firefox Desktop developer path
 
-- [Install in Chromium](./install-chromium.md) if you want detailed Chromium release and source instructions.
-- [Install in Firefox Desktop](./install-firefox.md) if you want to manually test the experimental Firefox build.
+Use Firefox only if you are comfortable with manual developer loading. This path uses WXT's Firefox Manifest V2 build and Firefox's temporary add-on loader.
+
+From the repository root:
+
+```bash
+npm run setup:firefox
+```
+
+Then load Swan in Firefox:
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click **This Firefox**.
+3. Click **Load Temporary Add-on**.
+4. Select `output/firefox-mv2/manifest.json`.
+5. Confirm Swan appears in the temporary extensions list.
+
+Temporary Firefox add-ons are removed when Firefox restarts. After source changes, run `npm run build:firefox` and load `output/firefox-mv2/manifest.json` again.
+
+To package a Firefox ZIP for review experiments:
+
+```bash
+npm run zip:firefox
+```
+
+The generated ZIP is not a signed Firefox distribution artifact.
 
 ## Open settings
 
@@ -83,3 +106,7 @@ npm run test
 npm run build
 npm run build:firefox
 ```
+
+## Update Swan
+
+For release installs, rerun the installer and reload Swan from `chrome://extensions`. For source checkouts, pull the latest changes, rebuild, and reload the extension. See [Update Swan](./update.md) for details.

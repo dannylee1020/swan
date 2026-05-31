@@ -82,4 +82,4 @@ Statuses can be `success`, `failed`, `skipped`, or `pending`.
 
 Provider credentials are stored in browser extension local storage for the loaded extension profile. Treat Swan v0 as browser-local software connected to your own provider accounts, not a managed production secret system.
 
-See [Storage and privacy](../reference/storage-privacy.md) for details.
+See [Privacy](../privacy.md) for details.
