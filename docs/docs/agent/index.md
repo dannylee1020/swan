@@ -20,7 +20,8 @@ the prompt, and put longer recovery context in the knowledge base.
 2. Open [System prompt](./easypeasy-system-prompt.md).
 3. Copy the system prompt block into the agent instructions or system prompt
    field.
-4. Copy the first message into the first-message or opening-message field.
+4. Set the first-message or opening-message field to
+   `{{swan_opening_message}}`.
 5. Open [Swan Recovery Playbook](./swan-recovery-playbook.md).
 6. Upload the playbook as the agent knowledge base.
 7. Attach or enable that knowledge base for the Swan agent.
@@ -30,7 +31,8 @@ the prompt, and put longer recovery context in the knowledge base.
 
 ## Recommended ElevenLabs settings
 
-- **First message:** use the first message from the system prompt file.
+- **First message:** use `{{swan_opening_message}}`. Swan passes this dynamic
+  variable when it starts the ElevenLabs call.
 - **Model:** start with the balanced default recommended by ElevenLabs for
   conversational agents. If the agent feels shallow, test a stronger reasoning
   model and compare latency.

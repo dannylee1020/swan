@@ -91,9 +91,9 @@ Use [Provider setup](docs/docs/provider-setup.md) for the full ElevenLabs walkth
 
 Settings, rules, provider credentials, and logs are stored in browser extension local storage. Treat Swan v0 as browser-local software that uses provider accounts you control, not a managed production secret store.
 
-Swan does not send data to a Swan-hosted backend. Alert delivery sends the minimum needed request data to the providers you configure: ElevenLabs for AI calls and Twilio only for optional SMS. Those providers may store call, message, billing, and diagnostic records according to their own policies.
+Swan does not send data to any server. Alert delivery sends the minimum needed request data to the providers you configure: ElevenLabs for conversational agent and Twilio for phone infrastructure and optional SMS. Those providers may store call, message, billing, and diagnostic records according to their own policies.
 
-The software is open source, but phone calls and SMS are not free to operate. You bring and pay for your own ElevenLabs and Twilio accounts.
+The software is open source, but phone calls and SMS are not free to operate. BYOP (Bring Your Own Provider).
 
 ## Development
 
@@ -132,13 +132,3 @@ npm run build:firefox
 Swan is early. Useful contributions include setup feedback, safer default domain rules, provider reliability notes, documentation fixes, and issues that describe where the install or provider setup flow is confusing.
 
 If you try Swan locally, open an issue with what worked, what failed, and which browser/provider setup you used.
-
-## Validate
-
-```bash
-npm run test
-npm run typecheck
-npm run build
-npm run build:firefox
-npm run docs:build
-```

@@ -42,6 +42,7 @@ describe("provider request builders", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("sends Twilio SMS without full URL context", async () => {
@@ -89,7 +90,8 @@ describe("provider request builders", () => {
     ).rejects.toThrow("Twilio SMS is not configured");
   });
 
-  it("starts ElevenLabs call with event metadata only", async () => {
+  it("starts ElevenLabs call with event metadata and opening variables", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ conversation_id: "conv_123" }),
@@ -116,6 +118,11 @@ describe("provider request builders", () => {
       swan_event_id: "event:1",
       swan_detected_domain: "example.com",
       swan_detected_at: "2026-05-20T10:00:00.000Z",
+      swan_opening_message:
+        "Stop. Stand up now. Close it, lock the screen, and step away.",
+      swan_opening_style: "stop",
+      swan_intervention_tone:
+        "Direct, urgent, and serious. Interrupt fast without softening the instruction.",
     });
     expect(String(init.body)).not.toContain("/watch");
     expect(String(init.body)).not.toContain("private=true");
