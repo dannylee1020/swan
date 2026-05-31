@@ -1,8 +1,31 @@
 # Update Swan
 
-Update Swan by pulling the repository, rebuilding the extension, and reloading the unpacked extension in your browser.
+Update Swan by rerunning the installer, then reloading the unpacked extension in your browser.
 
-### Pull latest changes
+## Release install
+
+macOS or Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+```
+
+Then reload Swan:
+
+1. Open `chrome://extensions`.
+2. Find Swan.
+3. Click the reload icon.
+4. Open Swan settings and confirm your settings are still present.
+
+## Source checkout
+
+If you installed from a source checkout, pull the latest changes:
 
 ```bash
 git pull
@@ -14,20 +37,20 @@ If dependencies changed:
 npm install
 ```
 
-### Rebuild
+Rebuild:
 
 ```bash
 npm run build
 ```
 
-### Reload the extension
+Then reload the extension:
 
 1. Open `chrome://extensions`.
 2. Find Swan.
 3. Click the reload icon.
 4. Open Swan settings and confirm your settings are still present.
 
-### When to re-run setup
+### When to re-run source setup
 
 Use setup again if you want the scripted path:
 

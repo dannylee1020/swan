@@ -4,13 +4,19 @@ This is the shortest path to a working Swan extension.
 
 ## Quick command
 
-Run the setup script from the repository root:
+Install the latest Chromium release on macOS or Linux:
 
 ```bash
-npm run setup
+curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
 ```
 
-The script installs dependencies when needed, builds the Chromium extension, prints the absolute `output/chrome-mv3` path, and tries to open `chrome://extensions`.
+Install the latest Chromium release on Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+```
+
+The installer downloads the latest GitHub Release, extracts the Chromium extension into a stable local folder, prints the absolute extension path, and tries to open `chrome://extensions`.
 
 Firefox is not the first-class v0 path. For manual Firefox Desktop developer testing, use:
 
@@ -49,8 +55,8 @@ npm run setup:firefox
   <li>
     <span>1</span>
     <div>
-      <strong>Install or build Swan.</strong>
-      <p>Run <code>npm run setup</code> from a source checkout.</p>
+      <strong>Install Swan.</strong>
+      <p>Run the macOS/Linux or Windows installer for the latest Chromium release.</p>
     </div>
   </li>
   <li>
@@ -85,15 +91,48 @@ npm run setup:firefox
 
 ## 1. Install prerequisites
 
-- Node.js 20 or newer.
-- npm.
 - A Chromium-based browser that supports unpacked extensions.
 - Optional: Firefox Desktop for manual temporary add-on loading.
 - An ElevenLabs account with a Conversational AI agent.
 - A paid/upgraded Twilio phone number connected in ElevenLabs for AI calls.
 - Optional: Twilio Messaging setup with an SMS-capable phone number.
+- For source builds only: Node.js 20 or newer and npm.
 
-## 2. Build the extension
+## 2. Install the Chromium extension
+
+macOS or Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+```
+
+The installer:
+
+- Downloads the latest `swan-chromium.zip` GitHub Release asset.
+- Extracts Swan into a stable local extension directory.
+- Verifies `manifest.json` exists.
+- Prints the exact extension directory to load in Chromium.
+- Tries to open `chrome://extensions`.
+
+## 3. Load Swan in Chromium
+
+1. Open `chrome://extensions`.
+2. Enable **Developer Mode**.
+3. Click **Load unpacked**.
+4. Select the extension path printed by the installer.
+5. Keep the folder in place. Chromium loads the extension from that local directory.
+
+After first install, Swan opens its settings page automatically. If it does not, click the Swan extension icon.
+
+## Build from source
+
+Use this path if you want to inspect or modify the source checkout before loading Swan.
 
 From the repository root:
 
@@ -112,16 +151,6 @@ The setup script:
 
 Optional: copy `config.example.yaml` to `config.yaml` before setup if you want
 to keep phone, provider, and tracked-domain values in one local file.
-
-## 3. Load Swan in Chromium
-
-1. Open `chrome://extensions`.
-2. Enable **Developer Mode**.
-3. Click **Load unpacked**.
-4. Select the `output/chrome-mv3` path printed by `npm run setup`.
-5. Keep the folder in place. Chromium loads the extension from that local build output.
-
-After first install, Swan opens its settings page automatically. If it does not, click the Swan extension icon.
 
 ## Firefox Desktop developer path
 

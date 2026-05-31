@@ -1,0 +1,87 @@
+name: Release artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing GitHub Release tag to attach swan-chromium.zip to"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package-chromium:
+    name: Package Chromium extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Build docs
+        run: npm run docs:build
+
+      - name: Build release-safe Chromium zip
+        run: npm run zip:store
+
+      - name: Normalize and verify artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_tag="${{ inputs.tag }}"
+          if ! gh release view "$release_tag" >/dev/null; then
+            echo "GitHub Release for tag '$release_tag' does not exist." >&2
+            echo "Create the release manually first, then rerun this workflow." >&2
+            exit 1
+          fi
+
+          chrome_zip="$(find output -maxdepth 1 -type f -name '*-chrome.zip' | head -n 1)"
+          if [[ -z "$chrome_zip" ]]; then
+            echo "No Chromium zip found in output/." >&2
+            exit 1
+          fi
+
+          mkdir -p release-assets
+          cp "$chrome_zip" release-assets/swan-chromium.zip
+
+          if [[ -f public/swan-bootstrap.json ]]; then
+            echo "public/swan-bootstrap.json must not exist after release packaging." >&2
+            exit 1
+          fi
+
+          if ! unzip -Z1 release-assets/swan-chromium.zip | grep -qx "manifest.json"; then
+            echo "swan-chromium.zip must contain manifest.json at the zip root." >&2
+            exit 1
+          fi
+
+          if unzip -Z1 release-assets/swan-chromium.zip | grep -q "swan-bootstrap.json"; then
+            echo "swan-chromium.zip must not contain swan-bootstrap.json." >&2
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Upload release artifact
+        run: gh release upload "${{ inputs.tag }}" release-assets/swan-chromium.zip --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

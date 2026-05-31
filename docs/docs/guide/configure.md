@@ -19,7 +19,8 @@ Click the Save button for the card after changing these values.
 ## Import data
 
 The General page can import bundled setup data generated from a local
-`config.yaml` file.
+`config.yaml` file. This is a source-build path, not the default release
+installer path.
 
 1. Copy `config.example.yaml` to `config.yaml`.
 2. Fill in the values you want to manage locally.

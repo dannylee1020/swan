@@ -6,7 +6,7 @@ description: What Swan is, what it does, and how the browser extension works.
 
 # Swan
 
-A browser extension that interrupts risky browsing moments with immediate AI phone-call intervention and optional SMS alerts. Chromium is the first-class v0 target. Firefox Desktop has a temporary developer testing path and may require more manual work.
+A browser extension that interrupts lust by calling you at the right moment. Supports Chromium and Firefox based browsers.
 
 ## What Swan does
 
@@ -17,12 +17,11 @@ The goal is not passive blocking or broad surveillance. Swan is built around a n
 ## How it works
 
 - The extension runs in a local browser profile.
-- Chromium is the supported v0 install path; Firefox is experimental developer support.
+- Chromium is the supported install path; Firefox is experimental developer support.
 - Detection uses configured domain rules and top-level navigation events.
 - Settings, rules, and logs live in `chrome.storage.local`.
-- AI calls use your ElevenLabs Conversational AI agent and connected phone number.
-- Optional SMS delivery uses your Twilio account and phone number.
-- Swan v0 does not run a hosted backend, proxy, DNS filter, localhost daemon, or page-content classifier.
+- Voice calls use your ElevenLabs Conversational AI agent and connected phone number.
+- SMS delivery uses your Twilio account and phone number.
 
 ## Who it is for
 
@@ -32,8 +31,8 @@ It is designed intentionally small: one browser extension, user-managed provider
 
 ## Start using Swan
 
-- [Quick start](./guide/quick-start.md) gives the full setup path from checkout to test alert.
-- [Install Swan](./guide/install.md) covers the local extension install path.
+- [Quick start](./guide/quick-start.md) gives the release install path from download to test alert.
+- [Install Swan](./guide/install.md) covers the release installer and source build paths.
 - [Provider setup](./provider-setup.md) walks through ElevenLabs and optional Twilio SMS.
 - [Troubleshooting](./troubleshooting.md) covers the common failure modes.
 - [Privacy policy](./privacy.md) explains local storage, provider data, and permissions.

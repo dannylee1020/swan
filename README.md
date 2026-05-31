@@ -22,33 +22,40 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 ## Requirements
 
-- Node.js 20 or newer
-- npm
-- Chromium-based browser for the default local install
+- Chromium-based browser for the default release install
 - Optional: Firefox Desktop for manual developer testing
 - ElevenLabs account for the voice-call provider
 - Twilio phone number connected inside ElevenLabs for calls
 - Optional: Twilio Messaging setup for SMS alerts
+- For source builds only: Node.js 20 or newer and npm
 
 Swan initiates voice calls through ElevenLabs' outbound-call API. Twilio is part of the phone number setup inside ElevenLabs, but Swan does not need Twilio credentials to start voice calls. Direct Twilio credentials are only used for optional SMS alerts.
 
 ## Quick Start
 
-Prepare Swan:
+Install the latest Chromium release on macOS or Linux:
 
 ```bash
-npm run setup
+curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
 ```
 
-This installs dependencies when needed, builds the Chromium extension, prints the absolute extension path, and opens `chrome://extensions` when possible.
+Install the latest Chromium release on Windows PowerShell:
 
-If you want repeatable local setup, copy `config.example.yaml` to `config.yaml` before running setup. Swan will bundle that local config as import data, which you can later apply from the General page.
+```powershell
+irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+```
 
-Load the extension in Chromium:
+The installer downloads the latest GitHub Release, extracts it into a stable local folder, prints the extension path, and opens `chrome://extensions` when possible.
+
+Load Swan in Chromium:
 
 1. Enable **Developer Mode**
 2. Click **Load unpacked**
-3. Select the `output/chrome-mv3` path printed by `npm run setup`
+3. Select the extension path printed by the installer
+
+To update, rerun the installer and click the reload button for Swan in `chrome://extensions`. Do not remove Swan from the browser unless you intend to clear extension-local settings.
+
+If you want repeatable local setup from source, copy `config.example.yaml` to `config.yaml` before running `npm run setup`. Swan will bundle that local config as import data, which you can later apply from the General page.
 
 Firefox is not a first-class v0 install path. If you want to test it manually:
 
@@ -119,6 +126,12 @@ Build the extension:
 
 ```bash
 npm run build
+```
+
+Run the source checkout setup path:
+
+```bash
+npm run setup
 ```
 
 Build the Firefox extension:

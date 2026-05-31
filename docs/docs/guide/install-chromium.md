@@ -1,20 +1,40 @@
 # Install in Chromium
 
-Chromium is Swan's default local install target.
+Chromium is Swan's default release install target.
 
-## Run setup
+## Install latest release
+
+macOS or Linux:
 
 ```bash
-npm run setup
+curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
 ```
 
-The setup command installs dependencies when needed, builds Swan, verifies `output/chrome-mv3/manifest.json`, prints the absolute extension path, and tries to open `chrome://extensions`.
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+```
+
+The installer downloads the latest `swan-chromium.zip` release asset, extracts it into a stable local directory, verifies `manifest.json`, prints the absolute extension path, and tries to open `chrome://extensions`.
 
 ::: tip
-Use `npm run setup -- --no-open` if you do not want the script to try opening `chrome://extensions`.
+To install a specific release, set `SWAN_VERSION`, for example `SWAN_VERSION=v0.1.0-beta.1 ./install.sh`.
 :::
 
-## Manual commands
+## Load unpacked extension
+
+1. Open `chrome://extensions`.
+2. Turn on **Developer Mode**.
+3. Click **Load unpacked**.
+4. Select the extension path printed by the installer.
+5. Confirm Swan appears in the extensions list.
+
+## Update release install
+
+Run the installer again, then open `chrome://extensions` and click the reload button on Swan. Do not remove Swan from the browser unless you intend to clear extension-local settings.
+
+## Build from source
 
 If you prefer to run each step yourself:
 
@@ -23,20 +43,10 @@ npm install
 npm run build
 ```
 
-## Load unpacked extension
-
-1. Open `chrome://extensions`.
-2. Turn on **Developer Mode**.
-3. Click **Load unpacked**.
-4. Select the absolute `output/chrome-mv3` directory.
-5. Confirm Swan appears in the extensions list.
-
-## Rebuild after source changes
-
-When you pull a new version or change source code:
+Or use the source setup wrapper:
 
 ```bash
-npm run build
+npm run setup
 ```
 
-Then open `chrome://extensions` and click the reload button on Swan.
+Then load the absolute `output/chrome-mv3` directory from `chrome://extensions`.

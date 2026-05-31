@@ -8,7 +8,7 @@ In Chromium, open `chrome://extensions` and confirm:
 
 - Swan is enabled.
 - Developer Mode remains on.
-- The extension path points at `output/chrome-mv3`.
+- The extension path points at the directory printed by the installer.
 - No manifest or runtime errors are visible on the extension card.
 
 In Firefox Desktop, open `about:debugging#/runtime/this-firefox` and confirm:

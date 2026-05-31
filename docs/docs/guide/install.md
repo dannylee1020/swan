@@ -1,38 +1,63 @@
 # Install Swan
 
-Swan installs from a local source checkout. Chromium is the first-class v0 install path. The same source can build for Firefox Desktop, but Firefox is experimental developer support and requires more manual loading.
+Swan installs as an unpacked Chromium extension from a local folder. The recommended path downloads the latest GitHub Release asset and prepares that folder for you. Source builds are still available for development.
 
 ## Browser support
 
 | Browser target | Status | Build output | Loading method |
 | --- | --- | --- | --- |
-| Chromium-based browsers | First-class v0 local install | `output/chrome-mv3` | Load unpacked directory from `chrome://extensions` |
+| Chromium-based browsers | First-class v0 release install | Installer path printed by script | Load unpacked directory from `chrome://extensions` |
 | Firefox Desktop | Experimental developer support | `output/firefox-mv2` | Load temporary add-on from `about:debugging` |
 | Firefox-derived browsers | Best effort | Browser-dependent | Smoke test before relying on it |
 | Tor Browser | Unsupported | Not applicable | Extra add-ons are not recommended |
 
 Firefox is not first-class supported in this version. Temporary Firefox add-ons are removed when Firefox restarts, and signed AMO distribution for persistent installs is separate release work.
 
-## Clone the repository
+## Install latest release
+
+macOS or Linux:
 
 ```bash
-git clone git@github.com:dannylee1020/swan.git
-cd swan
+curl -fsSL https://raw.githubusercontent.com/dannylee1020/swan/main/install.sh | bash
 ```
 
-If you use HTTPS instead of SSH:
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/dannylee1020/swan/main/install.ps1 | iex
+```
+
+The installer downloads `swan-chromium.zip` from the latest GitHub Release, extracts it into a stable local directory, verifies `manifest.json`, and prints the folder to load in Chromium.
+
+## Load in Chromium
+
+1. Open `chrome://extensions`.
+2. Enable **Developer Mode**.
+3. Click **Load unpacked**.
+4. Select the extension path printed by the installer.
+5. Keep that folder in place.
+
+## Build from source
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/dannylee1020/swan.git
 cd swan
 ```
 
-## Choose an install path
+Then use the source checkout setup path:
 
-- [Install in Chromium](./install-chromium.md) if you want the supported Swan v0 local install.
-- [Install in Firefox Desktop](./install-firefox.md) if you want to manually test the experimental Firefox build.
+```bash
+npm run setup
+```
 
 Copy `config.example.yaml` to `config.yaml` before setup if you want Swan to bundle local import data for phone, provider, and tracked-domain settings.
+
+## Other install paths
+
+- [Install in Chromium](./install-chromium.md) if you want detailed Chromium release and source instructions.
+- [Install in Firefox Desktop](./install-firefox.md) if you want to manually test the experimental Firefox build.
 
 ## Open settings
 
@@ -50,7 +75,7 @@ The settings page is where you configure:
 
 ## Validate the checkout
 
-Use these checks before trusting a modified checkout:
+Use these checks before trusting a modified source checkout:
 
 ```bash
 npm run typecheck
