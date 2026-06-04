@@ -30,7 +30,6 @@ describe("detection", () => {
       domain: "example.com",
       ruleId: rule.id,
       trigger: "navigation",
-      smsStatus: { state: "success" },
       callStatus: { state: "success" },
     };
 

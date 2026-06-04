@@ -43,7 +43,6 @@ export function createUrgeEvent(domain: string, ruleId: string): UrgeEvent {
     domain,
     ruleId,
     trigger: "navigation",
-    smsStatus: { state: "pending" },
     callStatus: { state: "pending" },
   };
 }

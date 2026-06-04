@@ -28,7 +28,6 @@ In Firefox Desktop, open `about:debugging#/runtime/this-firefox` and confirm:
 Expected result:
 
 - The call arrives from the ElevenLabs-connected phone number.
-- If SMS is enabled and Twilio is configured, the SMS arrives from the configured Twilio From number.
 - A new log entry appears in Swan.
 
 ## Verify logs
@@ -39,7 +38,7 @@ Open **Logs** and inspect the latest event:
 | --- | --- |
 | `success` | The provider accepted the request and returned an identifier when available. |
 | `failed` | The provider request failed. Check the error and provider console logs. |
-| `skipped` | Swan intentionally did not call that channel, usually because the channel is disabled or configuration is incomplete. |
+| `skipped` | Swan intentionally did not call, usually because calls are disabled or configuration is incomplete. |
 | `pending` | The event was created before the provider status finished updating. |
 
 ## Test domain detection

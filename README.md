@@ -7,7 +7,7 @@ It is built for people who want a transparent recovery-support tool they can ins
 ## What Swan Does
 
 - Monitors browser navigation for configured NSFW domains
-- Starts a phone call when a tracked domain is opened, SMS optional configuration
+- Starts a phone call when a tracked domain is opened
 - Redirects the browser to an intervention page
 - Stores settings, domain rules, and event history in browser local storage
 
@@ -23,10 +23,10 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 - Chromium-based browser for the default release install, Firefox currently in testing
 - ElevenLabs account for the voice-call provider
-- Twilio phone number connected inside ElevenLabs for calls. SMS setup optional
+- Phone number connected or imported inside ElevenLabs for calls
 - For source builds only: Node.js 20 or newer and npm
 
-Swan initiates voice calls through ElevenLabs' outbound-call API. Twilio is part of the phone number setup inside ElevenLabs, but Swan does not need Twilio credentials to start voice calls. Direct Twilio credentials are only used for optional SMS alerts.
+Swan initiates voice calls through ElevenLabs' outbound-call API.
 
 ## Quick Start
 
@@ -76,12 +76,11 @@ Start with:
 Swan needs these values in the options page:
 
 - Recipient phone number in E.164 format, for example `+15551234567`
-- Twilio account for outbound number and connecting to Elevenlabs
 - ElevenLabs API key
 - ElevenLabs Agent ID
 - ElevenLabs Agent phone number ID
 
-Use [Provider setup](https://swan-oss.com/docs/provider-setup) for the full ElevenLabs walkthrough and optional Twilio SMS setup. Configure and test the ElevenLabs agent before relying on Swan interventions.
+Use [Provider setup](https://swan-oss.com/docs/provider-setup) for the full ElevenLabs walkthrough. Configure and test the ElevenLabs agent before relying on Swan interventions.
 
 ## Limitations
 
@@ -93,11 +92,11 @@ Use [Provider setup](https://swan-oss.com/docs/provider-setup) for the full Elev
 
 ## Privacy and Costs
 
-Settings, rules, provider credentials, and logs are stored in browser extension local storage. Treat Swan v0 as browser-local software that uses provider accounts you control, not a managed production secret store.
+Settings, rules, provider credentials, and logs are stored in browser extension local storage. Treat Swan v0 as browser-local software that uses a provider account you control, not a managed production secret store.
 
-Swan does not send data to any server. Alert delivery sends the minimum needed request data to the providers you configure: ElevenLabs for conversational agent and Twilio for phone infrastructure and optional SMS. Those providers may store call, message, billing, and diagnostic records according to their own policies.
+Swan does not send data to any Swan-operated server. Alert delivery sends the minimum needed request data to ElevenLabs for the conversational phone call. ElevenLabs may store call, billing, and diagnostic records according to its own policies.
 
-The software is open source, but phone calls and SMS are not free to operate. BYOK (Bring Your Own Key).
+The software is open source, but phone calls are not free to operate. BYOK (Bring Your Own Key).
 
 ## Development
 

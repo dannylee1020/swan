@@ -10,7 +10,6 @@ import {
   Clock,
   Globe2,
   List,
-  MessageSquare,
   PhoneCall,
   Plus,
   RefreshCw,
@@ -49,7 +48,7 @@ import "./style.css";
 type ActivePage = "general" | "domains" | "logs";
 type DomainFilter = "all" | "enabled" | "disabled" | "user" | "seed";
 type LogFilter = "all" | AlertStatus["state"];
-type SettingsCardId = "phone" | "twilio" | "elevenLabs";
+type SettingsCardId = "phone" | "elevenLabs";
 type SaveState = "idle" | "saving" | "saved";
 type BootstrapInfo =
   | { state: "checking" }
@@ -82,7 +81,6 @@ function OptionsApp() {
   });
   const [saveState, setSaveState] = useState<Record<SettingsCardId, SaveState>>({
     phone: "idle",
-    twilio: "idle",
     elevenLabs: "idle",
   });
 
@@ -130,12 +128,9 @@ function OptionsApp() {
   const logStats = useMemo(
     () => ({
       total: events.length,
-      smsSuccess: countChannelStatus(events, "smsStatus", "success"),
-      smsFailed: countChannelStatus(events, "smsStatus", "failed"),
-      smsSkipped: countChannelStatus(events, "smsStatus", "skipped"),
-      callSuccess: countChannelStatus(events, "callStatus", "success"),
-      callFailed: countChannelStatus(events, "callStatus", "failed"),
-      callSkipped: countChannelStatus(events, "callStatus", "skipped"),
+      callSuccess: countCallStatus(events, "success"),
+      callFailed: countCallStatus(events, "failed"),
+      callSkipped: countCallStatus(events, "skipped"),
     }),
     [events],
   );
@@ -149,10 +144,7 @@ function OptionsApp() {
     const query = logSearch.trim().toLowerCase();
     return events.filter((event) => {
       const matchesSearch = !query || event.domain.includes(query);
-      const matchesStatus =
-        logFilter === "all" ||
-        event.smsStatus.state === logFilter ||
-        event.callStatus.state === logFilter;
+      const matchesStatus = logFilter === "all" || event.callStatus.state === logFilter;
       return matchesSearch && matchesStatus;
     });
   }, [events, logFilter, logSearch]);
@@ -167,7 +159,7 @@ function OptionsApp() {
     setSettingsDraft(nextSettings);
     setRules(nextRules);
     setEvents(nextEvents);
-    setSaveState({ phone: "idle", twilio: "idle", elevenLabs: "idle" });
+    setSaveState({ phone: "idle", elevenLabs: "idle" });
   }
 
   async function loadBootstrapInfo() {
@@ -298,7 +290,7 @@ function OptionsApp() {
       setSettings(result.settings);
       setSettingsDraft(result.settings);
       setRules(result.rules);
-      setSaveState({ phone: "idle", twilio: "idle", elevenLabs: "idle" });
+      setSaveState({ phone: "idle", elevenLabs: "idle" });
       setBootstrapInfo({
         state: "available",
         bootstrap,
@@ -450,7 +442,6 @@ function GeneralPage({
   settingsDraft: UserSettings;
 }) {
   const phoneDirty = isSettingsCardDirty(savedSettings, settingsDraft, "phone");
-  const twilioDirty = isSettingsCardDirty(savedSettings, settingsDraft, "twilio");
   const elevenLabsDirty = isSettingsCardDirty(
     savedSettings,
     settingsDraft,
@@ -532,17 +523,6 @@ function GeneralPage({
                 })
               }
             />
-            <ToggleRow
-              title="Send optional SMS"
-              description="Requires separate Twilio messaging setup"
-              checked={settingsDraft.smsEnabled}
-              onChange={(checked) =>
-                onSettingsDraftChange("phone", {
-                  ...settingsDraft,
-                  smsEnabled: checked,
-                })
-              }
-            />
           </div>
           <SaveCardFooter
             dirty={phoneDirty}
@@ -604,87 +584,13 @@ function GeneralPage({
             />
           </Field>
           <p className="helperText">
-            Connect or import a phone number inside ElevenLabs first. Swan does
-            not need Twilio credentials for voice calls.
+            Connect or import a phone number inside ElevenLabs first, then use
+            the resulting phone number ID here.
           </p>
           <SaveCardFooter
             dirty={elevenLabsDirty}
             state={saveState.elevenLabs}
             onSave={() => void onSaveCard("elevenLabs")}
-          />
-        </SettingsCard>
-
-        <SettingsCard icon={MessageSquare} title="Twilio">
-          <Field label="Account SID">
-            <input
-              className="monoInput"
-              value={settingsDraft.twilio.accountSid}
-              onChange={(event) =>
-                onSettingsDraftChange("twilio", {
-                  ...settingsDraft,
-                  twilio: {
-                    ...settingsDraft.twilio,
-                    accountSid: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <Field label="API key SID">
-            <input
-              className="monoInput"
-              value={settingsDraft.twilio.apiKeySid}
-              onChange={(event) =>
-                onSettingsDraftChange("twilio", {
-                  ...settingsDraft,
-                  twilio: {
-                    ...settingsDraft.twilio,
-                    apiKeySid: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <Field label="Client secret">
-            <input
-              className="monoInput"
-              type="password"
-              value={settingsDraft.twilio.clientSecret}
-              onChange={(event) =>
-                onSettingsDraftChange("twilio", {
-                  ...settingsDraft,
-                  twilio: {
-                    ...settingsDraft.twilio,
-                    clientSecret: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <Field label="From number">
-            <input
-              className="monoInput"
-              value={settingsDraft.twilio.fromNumber}
-              placeholder="+1 (888) 000-0000"
-              onChange={(event) =>
-                onSettingsDraftChange("twilio", {
-                  ...settingsDraft,
-                  twilio: {
-                    ...settingsDraft.twilio,
-                    fromNumber: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <p className="helperText">
-            These credentials are only for optional direct SMS. Voice calls use
-            ElevenLabs and work without this card.
-          </p>
-          <SaveCardFooter
-            dirty={twilioDirty}
-            state={saveState.twilio}
-            onSave={() => void onSaveCard("twilio")}
           />
         </SettingsCard>
 
@@ -889,9 +795,6 @@ function LogsPage({
   rulesById: Map<string, DetectionRule>;
   stats: {
     total: number;
-    smsSuccess: number;
-    smsFailed: number;
-    smsSkipped: number;
     callSuccess: number;
     callFailed: number;
     callSkipped: number;
@@ -910,7 +813,7 @@ function LogsPage({
       <PageHeader
         eyebrow="Logs"
         title="Detection history"
-        description="Review browser detections and the SMS/call outcomes Swan recorded locally."
+        description="Review browser detections and the call outcomes Swan recorded locally."
       >
         <button
           type="button"
@@ -924,12 +827,6 @@ function LogsPage({
 
       <div className="summaryStrip logSummary" aria-label="Log summary">
         <SummaryItem label="Events" value={stats.total} />
-        <ChannelSummary
-          label="SMS"
-          success={stats.smsSuccess}
-          failed={stats.smsFailed}
-          skipped={stats.smsSkipped}
-        />
         <ChannelSummary
           label="Calls"
           success={stats.callSuccess}
@@ -977,14 +874,13 @@ function LogsPage({
                 <th>Domain</th>
                 <th>Timestamp</th>
                 <th>Rule</th>
-                <th>SMS</th>
                 <th>Call</th>
               </tr>
             </thead>
             <tbody>
               {events.length === 0 ? (
                 <tr>
-                  <td className="emptyState" colSpan={5}>
+                  <td className="emptyState" colSpan={4}>
                     Logs appear after a test alert or detected tracked domain.
                   </td>
                 </tr>
@@ -1010,9 +906,6 @@ function LogsPage({
                             </span>
                           ) : null}
                         </div>
-                      </td>
-                      <td data-label="SMS">
-                        <StatusCell status={event.smsStatus} />
                       </td>
                       <td data-label="Call">
                         <StatusCell status={event.callStatus} />
@@ -1309,12 +1202,8 @@ function getImportButtonTitle(info: BootstrapInfo): string {
   return "Import bundled config.yaml data.";
 }
 
-function countChannelStatus(
-  events: UrgeEvent[],
-  channel: "smsStatus" | "callStatus",
-  state: AlertStatus["state"],
-): number {
-  return events.filter((event) => event[channel].state === state).length;
+function countCallStatus(events: UrgeEvent[], state: AlertStatus["state"]): number {
+  return events.filter((event) => event.callStatus.state === state).length;
 }
 
 function isSettingsCardDirty(
@@ -1327,17 +1216,7 @@ function isSettingsCardDirty(
       saved.enabled !== draft.enabled ||
       saved.phoneNumber !== draft.phoneNumber ||
       saved.cooldownMinutes !== draft.cooldownMinutes ||
-      saved.smsEnabled !== draft.smsEnabled ||
       saved.callEnabled !== draft.callEnabled
-    );
-  }
-
-  if (cardId === "twilio") {
-    return (
-      saved.twilio.accountSid !== draft.twilio.accountSid ||
-      saved.twilio.apiKeySid !== draft.twilio.apiKeySid ||
-      saved.twilio.clientSecret !== draft.twilio.clientSecret ||
-      saved.twilio.fromNumber !== draft.twilio.fromNumber
     );
   }
 
@@ -1360,13 +1239,8 @@ function mergeSettingsCard(
       enabled: draft.enabled,
       phoneNumber: draft.phoneNumber,
       cooldownMinutes: draft.cooldownMinutes,
-      smsEnabled: draft.smsEnabled,
       callEnabled: draft.callEnabled,
     };
-  }
-
-  if (cardId === "twilio") {
-    return { ...saved, twilio: draft.twilio };
   }
 
   return { ...saved, elevenLabs: draft.elevenLabs };

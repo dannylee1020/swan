@@ -6,9 +6,7 @@ export interface BootstrapSettings {
   phoneNumber?: string;
   cooldownMinutes?: number;
   callEnabled?: boolean;
-  smsEnabled?: boolean;
   elevenLabs?: Partial<UserSettings["elevenLabs"]>;
-  twilio?: Partial<UserSettings["twilio"]>;
 }
 
 export interface SwanBootstrap {
@@ -73,11 +71,7 @@ export function summarizeBootstrap(bootstrap: SwanBootstrap): BootstrapSummary {
     hasCredentials: Boolean(
       settings?.elevenLabs?.apiKey ||
         settings?.elevenLabs?.agentId ||
-        settings?.elevenLabs?.agentPhoneNumberId ||
-        settings?.twilio?.accountSid ||
-        settings?.twilio?.apiKeySid ||
-        settings?.twilio?.clientSecret ||
-        settings?.twilio?.fromNumber,
+        settings?.elevenLabs?.agentPhoneNumberId,
     ),
     trackedDomainCount: bootstrap.data.trackedDomains?.length ?? 0,
   };
@@ -120,16 +114,9 @@ function mergeBootstrapSettings(
     ...(settings.callEnabled !== undefined
       ? { callEnabled: settings.callEnabled }
       : {}),
-    ...(settings.smsEnabled !== undefined
-      ? { smsEnabled: settings.smsEnabled }
-      : {}),
     elevenLabs: {
       ...currentSettings.elevenLabs,
       ...(settings.elevenLabs ?? {}),
-    },
-    twilio: {
-      ...currentSettings.twilio,
-      ...(settings.twilio ?? {}),
     },
   };
 }
@@ -180,7 +167,6 @@ function readBootstrapSettings(input: unknown): BootstrapSettings | undefined {
   readString(input, "phoneNumber", target);
   readNumber(input, "cooldownMinutes", target);
   readBoolean(input, "callEnabled", target);
-  readBoolean(input, "smsEnabled", target);
 
   const elevenLabs = readProviderSettings(input.elevenLabs, [
     "apiKey",
@@ -188,20 +174,6 @@ function readBootstrapSettings(input: unknown): BootstrapSettings | undefined {
     "agentPhoneNumberId",
   ]);
   if (elevenLabs) settings.elevenLabs = elevenLabs;
-
-  const twilio = readProviderSettings(input.twilio, [
-    "accountSid",
-    "apiKeySid",
-    "clientSecret",
-    "fromNumber",
-  ]) ?? {};
-  if (isRecord(input.twilio) && typeof input.twilio.apiKeySecret === "string") {
-    twilio.clientSecret ??= input.twilio.apiKeySecret;
-  }
-  if (isRecord(input.twilio) && typeof input.twilio.authToken === "string") {
-    twilio.clientSecret ??= input.twilio.authToken;
-  }
-  if (Object.keys(twilio).length > 0) settings.twilio = twilio;
 
   return Object.keys(settings).length > 0 ? settings : undefined;
 }

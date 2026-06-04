@@ -17,7 +17,6 @@ User configuration
   Swan options page
     -> phone number, cooldown, monitoring toggle
     -> ElevenLabs call credentials
-    -> optional Twilio SMS credentials
     -> editable seed and custom tracked domains
     -> chrome.storage.local
 
@@ -31,7 +30,7 @@ Detection loop
     -> cooldown and enabled checks run
     -> pending or skipped event status is saved locally
     -> tab redirects to the intervention page
-    -> ElevenLabs call and optional Twilio SMS continue in background
+    -> ElevenLabs call continues in background
     -> intervention page shows detected domain and refreshed alert status
 ```
 
@@ -46,9 +45,8 @@ Detection loop
 7. Allowed alerts save a pending event immediately.
 8. The tab redirects to Swan's intervention page.
 9. ElevenLabs starts the standard AI phone call when configured.
-10. Twilio sends optional SMS when enabled and configured.
-11. Provider success, failure, or skipped status is saved locally.
-12. The intervention page asks the background worker for the saved event and displays refreshed status.
+10. Provider success, failure, or skipped status is saved locally.
+11. The intervention page asks the background worker for the saved event and displays refreshed status.
 
 ## Setup and configuration
 
@@ -66,7 +64,7 @@ The extension does not read local files or environment variables at runtime.
 | Storage helpers | `lib/storage.ts`, `lib/types.ts` |
 | Detection logic | `lib/detection.ts`, `lib/domain.ts`, `lib/defaults.ts` |
 | Alert orchestration | `lib/alerts.ts` |
-| Providers | `lib/providers/twilio.ts`, `lib/providers/elevenlabs.ts` |
+| Providers | `lib/providers/elevenlabs.ts` |
 | Build/setup helpers | `scripts/setup.mjs`, `scripts/targets.mjs`, `scripts/generate-bootstrap.mjs` |
 
 ## Local data
@@ -77,21 +75,19 @@ Swan stores runtime data in `chrome.storage.local`:
 - Editable seed and user domain rules.
 - Detection event history.
 
-Events store the normalized domain, matched rule id, timestamp, and call/SMS statuses. Swan does not store full page URLs for provider alerts.
+Events store the normalized domain, matched rule id, timestamp, and call status. Swan does not store full page URLs for provider alerts.
 
 ## Provider boundary
 
-Swan keeps external delivery behind provider interfaces:
+Swan keeps external delivery behind a provider interface:
 
-- `SmsProvider` sends SMS alerts.
 - `CallProvider` starts AI calls.
 
 The current implementations are:
 
 - ElevenLabs for standard AI voice calls.
-- Twilio for optional SMS.
 
-ElevenLabs receives the recipient number, agent identifiers, and minimal event metadata needed to start the call. Twilio receives the recipient number, from number, and a domain-only SMS body when SMS is enabled.
+ElevenLabs receives the recipient number, agent identifiers, and minimal event metadata needed to start the call.
 
 ## What Swan does not run
 

@@ -10,7 +10,7 @@ A browser extension that interrupts lust by calling you at the right moment. Sup
 
 ## What Swan does
 
-Swan watches browser navigation for NSFW domains you configure. When you navigate to one of the sites, Swan calls you immediately to intervene and break you out of the urge. SMS can be enabled as an extra alert channel.
+Swan watches browser navigation for NSFW domains you configure. When you navigate to one of the sites, Swan calls you immediately to intervene and break you out of the urge.
 
 The goal is not passive blocking or broad surveillance. Swan is built around a narrow intervention loop: detect the urge moment, interrupt quickly, and make the next action harder to ignore.
 
@@ -21,7 +21,6 @@ The goal is not passive blocking or broad surveillance. Swan is built around a n
 - Detection uses configured domain rules and top-level navigation events.
 - Settings, rules, and logs live in `chrome.storage.local`.
 - Voice calls use your ElevenLabs Conversational AI agent and connected phone number.
-- SMS delivery uses your Twilio account and phone number.
 
 ## Who it is for
 
@@ -33,6 +32,6 @@ It is designed intentionally small: one browser extension, user-managed provider
 
 - [Quick start](./guide/quick-start.md) gives the shortest path from install to test alert.
 - [Install](./guide/install.md) covers source builds, browser support, and experimental Firefox setup.
-- [Provider setup](./provider-setup.md) walks through ElevenLabs and optional Twilio SMS.
+- [Provider setup](./provider-setup.md) walks through ElevenLabs.
 - [Troubleshooting](./troubleshooting.md) covers the common failure modes.
 - [Privacy](./privacy.md) explains local storage, provider data, permissions, and user control.

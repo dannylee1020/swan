@@ -2,11 +2,15 @@ import { browser, type Browser } from "wxt/browser";
 import { AlertCoordinator } from "../lib/alerts";
 import { createUrgeEvent, findMatchingRule } from "../lib/detection";
 import type { SwanMessage, SwanMessageResponse } from "../lib/messages";
-import { getEvents, getRules } from "../lib/storage";
+import { cleanupLegacySmsData, getEvents, getRules } from "../lib/storage";
 
 const coordinator = new AlertCoordinator();
 
 export default defineBackground(() => {
+  void cleanupLegacySmsData().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+  });
+
   browser.runtime.onInstalled.addListener((details) => {
     void handleInstalled(details);
   });

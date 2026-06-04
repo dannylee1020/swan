@@ -20,15 +20,7 @@ export interface UrgeEvent {
   domain: string;
   ruleId: string;
   trigger: "navigation";
-  smsStatus: AlertStatus;
   callStatus: AlertStatus;
-}
-
-export interface TwilioSettings {
-  accountSid: string;
-  apiKeySid: string;
-  clientSecret: string;
-  fromNumber: string;
 }
 
 export interface ElevenLabsSettings {
@@ -41,9 +33,7 @@ export interface UserSettings {
   enabled: boolean;
   phoneNumber: string;
   cooldownMinutes: number;
-  smsEnabled: boolean;
   callEnabled: boolean;
-  twilio: TwilioSettings;
   elevenLabs: ElevenLabsSettings;
 }
 
@@ -60,10 +50,6 @@ export interface AlertContext {
 
 export interface ProviderResult {
   providerId?: string;
-}
-
-export interface SmsProvider {
-  send(context: AlertContext): Promise<ProviderResult>;
 }
 
 export interface CallProvider {

@@ -36,7 +36,6 @@ Open **Swan settings** and save the required values:
 | --- | --- |
 | Phone Configuration | Recipient phone number, Start voice call toggle, monitoring toggle, cooldown minutes |
 | ElevenLabs Voice Call | API key, Agent ID, Agent phone number ID |
-| Twilio SMS | Optional direct SMS only: Account SID, API Key SID, client secret, SMS From number |
 
 Use E.164 phone-number formatting for the recipient number, for example `+15551234567`.
 
@@ -46,8 +45,7 @@ Before relying on Swan, configure the ElevenLabs [agent prompt and knowledge bas
 
 1. Click **Send test alert** in Swan settings.
 2. Confirm an AI call arrives from the ElevenLabs-connected number.
-3. If SMS is enabled, confirm the SMS arrives from the Twilio From number.
-4. Open **Logs** and verify the latest event has call and SMS statuses.
+3. Open **Logs** and verify the latest event has call status.
 
 ## 5. Add domains
 

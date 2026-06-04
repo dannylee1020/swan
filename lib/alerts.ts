@@ -1,11 +1,9 @@
 import { shouldAlert } from "./detection";
 import { ElevenLabsCallProvider } from "./providers/elevenlabs";
-import { TwilioSmsProvider } from "./providers/twilio";
 import { getEvents, getSettings, saveEvent, updateEvent } from "./storage";
-import type { CallProvider, SmsProvider, UrgeEvent, UserSettings } from "./types";
+import type { CallProvider, UrgeEvent, UserSettings } from "./types";
 
 export interface AlertCoordinatorDeps {
-  smsProvider?: SmsProvider;
   callProvider?: CallProvider;
 }
 
@@ -15,11 +13,9 @@ export interface StartedAlert {
 }
 
 export class AlertCoordinator {
-  private smsProvider: SmsProvider;
   private callProvider: CallProvider;
 
   constructor(deps: AlertCoordinatorDeps = {}) {
-    this.smsProvider = deps.smsProvider ?? new TwilioSmsProvider();
     this.callProvider = deps.callProvider ?? new ElevenLabsCallProvider();
   }
 
@@ -53,36 +49,21 @@ export class AlertCoordinator {
   }
 
   private async complete(event: UrgeEvent, settings: UserSettings): Promise<UrgeEvent> {
-    const [smsStatus, callStatus] = await Promise.all([
-      settings.smsEnabled
-        ? this.smsProvider
-            .send({ event, settings })
-            .then((result) =>
-              result.providerId
-                ? { state: "success" as const, providerId: result.providerId }
-                : { state: "success" as const },
-            )
-            .catch((error: unknown) => ({
-              state: "failed" as const,
-              error: error instanceof Error ? error.message : "SMS failed",
-            }))
-        : Promise.resolve({ state: "skipped" as const, reason: "SMS disabled" }),
-      settings.callEnabled
-        ? this.callProvider
-            .start({ event, settings })
-            .then((result) =>
-              result.providerId
-                ? { state: "success" as const, providerId: result.providerId }
-                : { state: "success" as const },
-            )
-            .catch((error: unknown) => ({
-              state: "failed" as const,
-              error: error instanceof Error ? error.message : "Call failed",
-            }))
-        : Promise.resolve({ state: "skipped" as const, reason: "Call disabled" }),
-    ]);
+    const callStatus = settings.callEnabled
+      ? await this.callProvider
+          .start({ event, settings })
+          .then((result) =>
+            result.providerId
+              ? { state: "success" as const, providerId: result.providerId }
+              : { state: "success" as const },
+          )
+          .catch((error: unknown) => ({
+            state: "failed" as const,
+            error: error instanceof Error ? error.message : "Call failed",
+          }))
+      : { state: "skipped" as const, reason: "Call disabled" };
 
-    const updated = { ...event, smsStatus, callStatus };
+    const updated = { ...event, callStatus };
     await updateEvent(updated);
     return updated;
   }
@@ -91,7 +72,6 @@ export class AlertCoordinator {
 function withSkippedAlerts(event: UrgeEvent, reason: string): UrgeEvent {
   return {
     ...event,
-    smsStatus: { state: "skipped", reason },
     callStatus: { state: "skipped", reason },
   };
 }

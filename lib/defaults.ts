@@ -25,14 +25,7 @@ export const defaultSettings: UserSettings = {
   enabled: true,
   phoneNumber: "",
   cooldownMinutes: 10,
-  smsEnabled: false,
   callEnabled: true,
-  twilio: {
-    accountSid: "",
-    apiKeySid: "",
-    clientSecret: "",
-    fromNumber: "",
-  },
   elevenLabs: {
     apiKey: "",
     agentId: "",

@@ -16,7 +16,6 @@ const outputDir = join(rootDir, "output", "chrome-mv3");
 const expectedPermissions = ["storage", "webNavigation"];
 const expectedHostPermissions = [
   "https://api.elevenlabs.io/*",
-  "https://api.twilio.com/*",
 ];
 const expectedIcons = [
   "icons/icon-16.png",

@@ -22,8 +22,7 @@ function InterventionApp() {
 
   useEffect(() => {
     const isWaitingForEvent = !event && error === EVENT_PENDING_MESSAGE;
-    const hasPendingStatus =
-      event?.callStatus.state === "pending" || event?.smsStatus.state === "pending";
+    const hasPendingStatus = event?.callStatus.state === "pending";
     if (!hasPendingStatus && !isWaitingForEvent) return;
 
     const intervalId = window.setInterval(() => {
@@ -31,7 +30,7 @@ function InterventionApp() {
     }, 2500);
 
     return () => window.clearInterval(intervalId);
-  }, [error, event, event?.callStatus.state, event?.smsStatus.state]);
+  }, [error, event, event?.callStatus.state]);
 
   async function loadEvent() {
     if (!eventId) {
@@ -100,7 +99,6 @@ function InterventionApp() {
 
         <div className="statusRows" aria-label="Alert delivery status" aria-live="polite">
           <StatusRow label="Call" status={event?.callStatus ?? { state: "pending" }} />
-          <StatusRow label="SMS" status={event?.smsStatus ?? { state: "pending" }} />
         </div>
 
         <div className="actions">

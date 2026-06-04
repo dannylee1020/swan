@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AlertCoordinator } from "../lib/alerts";
 import { defaultSettings } from "../lib/defaults";
-import type { CallProvider, ProviderResult, SmsProvider, UrgeEvent } from "../lib/types";
+import type { CallProvider, ProviderResult, UrgeEvent } from "../lib/types";
 
 const storage = vi.hoisted(() => new Map<string, unknown>());
 
@@ -25,7 +25,6 @@ const event: UrgeEvent = {
   domain: "example.com",
   ruleId: "rule:example",
   trigger: "navigation",
-  smsStatus: { state: "pending" },
   callStatus: { state: "pending" },
 };
 
@@ -38,44 +37,28 @@ describe("alert coordination", () => {
     vi.clearAllMocks();
   });
 
-  it("starts voice calls without Twilio SMS settings when SMS is disabled", async () => {
+  it("starts voice calls without SMS settings", async () => {
     storage.set("settings", {
       ...defaultSettings,
       phoneNumber: "+15551234567",
-      smsEnabled: false,
       callEnabled: true,
       elevenLabs: {
         apiKey: "elevenlabs-key",
         agentId: "agent_123",
         agentPhoneNumberId: "phnum_123",
       },
-      twilio: {
-        accountSid: "",
-        apiKeySid: "",
-        clientSecret: "",
-        fromNumber: "",
-      },
     });
     storage.set("events", []);
 
-    const smsProvider: SmsProvider = {
-      send: vi.fn(),
-    };
     const callProvider: CallProvider = {
       start: vi.fn(async () => ({ providerId: "conv_123" })),
     };
 
     const result = await new AlertCoordinator({
-      smsProvider,
       callProvider,
     }).handle(event);
 
-    expect(smsProvider.send).not.toHaveBeenCalled();
     expect(callProvider.start).toHaveBeenCalledOnce();
-    expect(result.smsStatus).toEqual({
-      state: "skipped",
-      reason: "SMS disabled",
-    });
     expect(result.callStatus).toEqual({
       state: "success",
       providerId: "conv_123",
@@ -86,18 +69,11 @@ describe("alert coordination", () => {
     storage.set("settings", {
       ...defaultSettings,
       phoneNumber: "+15551234567",
-      smsEnabled: false,
       callEnabled: true,
       elevenLabs: {
         apiKey: "elevenlabs-key",
         agentId: "agent_123",
         agentPhoneNumberId: "phnum_123",
-      },
-      twilio: {
-        accountSid: "",
-        apiKeySid: "",
-        clientSecret: "",
-        fromNumber: "",
       },
     });
     storage.set("events", []);
@@ -127,7 +103,6 @@ describe("alert coordination", () => {
     expect(storage.get("events")).toEqual([
       {
         ...event,
-        smsStatus: { state: "skipped", reason: "SMS disabled" },
         callStatus: { state: "success", providerId: "conv_123" },
       },
     ]);

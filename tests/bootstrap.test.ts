@@ -55,9 +55,7 @@ describe("bootstrap import", () => {
       data: {
         settings: {
           phoneNumber: "+15551234567",
-          smsEnabled: true,
           elevenLabs: { apiKey: "eleven-key" },
-          twilio: { accountSid: "AC123", apiKeySid: "SK123" },
         },
         trackedDomains: ["example.com", "new.example"],
       },
@@ -71,16 +69,35 @@ describe("bootstrap import", () => {
     );
 
     expect(result.settings.phoneNumber).toBe("+15551234567");
-    expect(result.settings.smsEnabled).toBe(true);
     expect(result.settings.callEnabled).toBe(true);
     expect(result.settings.elevenLabs.apiKey).toBe("eleven-key");
-    expect(result.settings.twilio.accountSid).toBe("AC123");
-    expect(result.settings.twilio.apiKeySid).toBe("SK123");
     expect(result.addedRules).toBe(1);
     expect(result.updatedRules).toBe(1);
     expect(result.rules.map((rule) => [rule.domain, rule.enabled])).toEqual([
       ["new.example", true],
       ["example.com", true],
     ]);
+  });
+
+  it("ignores legacy SMS and Twilio fields in schema v1 data", () => {
+    const bootstrap = parseSwanBootstrap({
+      app: "swan",
+      schemaVersion: 1,
+      source: "config.yaml",
+      generatedAt: "2026-05-23T00:00:00.000Z",
+      data: {
+        settings: {
+          phoneNumber: "+15551234567",
+          smsEnabled: true,
+          twilio: { accountSid: "AC123", apiKeySid: "SK123" },
+        },
+      },
+    });
+
+    const result = applyBootstrap(defaultSettings, [], bootstrap);
+
+    expect(result.settings).not.toHaveProperty("smsEnabled");
+    expect(result.settings).not.toHaveProperty("twilio");
+    expect(result.settings.phoneNumber).toBe("+15551234567");
   });
 });

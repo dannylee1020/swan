@@ -19,7 +19,6 @@ Swan stores these values in `chrome.storage.local` for the installed extension p
 - Extension settings.
 - Recipient phone number.
 - ElevenLabs API key, Agent ID, and Agent phone number ID.
-- Optional Twilio Account SID, API Key SID, client secret, and SMS From number, only when direct SMS is configured.
 - Domain tracking rules.
 - Detection event history and provider delivery status.
 
@@ -32,20 +31,19 @@ If you build Swan from source, Swan can also bundle local import data from `conf
 Swan sends data only when an alert is triggered or when you click **Send test alert**:
 
 - ElevenLabs receives the recipient number, agent identifiers, and minimal event metadata needed to start the call.
-- Twilio receives the recipient number, SMS From number, and alert message body only when optional SMS is enabled.
 
-Provider consoles may retain call, SMS, billing, diagnostic, or compliance records according to their own policies. Swan does not control those provider records.
+Provider consoles may retain call, billing, diagnostic, or compliance records according to their own policies. Swan does not control those provider records.
 
 ## Chrome Web Store data use
 
 For Chrome Web Store disclosure purposes, Swan handles:
 
 - Personally identifiable information: the recipient phone number you enter.
-- Authentication information: user-configured ElevenLabs and optional Twilio credentials.
+- Authentication information: user-configured ElevenLabs credentials.
 - Website content or browsing activity: configured domain rules and detected domain event logs.
-- Personal communications: call and optional SMS delivery status metadata from the providers you configure.
+- Personal communications: call delivery status metadata from the provider you configure.
 
-Swan uses this data only to provide the configured intervention feature. Swan does not sell this data, use it for advertising, use it for credit or lending, or transfer it to data brokers or information resellers. Swan transfers data only to providers you configure, such as ElevenLabs and optional Twilio, when needed to start a call, send an SMS, or report delivery status.
+Swan uses this data only to provide the configured intervention feature. Swan does not sell this data, use it for advertising, use it for credit or lending, or transfer it to data brokers or information resellers. Swan transfers data only to ElevenLabs when needed to start a call or report delivery status.
 
 ## Browser permissions
 
@@ -53,7 +51,7 @@ Swan requests:
 
 - `storage` to save settings, domain rules, provider credentials, and event history locally.
 - `webNavigation` to observe top-level browser navigation so Swan can match configured domains.
-- Host access for ElevenLabs and Twilio API endpoints so the extension can start user-configured calls and optional SMS alerts.
+- Host access for the ElevenLabs API endpoint so the extension can start user-configured calls.
 
 Swan does not inspect page content, collect browsing history broadly, run a proxy, install DNS filtering, or send browsing data to a Swan-operated server.
 
@@ -66,7 +64,7 @@ Practical precautions:
 - Use a separate browser profile if you want to isolate Swan from day-to-day browsing state.
 - Keep `config.yaml` private; it can contain provider credentials.
 - Do not commit provider credentials.
-- Rotate ElevenLabs or Twilio credentials if they are exposed.
+- Rotate ElevenLabs credentials if they are exposed.
 - Use provider dashboards to review call and message logs.
 
 ## User control
@@ -74,10 +72,10 @@ Practical precautions:
 You can:
 
 - Disable Swan from the General settings card.
-- Disable voice calls or optional SMS independently.
+- Disable voice calls.
 - Edit or disable tracked domains.
 - Delete the extension from the browser profile.
-- Rotate provider credentials in ElevenLabs or Twilio.
+- Rotate provider credentials in ElevenLabs.
 
 Removing the extension can remove extension-local data for that profile. Browser behavior can vary by profile and extension ID, so export or record important configuration before removing Swan.
 

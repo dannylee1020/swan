@@ -8,9 +8,8 @@ Open **Swan settings** and start with **General**.
 
 | Setting | What to enter |
 | --- | --- |
-| Recipient number | The phone number that should receive voice calls and optional SMS alerts. Use E.164 format, for example `+15551234567`. |
+| Recipient number | The phone number that should receive voice calls. Use E.164 format, for example `+15551234567`. |
 | Start voice call | Keep enabled if ElevenLabs should start a call for detections and test alerts. |
-| Send optional SMS | Enable only if Twilio should send a text message for detections and test alerts. SMS is off by default. |
 | Enable monitoring | Keep enabled to watch configured domains in this browser. |
 | Cooldown minutes | Minimum time before Swan sends another intervention for the same browsing pattern. |
 
@@ -40,20 +39,7 @@ Enter:
 - Agent ID.
 - Agent phone number ID.
 
-The Agent phone number ID is not the literal phone number. It is the ElevenLabs phone-number identifier created after connecting or importing a number inside ElevenLabs. Swan does not need Twilio credentials for voice calls.
-
-## Twilio SMS card
-
-This card is only for optional direct SMS. Leave it empty when `Send optional SMS` is off.
-
-Enter:
-
-- Account SID.
-- API Key SID.
-- Client secret.
-- From number.
-
-The From number must be SMS-capable. SMS is optional and off by default. Trial Twilio accounts usually require the recipient phone number to be verified before SMS delivery works.
+The Agent phone number ID is not the literal phone number. It is the ElevenLabs phone-number identifier created after connecting or importing a number inside ElevenLabs.
 
 ## Domain Tracking page
 
@@ -73,7 +59,6 @@ Each event records:
 - Timestamp.
 - Detected domain.
 - Matching rule.
-- SMS status.
 - Call status.
 
 Statuses can be `success`, `failed`, `skipped`, or `pending`.

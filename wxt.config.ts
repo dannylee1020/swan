@@ -10,10 +10,7 @@ export default defineConfig({
     homepage_url: "https://swan-oss.com/docs",
     ...(browser === "firefox" ? {} : { incognito: "split" as const }),
     permissions: ["storage", "webNavigation"],
-    host_permissions: [
-      "https://api.elevenlabs.io/*",
-      "https://api.twilio.com/*",
-    ],
+    host_permissions: ["https://api.elevenlabs.io/*"],
     web_accessible_resources:
       browser === "firefox"
         ? ["intervention.html", "assets/*", "chunks/*"]

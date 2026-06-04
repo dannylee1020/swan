@@ -10,16 +10,10 @@ phoneNumber: "+15551234567"
 cooldownMinutes: 5
 monitoringEnabled: true
 callEnabled: true
-smsEnabled: false
 elevenLabs:
   apiKey: "eleven-key"
   agentId: "agent-id"
   agentPhoneNumberId: "phnum_123"
-twilio:
-  accountSid: "AC123"
-  apiKeySid: "SK123"
-  clientSecret: "secret"
-  fromNumber: "+15550000000"
 trackedDomains:
   - https://www.example.com/path
   - example.com
@@ -41,17 +35,10 @@ trackedDomains:
           cooldownMinutes: 5,
           enabled: true,
           callEnabled: true,
-          smsEnabled: false,
           elevenLabs: {
             apiKey: "eleven-key",
             agentId: "agent-id",
             agentPhoneNumberId: "phnum_123",
-          },
-          twilio: {
-            accountSid: "AC123",
-            apiKeySid: "SK123",
-            clientSecret: "secret",
-            fromNumber: "+15550000000",
           },
         },
         trackedDomains: ["example.com"],
@@ -68,5 +55,18 @@ trackedDomains:
     expect(() => buildBootstrapFromConfig(config)).toThrow(
       "trackedDomains[0] is not a valid domain",
     );
+  });
+
+  it("ignores legacy SMS and Twilio config fields", () => {
+    const config = parseConfig(`
+smsEnabled: true
+twilio:
+  accountSid: "AC123"
+  apiKeySid: "SK123"
+  clientSecret: "secret"
+  fromNumber: "+15550000000"
+`);
+
+    expect(buildBootstrapFromConfig(config).data).toEqual({});
   });
 });

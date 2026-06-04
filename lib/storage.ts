@@ -32,7 +32,9 @@ export async function saveRules(rules: DetectionRule[]): Promise<void> {
 
 export async function getEvents(): Promise<UrgeEvent[]> {
   const result = await getBrowserStorage().get("events");
-  return Array.isArray(result.events) ? result.events : [];
+  return Array.isArray(result.events)
+    ? result.events.map(normalizeEvent).filter((event) => event !== null)
+    : [];
 }
 
 export async function saveEvent(event: UrgeEvent): Promise<void> {
@@ -60,29 +62,101 @@ export async function getStorageSnapshot(): Promise<StorageShape> {
   return { settings, rules, events };
 }
 
+export async function cleanupLegacySmsData(): Promise<void> {
+  const storage = getBrowserStorage();
+  const [settingsResult, eventsResult] = await Promise.all([
+    storage.get("settings"),
+    storage.get("events"),
+  ]);
+  const updates: Partial<StorageShape> = {};
+
+  if (isRecord(settingsResult.settings)) {
+    const normalizedSettings = normalizeSettings(settingsResult.settings);
+    if (hasLegacySmsSettings(settingsResult.settings)) {
+      updates.settings = normalizedSettings;
+    }
+  }
+
+  if (Array.isArray(eventsResult.events)) {
+    const normalizedEvents = eventsResult.events
+      .map(normalizeEvent)
+      .filter((event) => event !== null);
+    if (eventsResult.events.some(hasLegacySmsStatus)) {
+      updates.events = normalizedEvents;
+    }
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await storage.set(updates);
+  }
+}
+
 function normalizeSettings(input: unknown): UserSettings {
   const saved = isRecord(input) ? input : {};
-  const savedTwilio = isRecord(saved.twilio) ? saved.twilio : {};
   const savedElevenLabs = isRecord(saved.elevenLabs) ? saved.elevenLabs : {};
 
   return {
     ...defaultSettings,
-    ...saved,
-    twilio: {
-      ...defaultSettings.twilio,
-      ...savedTwilio,
-      apiKeySid: readString(savedTwilio.apiKeySid),
-      clientSecret:
-        readString(savedTwilio.clientSecret) ||
-        readString(savedTwilio.apiKeySecret) ||
-        readString(savedTwilio.authToken),
-      fromNumber: readString(savedTwilio.fromNumber),
-    },
+    enabled:
+      typeof saved.enabled === "boolean" ? saved.enabled : defaultSettings.enabled,
+    phoneNumber: readString(saved.phoneNumber) || defaultSettings.phoneNumber,
+    cooldownMinutes:
+      typeof saved.cooldownMinutes === "number"
+        ? saved.cooldownMinutes
+        : defaultSettings.cooldownMinutes,
+    callEnabled:
+      typeof saved.callEnabled === "boolean"
+        ? saved.callEnabled
+        : defaultSettings.callEnabled,
     elevenLabs: {
       ...defaultSettings.elevenLabs,
       ...savedElevenLabs,
     },
   };
+}
+
+function normalizeEvent(input: unknown): UrgeEvent | null {
+  if (!isRecord(input)) return null;
+  const callStatus = isAlertStatus(input.callStatus)
+    ? input.callStatus
+    : { state: "pending" as const };
+  if (
+    typeof input.id !== "string" ||
+    typeof input.timestamp !== "string" ||
+    typeof input.domain !== "string" ||
+    typeof input.ruleId !== "string" ||
+    input.trigger !== "navigation"
+  ) {
+    return null;
+  }
+
+  return {
+    id: input.id,
+    timestamp: input.timestamp,
+    domain: input.domain,
+    ruleId: input.ruleId,
+    trigger: "navigation",
+    callStatus,
+  };
+}
+
+function hasLegacySmsSettings(settings: Record<string, unknown>): boolean {
+  return "smsEnabled" in settings || "twilio" in settings;
+}
+
+function hasLegacySmsStatus(event: unknown): boolean {
+  return isRecord(event) && "smsStatus" in event;
+}
+
+function isAlertStatus(value: unknown): value is UrgeEvent["callStatus"] {
+  if (!isRecord(value) || typeof value.state !== "string") return false;
+  if (value.state === "pending") return true;
+  if (value.state === "skipped") return typeof value.reason === "string";
+  if (value.state === "success") {
+    return value.providerId === undefined || typeof value.providerId === "string";
+  }
+  if (value.state === "failed") return typeof value.error === "string";
+  return false;
 }
 
 function readString(value: unknown): string {

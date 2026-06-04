@@ -50,20 +50,6 @@ npm run build
 
 Click the Swan extension icon from the browser toolbar. If it is hidden, open the browser extensions menu and pin Swan.
 
-## SMS does not arrive
-
-Skip this section if you only use voice calls. Twilio SMS settings are not
-required for the ElevenLabs voice-call path.
-
-Check:
-
-- Send optional SMS is enabled in Swan settings. SMS is off by default.
-- Recipient phone number uses E.164 format, for example `+15551234567`.
-- Twilio Account SID, API Key SID, and client secret are correct.
-- Twilio From number supports SMS.
-- Trial-account recipient numbers are verified in Twilio.
-- Twilio Messaging logs show the attempted message.
-
 ## AI call does not arrive
 
 Check:
@@ -71,32 +57,28 @@ Check:
 - ElevenLabs API key has access to Conversational AI calls.
 - Agent ID is copied from the same ElevenLabs workspace as the API key.
 - Agent phone number ID is copied from ElevenLabs phone-number settings.
-- The phone number is from a paid/upgraded Twilio account and is connected or imported inside ElevenLabs.
+- The phone number is connected inside ElevenLabs and supports outbound calls.
 - ElevenLabs call history shows the attempted outbound call.
 
 Do not enter the literal phone number in the Agent phone number ID field.
 
-If the call rings, plays the Twilio trial-account message, and then the agent
-is silent, upgrade the Twilio account and test the outbound call from
+If the call rings but the agent does not speak, test the outbound call from
 ElevenLabs again before testing Swan.
 
 ## Logs show `skipped`
 
-Swan skipped a channel when it was disabled or missing required configuration.
+Swan skipped the call when monitoring, the call toggle, or required configuration was missing.
 
 Review:
 
-- Send optional SMS toggle.
 - Start voice call toggle.
 - Recipient phone number.
-- Twilio settings.
 - ElevenLabs settings.
 
 ## Logs show `failed`
 
 Open the provider console first:
 
-- Twilio Messaging logs for SMS failures.
 - ElevenLabs call history for call failures.
 
 Then check the saved values in Swan settings.

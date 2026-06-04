@@ -91,7 +91,6 @@ The settings page is where you configure:
 - Bundled `config.yaml` data through **Import data** on General.
 - Recipient phone number.
 - ElevenLabs voice-call credentials.
-- Optional Twilio SMS credentials.
 - Domain tracking rules.
 - Test alerts.
 - Recent event logs.

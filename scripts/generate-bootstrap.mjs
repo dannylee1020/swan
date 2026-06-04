@@ -45,7 +45,6 @@ export function buildBootstrapFromConfig(config, generatedAt = new Date()) {
   assignNumber(config, "cooldownMinutes", settings);
   assignBoolean(config, "monitoringEnabled", settings, "enabled");
   assignBoolean(config, "callEnabled", settings);
-  assignBoolean(config, "smsEnabled", settings);
 
   const elevenLabs = readProviderBlock(config, "elevenLabs", [
     "apiKey",
@@ -53,16 +52,6 @@ export function buildBootstrapFromConfig(config, generatedAt = new Date()) {
     "agentPhoneNumberId",
   ]);
   if (Object.keys(elevenLabs).length > 0) settings.elevenLabs = elevenLabs;
-
-  const twilio = readProviderBlock(config, "twilio", [
-    "accountSid",
-    "apiKeySid",
-    "clientSecret",
-    "fromNumber",
-  ]);
-  assignStringAlias(config.twilio, "apiKeySecret", twilio, "clientSecret");
-  assignStringAlias(config.twilio, "authToken", twilio, "clientSecret");
-  if (Object.keys(twilio).length > 0) settings.twilio = twilio;
 
   const trackedDomains = readTrackedDomains(config);
   if (Object.keys(settings).length > 0) data.settings = settings;
@@ -126,11 +115,6 @@ function assignString(source, sourceKey, target, targetKey = sourceKey) {
     throw new Error(`${sourceKey} must be a string.`);
   }
   target[targetKey] = value;
-}
-
-function assignStringAlias(source, sourceKey, target, targetKey) {
-  if (!isRecord(source) || target[targetKey] != null) return;
-  assignString(source, sourceKey, target, targetKey);
 }
 
 function assignNumber(source, sourceKey, target, targetKey = sourceKey) {
