@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AlertCoordinator } from "../lib/alerts";
 import { defaultSettings } from "../lib/defaults";
-import type { CallProvider, SmsProvider, UrgeEvent } from "../lib/types";
+import type { CallProvider, ProviderResult, SmsProvider, UrgeEvent } from "../lib/types";
 
 const storage = vi.hoisted(() => new Map<string, unknown>());
 
@@ -80,5 +80,56 @@ describe("alert coordination", () => {
       state: "success",
       providerId: "conv_123",
     });
+  });
+
+  it("saves a pending event before provider delivery finishes", async () => {
+    storage.set("settings", {
+      ...defaultSettings,
+      phoneNumber: "+15551234567",
+      smsEnabled: false,
+      callEnabled: true,
+      elevenLabs: {
+        apiKey: "elevenlabs-key",
+        agentId: "agent_123",
+        agentPhoneNumberId: "phnum_123",
+      },
+      twilio: {
+        accountSid: "",
+        apiKeySid: "",
+        clientSecret: "",
+        fromNumber: "",
+      },
+    });
+    storage.set("events", []);
+
+    let resolveCall: (value: { providerId: string }) => void = () => {};
+    const callProvider: CallProvider = {
+      start: vi.fn(
+        () =>
+          new Promise<ProviderResult>((resolve) => {
+            resolveCall = resolve;
+          }),
+      ),
+    };
+
+    const started = await new AlertCoordinator({
+      callProvider,
+    }).start(event);
+
+    expect(started.event).toBe(event);
+    expect(storage.get("events")).toEqual([event]);
+    expect(callProvider.start).toHaveBeenCalledOnce();
+
+    resolveCall({ providerId: "conv_123" });
+    await expect(started.completion).resolves.toMatchObject({
+      callStatus: { state: "success", providerId: "conv_123" },
+    });
+    expect(storage.get("events")).toEqual([
+      {
+        ...event,
+        smsStatus: { state: "skipped", reason: "SMS disabled" },
+        callStatus: { state: "success", providerId: "conv_123" },
+      },
+    ]);
   });
 });

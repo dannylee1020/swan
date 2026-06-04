@@ -15,7 +15,7 @@ export default defineBackground(() => {
     void browser.runtime.openOptionsPage();
   });
 
-  browser.webNavigation.onCommitted.addListener((details) => {
+  browser.webNavigation.onBeforeNavigate.addListener((details) => {
     if (details.frameId !== 0 || !details.url.startsWith("http")) return;
 
     void handleNavigation(details.url, details.tabId);
@@ -53,14 +53,21 @@ async function handleInstalled(
 }
 
 async function handleNavigation(url: string, tabId: number): Promise<void> {
+  if (tabId < 0) return;
+
   const match = findMatchingRule(url, await getRules());
   if (!match) return;
 
   const event = createUrgeEvent(match.domain, match.rule.id);
-  await coordinator.handle(event);
-
-  await browser.tabs.update(tabId, {
+  void browser.tabs.update(tabId, {
     url: browser.runtime.getURL(`/intervention.html?eventId=${event.id}`),
+  }).catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+  });
+
+  const started = await coordinator.start(event);
+  void started.completion.catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
   });
 }
 

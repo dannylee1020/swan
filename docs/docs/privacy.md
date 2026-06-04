@@ -6,7 +6,7 @@ description: What Swan stores locally, what it sends to providers, and what it d
 
 # Privacy
 
-Last updated: May 31, 2026
+Last updated: June 3, 2026
 
 Swan is open-source browser extension software. It does not operate a hosted backend for the v0 extension, and Swan itself does not have accounts, payments, analytics, ads, or data sale.
 
@@ -35,6 +35,17 @@ Swan sends data only when an alert is triggered or when you click **Send test al
 - Twilio receives the recipient number, SMS From number, and alert message body only when optional SMS is enabled.
 
 Provider consoles may retain call, SMS, billing, diagnostic, or compliance records according to their own policies. Swan does not control those provider records.
+
+## Chrome Web Store data use
+
+For Chrome Web Store disclosure purposes, Swan handles:
+
+- Personally identifiable information: the recipient phone number you enter.
+- Authentication information: user-configured ElevenLabs and optional Twilio credentials.
+- Website content or browsing activity: configured domain rules and detected domain event logs.
+- Personal communications: call and optional SMS delivery status metadata from the providers you configure.
+
+Swan uses this data only to provide the configured intervention feature. Swan does not sell this data, use it for advertising, use it for credit or lending, or transfer it to data brokers or information resellers. Swan transfers data only to providers you configure, such as ElevenLabs and optional Twilio, when needed to start a call, send an SMS, or report delivery status.
 
 ## Browser permissions
 

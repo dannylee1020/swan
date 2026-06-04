@@ -59,7 +59,7 @@ The From number must be SMS-capable. SMS is optional and off by default. Trial T
 
 Use **Domain Tracking** to manage domains Swan watches.
 
-- Seed rules ship with Swan and can be disabled.
+- Seed rules ship with Swan and can be disabled or removed.
 - Custom rules are added by the user.
 - Subdomains match automatically. A rule for `example.com` also matches `sub.example.com`.
 - Swan normalizes entered domains, so you can paste a bare domain or URL.

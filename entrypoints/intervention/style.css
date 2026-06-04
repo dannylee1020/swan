@@ -1,9 +1,29 @@
 :root {
-  color: oklch(18% 0.02 190);
-  background: oklch(95% 0.014 190);
-  font-family:
-    Avenir Next, Avenir, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --background: oklch(97.8% 0.006 183);
+  --surface: oklch(99.2% 0.004 183);
+  --text: oklch(20% 0.012 183);
+  --text-muted: oklch(41% 0.019 183);
+  --outline: oklch(84% 0.017 183);
+  --outline-soft: oklch(90% 0.012 183);
+  --primary: oklch(41% 0.078 183);
+  --primary-soft: oklch(93.8% 0.036 183);
+  --error: oklch(44% 0.15 29);
+  --error-soft: oklch(93.5% 0.036 29);
+  --pending: oklch(43% 0.052 255);
+  --pending-soft: oklch(93.5% 0.024 255);
+  --skipped: oklch(45% 0.012 183);
+  --skipped-soft: oklch(93.5% 0.008 183);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  color: var(--text);
+  background: var(--background);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -12,24 +32,23 @@
 
 body {
   margin: 0;
+  background: var(--background);
 }
 
 button {
-  min-height: 42px;
-  border: 1px solid oklch(38% 0.1 178);
-  border-radius: 8px;
-  padding: 0 16px;
-  background: oklch(38% 0.1 178);
-  color: oklch(98% 0.008 190);
+  min-height: 44px;
+  border-radius: 6px;
+  padding: 0 var(--space-4);
   font: inherit;
-  font-weight: 760;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
   cursor: pointer;
-}
-
-button.secondary {
-  border-color: oklch(74% 0.025 190);
-  background: oklch(98% 0.008 190);
-  color: oklch(24% 0.02 190);
+  transition:
+    border-color 160ms ease-out,
+    background-color 160ms ease-out,
+    color 160ms ease-out,
+    transform 160ms ease-out;
 }
 
 p,
@@ -37,83 +56,218 @@ h1 {
   margin: 0;
 }
 
-.screen {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: 24px;
+button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 72%, white);
+  outline-offset: 3px;
 }
 
-.panel {
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.screen {
+  min-height: 100vh;
   display: grid;
-  gap: 22px;
-  width: min(720px, 100%);
-  padding: clamp(24px, 5vw, 52px);
-  border: 1px solid oklch(81% 0.02 190);
-  border-radius: 8px;
-  background: oklch(98% 0.008 190);
-  box-shadow: 0 24px 80px color-mix(in oklch, oklch(20% 0.02 190), transparent 86%);
+  align-items: center;
+  padding: clamp(var(--space-6), 7vw, 88px);
+  background: var(--background);
+}
+
+.interventionSurface {
+  width: min(760px, 100%);
+  display: grid;
+  gap: var(--space-6);
+}
+
+.heroBlock {
+  display: grid;
+  gap: var(--space-3);
 }
 
 .eyebrow {
-  color: oklch(41% 0.09 178);
-  font-size: 0.78rem;
-  font-weight: 850;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
 h1 {
-  max-width: 620px;
-  font-size: clamp(2.2rem, 6vw, 4.6rem);
-  line-height: 0.96;
+  max-width: 12ch;
+  color: var(--text);
+  font-size: 64px;
+  font-weight: 790;
+  line-height: 0.98;
   letter-spacing: 0;
 }
 
 .copy {
   max-width: 58ch;
-  color: oklch(36% 0.025 190);
-  font-size: 1.05rem;
-  line-height: 1.55;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 24px;
 }
 
 .notice {
-  padding: 12px 14px;
-  border: 1px solid oklch(79% 0.06 25);
-  border-radius: 8px;
-  background: oklch(94% 0.035 25);
-  color: oklch(31% 0.06 25);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--error) 32%, var(--outline));
+  border-radius: 6px;
+  background: var(--error-soft);
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 20px;
 }
 
-.eventBox {
+.domainBlock {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-2);
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--outline-soft);
+  border-bottom: 1px solid var(--outline-soft);
 }
 
-.eventBox div {
+.domainBlock span,
+.statusDetail {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.domainBlock strong {
+  color: var(--text);
+  font-size: 34px;
+  font-weight: 760;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.statusRows {
   display: grid;
-  gap: 6px;
-  padding: 14px;
-  border: 1px solid oklch(84% 0.018 190);
-  border-radius: 8px;
-  background: oklch(96% 0.012 190);
+  border-top: 1px solid var(--outline-soft);
 }
 
-.eventBox span {
-  color: oklch(46% 0.025 190);
-  font-size: 0.78rem;
-  font-weight: 750;
-  text-transform: uppercase;
+.statusRow {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: minmax(84px, 0.5fr) minmax(98px, 0.45fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+  border-bottom: 1px solid var(--outline-soft);
+}
+
+.statusRow strong {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 740;
+  line-height: 22px;
+}
+
+.statusChip {
+  min-width: 86px;
+  min-height: 32px;
+  display: inline-grid;
+  place-items: center;
+  justify-self: start;
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+  padding: var(--space-1) var(--space-3);
+  background: var(--skipped-soft);
+  color: var(--skipped);
+  font-size: 13px;
+  font-weight: 730;
+  line-height: 18px;
+}
+
+.statusChip.pending {
+  border-color: color-mix(in srgb, var(--pending) 34%, var(--outline));
+  background: var(--pending-soft);
+  color: var(--pending);
+}
+
+.statusChip.success {
+  border-color: color-mix(in srgb, var(--primary) 34%, var(--outline));
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.statusChip.failed {
+  border-color: color-mix(in srgb, var(--error) 34%, var(--outline));
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.statusDetail {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-2);
+}
+
+.primaryAction {
+  border: 1px solid var(--primary);
+  background: var(--surface);
+  color: var(--primary);
+}
+
+.secondaryAction {
+  border: 1px solid var(--outline);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.primaryAction:hover,
+.primaryAction:focus-visible {
+  background: var(--primary-soft);
+}
+
+.secondaryAction:hover,
+.secondaryAction:focus-visible {
+  border-color: color-mix(in srgb, var(--text-muted) 42%, var(--outline));
+  background: color-mix(in srgb, var(--surface) 62%, var(--outline-soft));
 }
 
 @media (max-width: 640px) {
-  .eventBox {
+  .screen {
+    align-items: start;
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .interventionSurface {
+    gap: var(--space-6);
+  }
+
+  h1 {
+    font-size: 46px;
+  }
+
+  .copy {
+    font-size: 15px;
+    line-height: 23px;
+  }
+
+  .domainBlock strong {
+    font-size: 28px;
+  }
+
+  .statusRow {
     grid-template-columns: 1fr;
+    gap: var(--space-2);
+    align-items: start;
+    padding-block: var(--space-4);
+  }
+
+  .actions button {
+    width: 100%;
   }
 }

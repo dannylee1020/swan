@@ -113,6 +113,20 @@ Confirm:
 
 Swan v0 does not inspect page content or non-browser traffic.
 
+## Private window shows the browser block page
+
+For Chromium private or incognito windows, confirm:
+
+- Swan is enabled for private/incognito windows in the browser extension details page.
+- You loaded or reloaded a build that includes `incognito: "split"` in `manifest.json`.
+- `manifest.json` includes `web_accessible_resources` for `intervention.html`, `assets/*`, and `chunks/*`.
+
+Swan cannot enable private-window access itself. In Chrome or Brave, open
+`chrome://extensions`, open Swan details, enable private/incognito access, then
+reload Swan. If a private window shows `ERR_BLOCKED_BY_CLIENT` for Swan's
+extension ID, remove and load the unpacked extension again so the browser uses
+the current manifest.
+
 ## Credentials disappeared
 
 Swan stores credentials in `chrome.storage.local` for the installed extension. Removing the extension, loading a different build as a different extension ID, or using another browser profile can make settings appear missing.

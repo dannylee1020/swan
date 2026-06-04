@@ -342,11 +342,21 @@ function OptionsApp() {
         </nav>
 
         <div className="sidebarFooter">
-          <a className="navItem" href="../../docs/provider-setup.md">
+          <a
+            className="navItem"
+            href="https://swan-oss.com/docs/provider-setup"
+            rel="noreferrer"
+            target="_blank"
+          >
             <BookOpen size={18} aria-hidden="true" />
             <span>Documentation</span>
           </a>
-          <a className="navItem" href="#support">
+          <a
+            className="navItem"
+            href="https://github.com/dannylee1020/swan/issues"
+            rel="noreferrer"
+            target="_blank"
+          >
             <CircleHelp size={18} aria-hidden="true" />
             <span>Support</span>
           </a>
@@ -786,7 +796,8 @@ function DomainTrackingPage({
 
           <p className="domainNote">
             Swan v0 detects configured domains only. It ships with a small seed
-            list, matches subdomains, and lets you add or disable rules here.
+            list, matches subdomains, and lets you add, disable, or remove rules
+            here.
           </p>
         </div>
 
@@ -838,16 +849,14 @@ function DomainTrackingPage({
                           }`}
                           onChange={() => void onToggleRule(rule.id)}
                         />
-                        {rule.source === "user" ? (
-                          <button
-                            type="button"
-                            className="dangerIconButton"
-                            aria-label={`Remove ${rule.domain}`}
-                            onClick={() => void onRemoveRule(rule.id)}
-                          >
-                            <Trash2 size={15} aria-hidden="true" />
-                          </button>
-                        ) : null}
+                        <button
+                          type="button"
+                          className="dangerIconButton"
+                          aria-label={`Remove ${rule.domain}`}
+                          onClick={() => void onRemoveRule(rule.id)}
+                        >
+                          <Trash2 size={15} aria-hidden="true" />
+                        </button>
                       </div>
                     </td>
                   </tr>

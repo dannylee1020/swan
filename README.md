@@ -86,7 +86,7 @@ Use [Provider setup](https://swan-oss.com/docs/provider-setup) for the full Elev
 ## Limitations
 
 - Swan v0 detects configured domains only.
-- It ships with a small seed list of NSFW domains and matches subdomains of tracked domains.
+- It ships with a small editable seed list of NSFW domains and matches subdomains of tracked domains.
 - It does not inspect page content, classify images or videos, install DNS rules, run a proxy, or block at the operating-system level.
 - Swan currently installs by loading a local extension build. Chromium is the supported v0 path. Firefox Desktop uses a temporary developer add-on and is not first-class supported in this version.
 - It is recovery-support software, not medical advice, therapy, or clinical treatment.
@@ -139,6 +139,6 @@ npm run build:firefox
 
 ## Contributing
 
-Swan is early. Useful contributions include setup feedback, safer default domain rules, provider reliability notes, documentation fixes, and issues that describe where the install or provider setup flow is confusing.
+Swan is early. Useful contributions include setup feedback, seed-domain tuning, provider reliability notes, documentation fixes, and issues that describe where the install or provider setup flow is confusing.
 
 If you try Swan locally, open an issue with what worked, what failed, and which browser/provider setup you used.

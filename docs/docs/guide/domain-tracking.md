@@ -21,7 +21,7 @@ Swan does not detect:
 
 ## Seed domains
 
-Swan ships with a small seed list of NSFW domains so a new install can test the flow quickly. Seed rules can be disabled from **Domain Tracking**.
+Swan ships with a small enabled seed list of NSFW domains so a new install can test the flow quickly. Seed rules can be disabled or removed from **Domain Tracking**.
 
 ## Add a custom domain
 

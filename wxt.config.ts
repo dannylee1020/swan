@@ -5,12 +5,24 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifest: ({ browser }) => ({
     name: "Swan",
-    description: "Adult-site urge intervention with AI phone calls.",
+    description:
+      "Swan helps interrupt unwanted porn urges with custom domain blocking and a personalized phone call.",
+    homepage_url: "https://swan-oss.com/docs",
+    ...(browser === "firefox" ? {} : { incognito: "split" as const }),
     permissions: ["storage", "webNavigation"],
     host_permissions: [
       "https://api.elevenlabs.io/*",
       "https://api.twilio.com/*",
     ],
+    web_accessible_resources:
+      browser === "firefox"
+        ? ["intervention.html", "assets/*", "chunks/*"]
+        : [
+            {
+              resources: ["intervention.html", "assets/*", "chunks/*"],
+              matches: ["<all_urls>"],
+            },
+          ],
     icons: {
       16: "icons/icon-16.png",
       32: "icons/icon-32.png",

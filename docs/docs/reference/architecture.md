@@ -18,37 +18,37 @@ User configuration
     -> phone number, cooldown, monitoring toggle
     -> ElevenLabs call credentials
     -> optional Twilio SMS credentials
-    -> seed and custom tracked domains
+    -> editable seed and custom tracked domains
     -> chrome.storage.local
 
 Detection loop
   User opens a top-level HTTP(S) page
-    -> background service worker receives navigation event
+    -> background service worker receives pre-navigation event
     -> URL is normalized to a domain
     -> enabled exact/subdomain rules are checked
     -> no match: page loads normally
     -> match: urge event is created
     -> cooldown and enabled checks run
-    -> ElevenLabs call and optional Twilio SMS are attempted
-    -> event status is saved locally
+    -> pending or skipped event status is saved locally
     -> tab redirects to the intervention page
-    -> intervention page shows detected domain and alert status
+    -> ElevenLabs call and optional Twilio SMS continue in background
+    -> intervention page shows detected domain and refreshed alert status
 ```
 
 ## Runtime flow
 
-1. The background service worker listens to top-level `webNavigation` events.
+1. The background service worker listens to top-level pre-navigation events.
 2. The visited URL is normalized to a domain.
 3. Swan checks enabled rules for exact-domain or subdomain matches.
 4. A match creates an urge event with domain-level metadata.
 5. Swan reads settings and recent events from `chrome.storage.local`.
 6. Disabled monitoring or active cooldown saves a skipped event.
-7. Allowed alerts run enabled channels in parallel.
-8. ElevenLabs starts the standard AI phone call when configured.
-9. Twilio sends optional SMS when enabled and configured.
-10. Provider success, failure, or skipped status is saved locally.
-11. The tab redirects to Swan's intervention page.
-12. The intervention page asks the background worker for the saved event and displays the result.
+7. Allowed alerts save a pending event immediately.
+8. The tab redirects to Swan's intervention page.
+9. ElevenLabs starts the standard AI phone call when configured.
+10. Twilio sends optional SMS when enabled and configured.
+11. Provider success, failure, or skipped status is saved locally.
+12. The intervention page asks the background worker for the saved event and displays refreshed status.
 
 ## Setup and configuration
 
@@ -74,7 +74,7 @@ The extension does not read local files or environment variables at runtime.
 Swan stores runtime data in `chrome.storage.local`:
 
 - Settings and provider credentials.
-- Seed and user domain rules.
+- Editable seed and user domain rules.
 - Detection event history.
 
 Events store the normalized domain, matched rule id, timestamp, and call/SMS statuses. Swan does not store full page URLs for provider alerts.

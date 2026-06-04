@@ -51,7 +51,7 @@ Before relying on Swan, configure the ElevenLabs [agent prompt and knowledge bas
 
 ## 5. Add domains
 
-Open **Domain Tracking** to review seed rules or add a custom domain. Swan matches configured domains and their subdomains during top-level browser navigation.
+Open **Domain Tracking** to review, remove, or add domains. Swan matches configured domains and their subdomains during top-level browser navigation.
 
 ## Next
 

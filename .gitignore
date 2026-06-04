@@ -13,3 +13,4 @@ todo.todo
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 .impeccable.md
+store-assets/

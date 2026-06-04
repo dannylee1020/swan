@@ -20,6 +20,7 @@
     "zip": "wxt zip",
     "zip:firefox": "node scripts/generate-bootstrap.mjs && wxt zip -b firefox",
     "zip:store": "node scripts/generate-bootstrap.mjs --release && wxt zip",
+    "validate:store": "node scripts/validate-store-package.mjs",
     "prepare": "wxt prepare",
     "test": "wxt prepare && vitest run",
     "typecheck": "wxt prepare && tsc --noEmit"
