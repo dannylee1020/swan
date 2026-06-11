@@ -1,27 +1,15 @@
 # Update Swan
 
-Update Swan by rerunning the installer, then reloading the unpacked extension in your browser.
+Chrome Web Store installs update through Chrome. If you are using a source checkout, rebuild and reload the unpacked extension in your browser.
 
-## Release install
+## Chrome Web Store install
 
-macOS or Linux:
-
-```bash
-curl -fsSL https://swan-oss.com/install.sh | bash
-```
-
-Windows PowerShell:
-
-```powershell
-irm https://swan-oss.com/install.ps1 | iex
-```
-
-Then reload Swan:
+Chrome handles updates for Web Store installs. To check the installed version manually:
 
 1. Open `chrome://extensions`.
 2. Find Swan.
-3. Click the reload icon.
-4. Open Swan settings and confirm your settings are still present.
+3. Enable **Developer Mode** if version details are hidden.
+4. Confirm Swan remains enabled.
 
 ## Source checkout
 
@@ -62,4 +50,4 @@ It will build the extension and print the current extension path again.
 
 ## Settings persistence
 
-Swan settings live in browser extension local storage. Rebuilding the source does not normally clear settings. Removing the extension from the browser can remove extension-local data for that profile.
+Swan settings live in browser extension local storage. Web Store updates and source rebuilds do not normally clear settings. Removing the extension from the browser can remove extension-local data for that profile.

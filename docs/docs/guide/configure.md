@@ -1,10 +1,10 @@
 # Configure Swan
 
-Swan stores settings in `chrome.storage.local` for the loaded extension profile. There is no hosted Swan backend in v0.
+Swan stores settings in `chrome.storage.local` for the loaded extension profile. BYOK calls use your local provider settings. Managed calls use Swan's hosted service for account, payment, entitlement, and call delivery.
 
 ## General settings
 
-Open **Swan settings** and start with **General**.
+Open **Swan settings** and start with **Status**.
 
 | Setting | What to enter |
 | --- | --- |
@@ -17,8 +17,7 @@ Click the Save button for the card after changing these values.
 ## Import data
 
 The General page can import bundled setup data generated from a local
-`config.yaml` file. This is a source-build path, not the default release
-installer path.
+`config.yaml` file. This is a source-build path, not the default Chrome Web Store path.
 
 1. Copy `config.example.yaml` to `config.yaml`.
 2. Fill in the values you want to manage locally.

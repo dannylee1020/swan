@@ -1,14 +1,14 @@
 ---
 layout: doc
 title: Chrome Web Store
-description: Install Swan from the Chrome Web Store or review the local setup path for the open-source extension.
+description: Install Swan from the Chrome Web Store or build the open-source extension from source.
 ---
 
 # Chrome Web Store
 
 [Install Swan from the Chrome Web Store](https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg).
 
-The store listing is the recommended install path for most Chrome and Chromium users. Swan is still open source, and the local setup path remains available for people who want to inspect the release package, build from source, or keep a manual extension install.
+The store listing is the recommended install path for Chrome and Chromium users. Swan is still open source, and the source build path remains available for people who want to inspect or modify the extension.
 
 ## Store install
 
@@ -18,29 +18,22 @@ The store listing is the recommended install path for most Chrome and Chromium u
 4. Configure your phone number, ElevenLabs credentials, and tracked domains.
 5. Click **Send test alert** before relying on real interventions.
 
-## Local install fallback
+## Source build fallback
 
-Use the local install path if you want the GitHub Release package instead of the Web Store package.
-
-macOS or Linux:
+Use the source build path if you want to inspect or modify the extension before loading it manually.
 
 ```bash
-curl -fsSL https://swan-oss.com/install.sh | bash
+npm install
+npm run setup
 ```
 
-Windows PowerShell:
-
-```powershell
-irm https://swan-oss.com/install.ps1 | iex
-```
-
-Then open `chrome://extensions`, enable **Developer Mode**, click **Load unpacked**, and select the folder printed by the installer.
+Then open `chrome://extensions`, enable **Developer Mode**, click **Load unpacked**, and select `output/chrome-mv3`.
 
 ## What the store version makes easier
 
 - Install Swan without manually loading an unpacked extension.
 - Keep the open-source code and privacy claims inspectable.
-- Make updates simpler for people who do not want a manual release install.
+- Make updates simpler for people who do not want a manual source build.
 - Keep the core behavior narrow: configured NSFW domains, tab redirect, immediate phone call.
 
 ## What does not change

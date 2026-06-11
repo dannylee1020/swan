@@ -1,40 +1,28 @@
 # Install Swan
 
-Swan installs as an unpacked browser extension from a local folder. The recommended path downloads the latest Chromium release and prepares that folder for you. Source builds and experimental Firefox testing are also available.
+Swan is available from the Chrome Web Store. Source builds and experimental Firefox testing are also available for people who want to inspect or modify the extension.
 
 ## Browser support
 
 | Browser target | Status | Build output | Loading method |
 | --- | --- | --- | --- |
-| Chromium-based browsers | First-class v0 release install | Installer path printed by script | Load unpacked directory from `chrome://extensions` |
+| Chromium-based browsers | First-class Chrome install | Chrome Web Store | Add to Chrome |
 | Firefox Desktop | Experimental developer support | `output/firefox-mv2` | Load temporary add-on from `about:debugging` |
 | Firefox-derived browsers | Best effort | Browser-dependent | Smoke test before relying on it |
 | Tor Browser | Unsupported | Not applicable | Extra add-ons are not recommended |
 
 Firefox is not first-class supported in this version. Temporary Firefox add-ons are removed when Firefox restarts, and signed AMO distribution for persistent installs is separate release work.
 
-## Install Chromium release
+## Install from Chrome Web Store
 
-macOS or Linux:
+Open the [Swan Chrome Web Store listing](https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg), click **Add to Chrome**, then open Swan from the extension toolbar.
 
-```bash
-curl -fsSL https://swan-oss.com/install.sh | bash
-```
-
-Windows PowerShell:
-
-```powershell
-irm https://swan-oss.com/install.ps1 | iex
-```
-
-The installer downloads `swan-chromium.zip` from the latest GitHub Release, extracts it into a stable local directory, verifies `manifest.json`, and prints the folder to load in Chromium.
-
-## Load in Chromium
+## Load a source build in Chromium
 
 1. Open `chrome://extensions`.
 2. Enable **Developer Mode**.
 3. Click **Load unpacked**.
-4. Select the extension path printed by the installer.
+4. Select `output/chrome-mv3`.
 5. Keep that folder in place.
 
 ## Build from source
@@ -108,4 +96,4 @@ npm run build:firefox
 
 ## Update Swan
 
-For release installs, rerun the installer and reload Swan from `chrome://extensions`. For source checkouts, pull the latest changes, rebuild, and reload the extension. See [Update Swan](./update.md) for details.
+Chrome Web Store installs update through Chrome. For source checkouts, pull the latest changes, rebuild, and reload the extension. See [Update Swan](./update.md) for details.

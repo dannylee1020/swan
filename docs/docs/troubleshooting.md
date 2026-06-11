@@ -29,7 +29,7 @@ Then retry the build.
 
 For Chromium, confirm:
 
-- You selected the extension directory printed by the installer, not the repository root.
+- For source builds, you selected `output/chrome-mv3`, not the repository root.
 - `manifest.json` exists inside that extension directory.
 - Developer Mode is enabled.
 - The browser supports Manifest V3 extensions.
@@ -115,6 +115,6 @@ Swan stores credentials in `chrome.storage.local` for the installed extension. R
 
 ## Need a clean reset
 
-Remove Swan from `chrome://extensions`, rerun the installer or rebuild from source, then load the extension directory again. This can clear extension-local settings for that profile.
+Remove Swan from `chrome://extensions`, then reinstall from the Chrome Web Store or rebuild from source. This can clear extension-local settings for that profile.
 
 For Firefox Desktop, remove Swan from `about:debugging#/runtime/this-firefox`, rebuild with `npm run build:firefox`, then load `output/firefox-mv2/manifest.json` again.

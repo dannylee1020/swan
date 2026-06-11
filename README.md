@@ -21,7 +21,7 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 ## Requirements
 
-- Chromium-based browser for the default release install, Firefox currently in testing
+- Chromium-based browser for the Chrome Web Store install, Firefox currently in testing
 - ElevenLabs account for the voice-call provider
 - Phone number connected or imported inside ElevenLabs for calls
 - For source builds only: Node.js 20 or newer and npm
@@ -34,31 +34,9 @@ Install Swan from the Chrome Web Store:
 
 https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg
 
-Use the local Chromium release install path from GitHub if you want to inspect the release package or load Swan manually.
+If you want to inspect or modify the extension, build it from source and load the generated folder through `chrome://extensions`.
 
-Install the latest Chromium release on macOS or Linux:
-
-```bash
-curl -fsSL https://swan-oss.com/install.sh | bash
-```
-
-Install the latest Chromium release on Windows PowerShell:
-
-```powershell
-irm https://swan-oss.com/install.ps1 | iex
-```
-
-The installer downloads the latest GitHub Release, extracts it into a stable local folder, prints the extension path, and opens `chrome://extensions` when possible.
-
-Load Swan in Chromium:
-
-1. Enable **Developer Mode**
-2. Click **Load unpacked**
-3. Select the extension path printed by the installer
-
-To update, rerun the installer and click the reload button for Swan in `chrome://extensions`. Do not remove Swan from the browser unless you intend to clear extension-local settings.
-
-If you want repeatable local setup from source, copy `config.example.yaml` to `config.yaml` before running `npm run setup`. Swan will bundle that local config as import data, which you can later apply from the General page.
+For repeatable local setup from source, copy `config.example.yaml` to `config.yaml` before running `npm run setup`. Swan will bundle that local config as import data, which you can later apply from the General page.
 
 Firefox is not a first-class v0 install path. If you want to test it manually:
 
@@ -94,7 +72,7 @@ Use [Provider setup](https://swan-oss.com/docs/provider-setup) for the full Elev
 - Swan v0 detects configured domains only.
 - It ships with a small editable seed list of NSFW domains and matches subdomains of tracked domains.
 - It does not inspect page content, classify images or videos, install DNS rules, run a proxy, or block at the operating-system level.
-- Swan currently installs by loading a local extension build. Chromium is the supported v0 path. Firefox Desktop uses a temporary developer add-on and is not first-class supported in this version.
+- Chrome Web Store is the supported install path. Firefox Desktop uses a temporary developer add-on and is not first-class supported in this version.
 - It is recovery-support software, not medical advice, therapy, or clinical treatment.
 
 ## Privacy and Costs
