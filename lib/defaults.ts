@@ -23,12 +23,13 @@ export const seedRules: DetectionRule[] = [
 
 export const defaultSettings: UserSettings = {
   enabled: true,
+  deliveryMode: "byok",
   phoneNumber: "",
-  cooldownMinutes: 10,
   callEnabled: true,
   elevenLabs: {
     apiKey: "",
     agentId: "",
     agentPhoneNumberId: "",
   },
+  managedAccount: null,
 };

@@ -37,12 +37,26 @@ import {
   saveRules,
   saveSettings,
 } from "../../lib/storage";
+import {
+  getManagedApiBaseUrl,
+  ManagedApiError,
+  ManagedClient,
+} from "../../lib/managed/client";
 import type {
   AlertStatus,
   DetectionRule,
+  DeliveryMode,
+  ManagedAccount,
   UrgeEvent,
   UserSettings,
 } from "../../lib/types";
+import {
+  getReadinessState,
+  getSettingsFieldErrors,
+  validatePhoneNumber,
+  type ReadinessState,
+  type SettingsFieldErrors,
+} from "./readiness";
 import "./style.css";
 
 type ActivePage = "general" | "domains" | "logs";
@@ -50,6 +64,8 @@ type DomainFilter = "all" | "enabled" | "disabled" | "user" | "seed";
 type LogFilter = "all" | AlertStatus["state"];
 type SettingsCardId = "phone" | "elevenLabs";
 type SaveState = "idle" | "saving" | "saved";
+type ManagedOtpState = { challengeId: string; phoneNumber: string } | null;
+type RemovedRuleUndo = { rule: DetectionRule; index: number } | null;
 type BootstrapInfo =
   | { state: "checking" }
   | { state: "missing" }
@@ -57,9 +73,9 @@ type BootstrapInfo =
   | { state: "error"; error: string };
 
 const navItems: Array<{ id: ActivePage; label: string; icon: LucideIcon }> = [
-  { id: "general", label: "General", icon: Settings },
-  { id: "domains", label: "Domain Tracking", icon: Globe2 },
-  { id: "logs", label: "Logs", icon: List },
+  { id: "general", label: "Status", icon: Settings },
+  { id: "domains", label: "Domains", icon: Globe2 },
+  { id: "logs", label: "History", icon: List },
 ];
 
 function OptionsApp() {
@@ -76,6 +92,12 @@ function OptionsApp() {
   const [notice, setNotice] = useState("");
   const [testing, setTesting] = useState(false);
   const [importingData, setImportingData] = useState(false);
+  const [managedBusy, setManagedBusy] = useState(false);
+  const [managedError, setManagedError] = useState("");
+  const [managedOtpState, setManagedOtpState] = useState<ManagedOtpState>(null);
+  const [fieldErrors, setFieldErrors] = useState<SettingsFieldErrors>({});
+  const [domainError, setDomainError] = useState("");
+  const [removedRuleUndo, setRemovedRuleUndo] = useState<RemovedRuleUndo>(null);
   const [bootstrapInfo, setBootstrapInfo] = useState<BootstrapInfo>({
     state: "checking",
   });
@@ -88,21 +110,6 @@ function OptionsApp() {
     void refresh();
     void loadBootstrapInfo();
   }, []);
-
-  const enabledRules = useMemo(
-    () => rules.filter((rule) => rule.enabled).length,
-    [rules],
-  );
-
-  const domainStats = useMemo(
-    () => ({
-      total: rules.length,
-      enabled: enabledRules,
-      custom: rules.filter((rule) => rule.source === "user").length,
-      seed: rules.filter((rule) => rule.source === "seed").length,
-    }),
-    [enabledRules, rules],
-  );
 
   const eventCountsByRule = useMemo(() => {
     const counts = new Map<string, number>();
@@ -125,16 +132,6 @@ function OptionsApp() {
     });
   }, [domainFilter, domainSearch, rules]);
 
-  const logStats = useMemo(
-    () => ({
-      total: events.length,
-      callSuccess: countCallStatus(events, "success"),
-      callFailed: countCallStatus(events, "failed"),
-      callSkipped: countCallStatus(events, "skipped"),
-    }),
-    [events],
-  );
-
   const rulesById = useMemo(
     () => new Map(rules.map((rule) => [rule.id, rule])),
     [rules],
@@ -148,6 +145,20 @@ function OptionsApp() {
       return matchesSearch && matchesStatus;
     });
   }, [events, logFilter, logSearch]);
+
+  const managedApiConfigured = Boolean(getManagedApiBaseUrl());
+  const readiness = useMemo(
+    () =>
+      settingsDraft
+        ? getReadinessState({
+            events,
+            managedApiConfigured,
+            rules,
+            settings: settingsDraft,
+          })
+        : null,
+    [events, managedApiConfigured, rules, settingsDraft],
+  );
 
   async function refresh() {
     const [nextSettings, nextRules, nextEvents] = await Promise.all([
@@ -187,34 +198,225 @@ function OptionsApp() {
 
   function updateSettingsDraft(cardId: SettingsCardId, next: UserSettings) {
     setSettingsDraft(next);
+    setFieldErrors({});
     setSaveState((current) => ({ ...current, [cardId]: "idle" }));
   }
 
-  async function saveSettingsCard(cardId: SettingsCardId) {
-    if (!settings || !settingsDraft) return;
+  async function changeDeliveryMode(deliveryMode: DeliveryMode) {
+    if (!settings || !settingsDraft || settings.deliveryMode === deliveryMode) {
+      return;
+    }
 
-    setSaveState((current) => ({ ...current, [cardId]: "saving" }));
-    const nextSettings = mergeSettingsCard(settings, settingsDraft, cardId);
+    const nextSettings = { ...settings, ...settingsDraft, deliveryMode };
     await saveSettings(nextSettings);
     setSettings(nextSettings);
-    setSettingsDraft((currentDraft) =>
-      currentDraft
-        ? mergeSettingsCard(currentDraft, nextSettings, cardId)
-        : nextSettings,
+    setSettingsDraft(nextSettings);
+    setSaveState({ phone: "idle", elevenLabs: "idle" });
+    setNotice(
+      deliveryMode === "managed"
+        ? "Managed calls selected. Sign in to continue."
+        : "BYOK selected. Swan will use your local ElevenLabs settings.",
     );
-    setSaveState((current) => ({ ...current, [cardId]: "saved" }));
-    setNotice("Settings saved locally.");
+  }
+
+  async function saveSettingsCard(
+    cardId: SettingsCardId,
+    validateDelivery = false,
+  ): Promise<boolean> {
+    if (!settings || !settingsDraft) return false;
+
+    setSaveState((current) => ({ ...current, [cardId]: "saving" }));
+    try {
+      const errors = getCardFieldErrors(settingsDraft, cardId, validateDelivery);
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        setSaveState((current) => ({ ...current, [cardId]: "idle" }));
+        return false;
+      }
+
+      const nextSettings = mergeSettingsCard(settings, settingsDraft, cardId);
+      await saveSettings(nextSettings);
+      if (cardId === "phone" && nextSettings.managedAccount) {
+        await syncManagedSettings(nextSettings);
+      }
+      setSettings(nextSettings);
+      setSettingsDraft((currentDraft) =>
+        currentDraft
+          ? mergeSettingsCard(currentDraft, nextSettings, cardId)
+          : nextSettings,
+      );
+      setSaveState((current) => ({ ...current, [cardId]: "saved" }));
+      setNotice("Settings saved locally.");
+      return true;
+    } catch (error) {
+      setSaveState((current) => ({ ...current, [cardId]: "idle" }));
+      setNotice(formatManagedError(error));
+      return false;
+    }
+  }
+
+  async function syncManagedSettings(nextSettings: UserSettings) {
+    if (!nextSettings.managedAccount) return;
+    const client = createManagedClient();
+    await client.updateSettings(nextSettings.managedAccount, {
+      enabled: nextSettings.enabled,
+    });
+  }
+
+  async function startManagedOtp(phoneNumber: string) {
+    if (!settings || !settingsDraft) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      const response = await client.startOtp(phoneNumber);
+      setManagedOtpState({
+        challengeId: response.challengeId,
+        phoneNumber,
+      });
+      setNotice("Verification code sent.");
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      setManagedBusy(false);
+    }
+  }
+
+  async function verifyManagedOtp(code: string) {
+    if (!settings || !settingsDraft || !managedOtpState) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      const auth = await client.verifyOtp({
+        challengeId: managedOtpState.challengeId,
+        code,
+      });
+      const managedAccount = await client.fetchMe(auth.account);
+      const nextSettings = {
+        ...settings,
+        ...settingsDraft,
+        deliveryMode: "managed" as const,
+        managedAccount,
+      };
+      await saveSettings(nextSettings);
+      setSettings(nextSettings);
+      setSettingsDraft(nextSettings);
+      setManagedOtpState(null);
+      setNotice("Signed in for managed calls.");
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      setManagedBusy(false);
+    }
+  }
+
+  async function refreshManagedAccount() {
+    if (!settings?.managedAccount) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      const managedAccount = await client.fetchMe(settings.managedAccount);
+      await updateManagedAccount(managedAccount);
+      setNotice("Managed status refreshed.");
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      setManagedBusy(false);
+    }
+  }
+
+  async function startManagedSubscription() {
+    if (!settings?.managedAccount) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      const response = await client.createCheckout(settings.managedAccount);
+      await browser.tabs.create({ url: response.checkoutUrl });
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      setManagedBusy(false);
+    }
+  }
+
+  async function manageManagedSubscription() {
+    if (!settings?.managedAccount) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      try {
+        const response = await client.createPortal(settings.managedAccount);
+        await browser.tabs.create({ url: response.portalUrl });
+      } catch (error) {
+        if (!(error instanceof ManagedApiError) || error.status !== 404) {
+          throw error;
+        }
+        const response = await client.createCheckout(settings.managedAccount);
+        await browser.tabs.create({ url: response.checkoutUrl });
+      }
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      setManagedBusy(false);
+    }
+  }
+
+  async function signOutManagedAccount() {
+    if (!settings?.managedAccount || !settingsDraft) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      await client.logout(settings.managedAccount);
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      const nextSettings = {
+        ...settings,
+        ...settingsDraft,
+        managedAccount: null,
+      };
+      await saveSettings(nextSettings);
+      setSettings(nextSettings);
+      setSettingsDraft(nextSettings);
+      setManagedOtpState(null);
+      setManagedBusy(false);
+      setNotice("Signed out of managed calls on this browser.");
+    }
+  }
+
+  async function updateManagedAccount(managedAccount: ManagedAccount) {
+    if (!settings || !settingsDraft) return;
+
+    const nextSettings = {
+      ...settings,
+      ...settingsDraft,
+      managedAccount,
+    };
+    await saveSettings(nextSettings);
+    setSettings(nextSettings);
+    setSettingsDraft(nextSettings);
   }
 
   async function addRule() {
     const domain = normalizeDomain(newDomain);
     if (!domain) {
-      setNotice("Enter a valid domain.");
+      setDomainError("Enter a valid domain, for example reddit.com.");
       return;
     }
 
     if (rules.some((rule) => rule.domain === domain)) {
-      setNotice("That domain is already tracked.");
+      setDomainError("That domain is already tracked.");
       return;
     }
 
@@ -231,6 +433,8 @@ function OptionsApp() {
 
     setRules(nextRules);
     setNewDomain("");
+    setDomainError("");
+    setRemovedRuleUndo(null);
     await saveRules(nextRules);
     setNotice("Domain added.");
   }
@@ -240,16 +444,30 @@ function OptionsApp() {
       rule.id === ruleId ? { ...rule, enabled: !rule.enabled } : rule,
     );
     setRules(nextRules);
+    setRemovedRuleUndo(null);
     await saveRules(nextRules);
   }
 
   async function removeRule(ruleId: string) {
+    const index = rules.findIndex((rule) => rule.id === ruleId);
+    if (index < 0) return;
+
+    const removedRule = rules[index];
+    if (!removedRule) return;
+
     const nextRules = rules.filter((rule) => rule.id !== ruleId);
     setRules(nextRules);
+    setRemovedRuleUndo({ rule: removedRule, index });
+    setNotice("");
     await saveRules(nextRules);
   }
 
   async function sendTestAlert() {
+    if (readiness?.blockers.length) {
+      setNotice(readiness.blockers[0] ?? "Complete setup before testing.");
+      return;
+    }
+
     setTesting(true);
     setNotice("Sending test alert...");
 
@@ -262,9 +480,28 @@ function OptionsApp() {
     await refresh();
     setNotice(
       response.ok
-        ? "Test alert completed. Check Logs for the latest event."
+        ? "Test alert completed. Check History for the latest event."
         : response.error,
     );
+  }
+
+  async function undoRemoveRule() {
+    if (!removedRuleUndo) return;
+
+    const { index, rule } = removedRuleUndo;
+    const existing = rules.some((candidate) => candidate.id === rule.id);
+    const nextRules = existing
+      ? rules
+      : [
+          ...rules.slice(0, Math.min(index, rules.length)),
+          rule,
+          ...rules.slice(Math.min(index, rules.length)),
+        ];
+
+    setRules(nextRules);
+    setRemovedRuleUndo(null);
+    await saveRules(nextRules);
+    setNotice("Domain restored.");
   }
 
   async function importBundledData() {
@@ -306,7 +543,7 @@ function OptionsApp() {
     }
   }
 
-  if (!settings || !settingsDraft) {
+  if (!settings || !settingsDraft || !readiness) {
     return <main className="loadingShell">Loading Swan...</main>;
   }
 
@@ -362,7 +599,12 @@ function OptionsApp() {
             <button
               type="button"
               className="primaryButton"
-              disabled={testing}
+              disabled={testing || readiness.blockers.length > 0}
+              title={
+                readiness.blockers.length
+                  ? readiness.blockers.join(" ")
+                  : "Send a test alert"
+              }
               onClick={sendTestAlert}
             >
               <Send size={15} aria-hidden="true" />
@@ -378,12 +620,25 @@ function OptionsApp() {
             <GeneralPage
               bootstrapInfo={bootstrapInfo}
               importingData={importingData}
+              managedApiConfigured={managedApiConfigured}
+              managedBusy={managedBusy}
+              managedError={managedError}
+              managedOtpState={managedOtpState}
+              onChangeDeliveryMode={changeDeliveryMode}
+              readiness={readiness}
               savedSettings={settings}
               saveState={saveState}
+              fieldErrors={fieldErrors}
               settingsDraft={settingsDraft}
+              onManageManagedSubscription={manageManagedSubscription}
               onImportData={importBundledData}
+              onRefreshManagedAccount={refreshManagedAccount}
               onSaveCard={saveSettingsCard}
               onSettingsDraftChange={updateSettingsDraft}
+              onSignOutManagedAccount={signOutManagedAccount}
+              onStartManagedOtp={startManagedOtp}
+              onStartManagedSubscription={startManagedSubscription}
+              onVerifyManagedOtp={verifyManagedOtp}
             />
           ) : null}
 
@@ -391,16 +646,21 @@ function OptionsApp() {
             <DomainTrackingPage
               domainFilter={domainFilter}
               domainSearch={domainSearch}
+              domainError={domainError}
               eventCountsByRule={eventCountsByRule}
               filteredRules={filteredRules}
               newDomain={newDomain}
-              stats={domainStats}
+              removedRuleUndo={removedRuleUndo}
               onAddRule={addRule}
               onDomainFilterChange={setDomainFilter}
-              onNewDomainChange={setNewDomain}
+              onNewDomainChange={(domain) => {
+                setNewDomain(domain);
+                setDomainError("");
+              }}
               onRemoveRule={removeRule}
               onSearchChange={setDomainSearch}
               onToggleRule={toggleRule}
+              onUndoRemoveRule={undoRemoveRule}
             />
           ) : null}
 
@@ -410,7 +670,6 @@ function OptionsApp() {
               logFilter={logFilter}
               logSearch={logSearch}
               rulesById={rulesById}
-              stats={logStats}
               onFilterChange={setLogFilter}
               onRefresh={refresh}
               onSearchChange={setLogSearch}
@@ -424,24 +683,56 @@ function OptionsApp() {
 
 function GeneralPage({
   bootstrapInfo,
+  fieldErrors,
   importingData,
+  managedApiConfigured,
+  managedBusy,
+  managedError,
+  managedOtpState,
+  onChangeDeliveryMode,
   onImportData,
+  onManageManagedSubscription,
+  onRefreshManagedAccount,
   onSaveCard,
   onSettingsDraftChange,
+  onSignOutManagedAccount,
+  onStartManagedOtp,
+  onStartManagedSubscription,
+  onVerifyManagedOtp,
+  readiness,
   savedSettings,
   saveState,
   settingsDraft,
 }: {
   bootstrapInfo: BootstrapInfo;
+  fieldErrors: SettingsFieldErrors;
   importingData: boolean;
+  managedApiConfigured: boolean;
+  managedBusy: boolean;
+  managedError: string;
+  managedOtpState: ManagedOtpState;
+  onChangeDeliveryMode: (deliveryMode: DeliveryMode) => Promise<void>;
   onImportData: () => Promise<void>;
-  onSaveCard: (cardId: SettingsCardId) => Promise<void>;
+  onManageManagedSubscription: () => Promise<void>;
+  onRefreshManagedAccount: () => Promise<void>;
+  onSaveCard: (
+    cardId: SettingsCardId,
+    validateDelivery?: boolean,
+  ) => Promise<boolean>;
   onSettingsDraftChange: (cardId: SettingsCardId, settings: UserSettings) => void;
+  onSignOutManagedAccount: () => Promise<void>;
+  onStartManagedOtp: (phoneNumber: string) => Promise<void>;
+  onStartManagedSubscription: () => Promise<void>;
+  onVerifyManagedOtp: (code: string) => Promise<void>;
+  readiness: ReadinessState;
   savedSettings: UserSettings;
   saveState: Record<SettingsCardId, SaveState>;
   settingsDraft: UserSettings;
 }) {
   const phoneDirty = isSettingsCardDirty(savedSettings, settingsDraft, "phone");
+  const localControlsDirty =
+    savedSettings.enabled !== settingsDraft.enabled ||
+    savedSettings.callEnabled !== settingsDraft.callEnabled;
   const elevenLabsDirty = isSettingsCardDirty(
     savedSettings,
     settingsDraft,
@@ -453,153 +744,478 @@ function GeneralPage({
   return (
     <>
       <PageHeader
-        eyebrow="General"
-        title="Intervention settings"
-        description="Configure the voice-first intervention Swan uses when a tracked domain is detected."
-      >
-        <button
-          type="button"
-          className="secondaryButton"
-          disabled={importDisabled}
-          title={importTitle}
-          onClick={() => void onImportData()}
-        >
-          <Upload size={14} aria-hidden="true" />
-          <span>{importingData ? "Importing..." : "Import data"}</span>
-        </button>
-      </PageHeader>
+        eyebrow="Status"
+        title="Intervention setup"
+        description="Choose how Swan calls you, then keep monitoring on."
+      />
 
-      <section className="settingsGrid" aria-label="Swan configuration">
-        <SettingsCard icon={PhoneCall} title="Phone Configuration" tone="primary">
-          <div className="phoneSettingsFields">
-            <Field label="Recipient number">
-              <input
-                className="monoInput"
-                value={settingsDraft.phoneNumber}
-                placeholder="+1 (555) 000-0000"
-                onChange={(event) =>
+      <ReadinessStrip readiness={readiness} />
+
+      <section className="setupLayout" aria-label="Swan configuration">
+        <div className="setupColumn">
+          <DeliveryModePanel
+            deliveryMode={settingsDraft.deliveryMode}
+            onChangeDeliveryMode={onChangeDeliveryMode}
+          />
+
+          <SettingsCard icon={PhoneCall} title="Monitoring" tone="primary">
+            <div className="phoneSettingsToggles">
+              <ToggleRow
+                title="Voice calls"
+                description="Call when Swan intervenes"
+                checked={settingsDraft.callEnabled}
+                onChange={(checked) =>
                   onSettingsDraftChange("phone", {
                     ...settingsDraft,
-                    phoneNumber: event.currentTarget.value,
+                    callEnabled: checked,
                   })
                 }
               />
-            </Field>
-            <Field label="Cooldown minutes">
-              <input
-                className="monoInput"
-                type="number"
-                min="1"
-                value={settingsDraft.cooldownMinutes}
-                onChange={(event) =>
+              <ToggleRow
+                title="Monitoring"
+                description="Watch enabled domains"
+                checked={settingsDraft.enabled}
+                onChange={(checked) =>
                   onSettingsDraftChange("phone", {
                     ...settingsDraft,
-                    cooldownMinutes: Number(event.currentTarget.value),
+                    enabled: checked,
                   })
                 }
               />
-            </Field>
-          </div>
-          <div className="phoneSettingsToggles">
-            <ToggleRow
-              title="Start voice call"
-              description="Standard intervention channel"
-              checked={settingsDraft.callEnabled}
-              onChange={(checked) =>
-                onSettingsDraftChange("phone", {
-                  ...settingsDraft,
-                  callEnabled: checked,
-                })
-              }
+            </div>
+            <SaveCardFooter
+              dirty={localControlsDirty}
+              state={saveState.phone}
+              onSave={() => void onSaveCard("phone")}
             />
-            <ToggleRow
-              title="Enable monitoring"
-              description="Watch configured domains in this browser"
-              checked={settingsDraft.enabled}
-              onChange={(checked) =>
-                onSettingsDraftChange("phone", {
-                  ...settingsDraft,
-                  enabled: checked,
-                })
-              }
-            />
-          </div>
-          <SaveCardFooter
-            dirty={phoneDirty}
-            state={saveState.phone}
-            onSave={() => void onSaveCard("phone")}
-          />
-        </SettingsCard>
+          </SettingsCard>
+        </div>
 
-        <SettingsCard
-          icon={AudioLines}
-          title="ElevenLabs Voice Agent"
-          tag="Standard"
-        >
-          <Field label="API key">
-            <input
-              className="monoInput"
-              type="password"
-              value={settingsDraft.elevenLabs.apiKey}
-              onChange={(event) =>
-                onSettingsDraftChange("elevenLabs", {
-                  ...settingsDraft,
-                  elevenLabs: {
-                    ...settingsDraft.elevenLabs,
-                    apiKey: event.currentTarget.value,
-                  },
-                })
-              }
+        <div className="setupColumn">
+          {settingsDraft.deliveryMode === "byok" ? (
+            <SettingsCard icon={AudioLines} title="BYOK calls" tag="Local">
+              <Field label="Recipient number">
+                <input
+                  className="monoInput"
+                  aria-invalid={fieldErrors.phoneNumber ? "true" : undefined}
+                  value={settingsDraft.phoneNumber}
+                  placeholder="+1 (555) 000-0000"
+                  onChange={(event) =>
+                    onSettingsDraftChange("phone", {
+                      ...settingsDraft,
+                      phoneNumber: event.currentTarget.value,
+                    })
+                  }
+                />
+                <FieldError message={fieldErrors.phoneNumber} />
+              </Field>
+              <Field label="API key">
+                <input
+                  className="monoInput"
+                  aria-invalid={fieldErrors.apiKey ? "true" : undefined}
+                  type="password"
+                  value={settingsDraft.elevenLabs.apiKey}
+                  onChange={(event) =>
+                    onSettingsDraftChange("elevenLabs", {
+                      ...settingsDraft,
+                      elevenLabs: {
+                        ...settingsDraft.elevenLabs,
+                        apiKey: event.currentTarget.value,
+                      },
+                    })
+                  }
+                />
+                <FieldError message={fieldErrors.apiKey} />
+              </Field>
+              <Field label="Agent ID">
+                <input
+                  className="monoInput"
+                  aria-invalid={fieldErrors.agentId ? "true" : undefined}
+                  value={settingsDraft.elevenLabs.agentId}
+                  onChange={(event) =>
+                    onSettingsDraftChange("elevenLabs", {
+                      ...settingsDraft,
+                      elevenLabs: {
+                        ...settingsDraft.elevenLabs,
+                        agentId: event.currentTarget.value,
+                      },
+                    })
+                  }
+                />
+                <FieldError message={fieldErrors.agentId} />
+              </Field>
+              <Field label="Agent phone number ID">
+                <input
+                  className="monoInput"
+                  aria-invalid={fieldErrors.agentPhoneNumberId ? "true" : undefined}
+                  value={settingsDraft.elevenLabs.agentPhoneNumberId}
+                  placeholder="phnum_..."
+                  onChange={(event) =>
+                    onSettingsDraftChange("elevenLabs", {
+                      ...settingsDraft,
+                      elevenLabs: {
+                        ...settingsDraft.elevenLabs,
+                        agentPhoneNumberId: event.currentTarget.value,
+                      },
+                    })
+                  }
+                />
+                <FieldError message={fieldErrors.agentPhoneNumberId} />
+              </Field>
+              <p className="helperText">
+                Your ElevenLabs credentials stay in this browser. Managed mode
+                does not use them.
+              </p>
+              <SaveCardFooter
+                dirty={phoneDirty || elevenLabsDirty}
+                state={
+                  phoneDirty && !elevenLabsDirty
+                    ? saveState.phone
+                    : saveState.elevenLabs
+                }
+                onSave={() => {
+                  void onSaveCard("phone", true).then((saved) => {
+                    if (saved) void onSaveCard("elevenLabs", true);
+                  });
+                }}
+              />
+            </SettingsCard>
+          ) : (
+            <ManagedAccountCard
+              account={settingsDraft.managedAccount}
+              busy={managedBusy}
+              error={managedError}
+              managedApiConfigured={managedApiConfigured}
+              otpState={managedOtpState}
+              onManageSubscription={onManageManagedSubscription}
+              onRefreshAccount={onRefreshManagedAccount}
+              onSignOut={onSignOutManagedAccount}
+              onStartOtp={onStartManagedOtp}
+              onStartSubscription={onStartManagedSubscription}
+              onVerifyOtp={onVerifyManagedOtp}
             />
-          </Field>
-          <Field label="Agent ID">
-            <input
-              className="monoInput"
-              value={settingsDraft.elevenLabs.agentId}
-              onChange={(event) =>
-                onSettingsDraftChange("elevenLabs", {
-                  ...settingsDraft,
-                  elevenLabs: {
-                    ...settingsDraft.elevenLabs,
-                    agentId: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <Field label="Agent phone number ID">
-            <input
-              className="monoInput"
-              value={settingsDraft.elevenLabs.agentPhoneNumberId}
-              placeholder="phnum_..."
-              onChange={(event) =>
-                onSettingsDraftChange("elevenLabs", {
-                  ...settingsDraft,
-                  elevenLabs: {
-                    ...settingsDraft.elevenLabs,
-                    agentPhoneNumberId: event.currentTarget.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <p className="helperText">
-            Connect or import a phone number inside ElevenLabs first, then use
-            the resulting phone number ID here.
-          </p>
-          <SaveCardFooter
-            dirty={elevenLabsDirty}
-            state={saveState.elevenLabs}
-            onSave={() => void onSaveCard("elevenLabs")}
-          />
-        </SettingsCard>
-
+          )}
+        </div>
       </section>
+
+      {settingsDraft.deliveryMode === "byok" ? (
+        <details className="utilityPanel">
+          <summary>Import setup file</summary>
+          <p>Use this only for a local build that includes config.yaml.</p>
+          <button
+            type="button"
+            className="secondaryButton"
+            disabled={importDisabled}
+            title={importTitle}
+            onClick={() => void onImportData()}
+          >
+            <Upload size={14} aria-hidden="true" />
+            <span>{importingData ? "Importing..." : "Import data"}</span>
+          </button>
+        </details>
+      ) : null}
     </>
   );
 }
 
+function ReadinessStrip({ readiness }: { readiness: ReadinessState }) {
+  const visibleItems = readiness.items.filter((item) =>
+    ["mode", "recipient", "provider", "domains"].includes(item.id),
+  );
+  const description = getReadinessDescription(readiness);
+
+  return (
+    <section
+      className={`readinessStrip ${readiness.tone}`}
+      aria-label="Setup readiness"
+      aria-live="polite"
+    >
+      <div className="readinessSummary">
+        <span>Status</span>
+        <div className="readinessTitle">
+          <span className="readinessDot" aria-hidden="true" />
+          <strong>{readiness.summary}</strong>
+        </div>
+        <p>{description}</p>
+      </div>
+      <div className="readinessItems" aria-label="Readiness checks">
+        {visibleItems.map((item) => (
+          <div className={`readinessItem ${item.tone}`} key={item.id}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+            {item.detail ? <p className="srOnly">{item.detail}</p> : null}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function getReadinessDescription(readiness: ReadinessState): string {
+  if (readiness.blockers.length === 0) return "Ready for a test alert.";
+
+  const provider = readiness.items.find((item) => item.id === "provider");
+  if (provider?.label === "Provider" && provider.tone === "blocked") {
+    return "Configure ElevenLabs.";
+  }
+
+  return readiness.blockers[0] ?? "Complete setup.";
+}
+
+function DeliveryModePanel({
+  deliveryMode,
+  onChangeDeliveryMode,
+}: {
+  deliveryMode: DeliveryMode;
+  onChangeDeliveryMode: (deliveryMode: DeliveryMode) => Promise<void>;
+}) {
+  return (
+    <section className="deliveryPanel" aria-labelledby="delivery-mode">
+      <div className="deliveryPanelHeader">
+        <div>
+          <h2 id="delivery-mode">Delivery mode</h2>
+          <p>
+            Choose who places intervention calls. Domains and history stay local.
+          </p>
+        </div>
+      </div>
+      <fieldset className="modeOptions" aria-label="Delivery mode">
+        <legend className="srOnly">Delivery mode</legend>
+        <ModeOption
+          active={deliveryMode === "byok"}
+          value="byok"
+          description="Use your ElevenLabs account. Credentials stay in this browser."
+          label="Use my keys"
+          onChange={() => void onChangeDeliveryMode("byok")}
+        />
+        <ModeOption
+          active={deliveryMode === "managed"}
+          value="managed"
+          description="Sign in and let Swan place calls for this browser."
+          label="Use managed calls"
+          onChange={() => void onChangeDeliveryMode("managed")}
+        />
+      </fieldset>
+    </section>
+  );
+}
+
+function ModeOption({
+  active,
+  description,
+  label,
+  onChange,
+  value,
+}: {
+  active: boolean;
+  description: string;
+  label: string;
+  onChange: () => void;
+  value: DeliveryMode;
+}) {
+  return (
+    <label
+      className={active ? "modeOption active" : "modeOption"}
+    >
+      <input
+        type="radio"
+        name="deliveryMode"
+        checked={active}
+        value={value}
+        onChange={onChange}
+      />
+      <span className="modeOptionTop">
+        <strong>{label}</strong>
+      </span>
+      <span>{description}</span>
+    </label>
+  );
+}
+
+function ManagedAccountCard({
+  account,
+  busy,
+  error,
+  managedApiConfigured,
+  onManageSubscription,
+  onRefreshAccount,
+  onSignOut,
+  onStartOtp,
+  onStartSubscription,
+  onVerifyOtp,
+  otpState,
+}: {
+  account: ManagedAccount | null;
+  busy: boolean;
+  error: string;
+  managedApiConfigured: boolean;
+  onManageSubscription: () => Promise<void>;
+  onRefreshAccount: () => Promise<void>;
+  onSignOut: () => Promise<void>;
+  onStartOtp: (phoneNumber: string) => Promise<void>;
+  onStartSubscription: () => Promise<void>;
+  onVerifyOtp: (code: string) => Promise<void>;
+  otpState: ManagedOtpState;
+}) {
+  const [phoneNumber, setPhoneNumber] = useState(account?.phoneNumber ?? "");
+  const [code, setCode] = useState("");
+  const [localError, setLocalError] = useState("");
+  const active = Boolean(account?.entitlementActive);
+
+  return (
+    <SettingsCard
+      icon={CheckCircle2}
+      title="Managed calls"
+      tag={account ? managedAccountTag(account) : "Sign in"}
+    >
+      {!managedApiConfigured ? (
+        <p className="managedNotice error">
+          Managed calls are not available in this build. Rebuild with
+          WXT_SWAN_MANAGED_API_BASE_URL.
+        </p>
+      ) : null}
+
+      {account ? (
+        <>
+          <div className="managedSummary">
+            <div>
+              <span>Phone</span>
+              <strong>{account.phoneNumber}</strong>
+            </div>
+            <div>
+              <span>Access</span>
+              <strong className={active ? "stateText enabled" : "stateText disabled"}>
+                {active ? "Active" : "Inactive"}
+              </strong>
+            </div>
+            <div>
+              <span>Plan</span>
+              <strong>{account.subscriptionStatus ?? "No subscription"}</strong>
+            </div>
+          </div>
+          <p className="helperText">
+            Managed calls send only event metadata when Swan intervenes. Your
+            domain list and BYOK keys stay local.
+          </p>
+          {account.currentPeriodEnd ? (
+            <p className="domainNote">
+              Current period ends {new Date(account.currentPeriodEnd).toLocaleDateString()}.
+            </p>
+          ) : null}
+          {error ? <p className="managedNotice error">{error}</p> : null}
+          <div className="managedActions">
+            <button
+              type="button"
+              className="primaryButton"
+              disabled={busy}
+              onClick={() => void onStartSubscription()}
+            >
+              <span>{active ? "Update subscription" : "Start subscription"}</span>
+            </button>
+            <button
+              type="button"
+              className="secondaryButton"
+              disabled={busy}
+              onClick={() => void onManageSubscription()}
+            >
+              <span>Open billing</span>
+            </button>
+            <button
+              type="button"
+              className="secondaryButton"
+              disabled={busy}
+              onClick={() => void onRefreshAccount()}
+            >
+              <RefreshCw size={14} aria-hidden="true" />
+              <span>Refresh status</span>
+            </button>
+            <button
+              type="button"
+              className="textButton"
+              disabled={busy}
+              onClick={() => void onSignOut()}
+            >
+              Sign out
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <Field label="Managed phone number">
+            <input
+              className="monoInput"
+              aria-invalid={localError ? "true" : undefined}
+              value={phoneNumber}
+              disabled={!managedApiConfigured || busy}
+              placeholder="+1 (555) 000-0000"
+              onChange={(event) => {
+                setPhoneNumber(event.currentTarget.value);
+                setLocalError("");
+              }}
+            />
+            <FieldError message={localError && !otpState ? localError : ""} />
+          </Field>
+          <button
+            type="button"
+            className="secondaryButton"
+            disabled={!managedApiConfigured || busy || phoneNumber.trim().length === 0}
+            onClick={() => {
+              const validation = validatePhoneNumber(phoneNumber, "Managed phone number");
+              if (validation) {
+                setLocalError(validation);
+                return;
+              }
+              void onStartOtp(phoneNumber);
+            }}
+          >
+            <span>{busy && !otpState ? "Sending..." : "Send verification code"}</span>
+          </button>
+          {otpState ? (
+            <>
+              <Field label="Verification code">
+                <input
+                  className="monoInput"
+                  aria-invalid={localError ? "true" : undefined}
+                  value={code}
+                  disabled={busy}
+                  inputMode="numeric"
+                  placeholder="000000"
+                  onChange={(event) => {
+                    setCode(event.currentTarget.value);
+                    setLocalError("");
+                  }}
+                />
+                <FieldError message={localError && otpState ? localError : ""} />
+              </Field>
+              <button
+                type="button"
+                className="primaryButton"
+                disabled={busy || code.trim().length === 0}
+                onClick={() => {
+                  if (!/^\d{4,8}$/.test(code.trim())) {
+                    setLocalError("Enter the numeric verification code.");
+                    return;
+                  }
+                  void onVerifyOtp(code);
+                }}
+              >
+                <span>{busy ? "Verifying..." : "Verify and sign in"}</span>
+              </button>
+            </>
+          ) : null}
+          <p className="helperText">
+            Managed calls use this phone number. BYOK calls keep their own
+            recipient.
+          </p>
+          {error ? <p className="managedNotice error">{error}</p> : null}
+        </>
+      )}
+    </SettingsCard>
+  );
+}
+
 function DomainTrackingPage({
+  domainError,
   domainFilter,
   domainSearch,
   eventCountsByRule,
@@ -611,8 +1227,10 @@ function DomainTrackingPage({
   onRemoveRule,
   onSearchChange,
   onToggleRule,
-  stats,
+  onUndoRemoveRule,
+  removedRuleUndo,
 }: {
+  domainError: string;
   domainFilter: DomainFilter;
   domainSearch: string;
   eventCountsByRule: Map<string, number>;
@@ -624,50 +1242,48 @@ function DomainTrackingPage({
   onRemoveRule: (ruleId: string) => Promise<void>;
   onSearchChange: (query: string) => void;
   onToggleRule: (ruleId: string) => Promise<void>;
-  stats: { total: number; enabled: number; custom: number; seed: number };
+  onUndoRemoveRule: () => Promise<void>;
+  removedRuleUndo: RemovedRuleUndo;
 }) {
   const domainFilters: Array<{ label: string; value: DomainFilter }> = [
     { label: "All", value: "all" },
     { label: "Enabled", value: "enabled" },
     { label: "Disabled", value: "disabled" },
     { label: "Custom", value: "user" },
-    { label: "Seed", value: "seed" },
+    { label: "Built-in", value: "seed" },
   ];
 
   return (
     <>
       <PageHeader
-        eyebrow="Domain Tracking"
-        title="Tracked domains"
-        description="Manage the configured list Swan watches. Subdomains are matched automatically."
+        eyebrow="Domains"
+        title="Watched domains"
+        description="Swan watches enabled domains and their subdomains."
       />
-
-      <div className="summaryStrip" aria-label="Domain summary">
-        <SummaryItem label="Total domains" value={stats.total} />
-        <SummaryItem label="Enabled" value={stats.enabled} />
-        <SummaryItem label="Custom" value={stats.custom} />
-        <SummaryItem label="Seed" value={stats.seed} />
-      </div>
 
       <section className="dataPanel" aria-labelledby="tracked-domains">
         <div className="panelHeader">
           <div className="titleWithIcon">
             <Globe2 size={18} aria-hidden="true" />
-            <h2 id="tracked-domains">Domain Tracking</h2>
+            <h2 id="tracked-domains">Domain list</h2>
           </div>
         </div>
 
         <div className="panelBody">
           <div className="domainForm">
-            <input
-              className="monoInput"
-              value={newDomain}
-              placeholder="domain.com"
-              onChange={(event) => onNewDomainChange(event.currentTarget.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void onAddRule();
-              }}
-            />
+            <Field label="Domain">
+              <input
+                className="monoInput"
+                aria-invalid={domainError ? "true" : undefined}
+                value={newDomain}
+                placeholder="domain.com"
+                onChange={(event) => onNewDomainChange(event.currentTarget.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void onAddRule();
+                }}
+              />
+              <FieldError message={domainError} />
+            </Field>
             <button
               type="button"
               className="secondaryButton"
@@ -701,10 +1317,20 @@ function DomainTrackingPage({
           </div>
 
           <p className="domainNote">
-            Swan v0 detects configured domains only. It ships with a small seed
-            list, matches subdomains, and lets you add, disable, or remove rules
-            here.
+            Add the root domain only. Swan matches subdomains automatically.
           </p>
+          {removedRuleUndo ? (
+            <div className="undoNotice" aria-live="polite">
+              <span>Removed {removedRuleUndo.rule.domain}.</span>
+              <button
+                type="button"
+                className="textButton"
+                onClick={() => void onUndoRemoveRule()}
+              >
+                Undo
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className="tableWrap">
@@ -784,7 +1410,6 @@ function LogsPage({
   onRefresh,
   onSearchChange,
   rulesById,
-  stats,
 }: {
   events: UrgeEvent[];
   logFilter: LogFilter;
@@ -793,15 +1418,10 @@ function LogsPage({
   onRefresh: () => Promise<void>;
   onSearchChange: (query: string) => void;
   rulesById: Map<string, DetectionRule>;
-  stats: {
-    total: number;
-    callSuccess: number;
-    callFailed: number;
-    callSkipped: number;
-  };
 }) {
   const logFilters: Array<{ label: string; value: LogFilter }> = [
     { label: "All", value: "all" },
+    { label: "Accepted", value: "accepted" },
     { label: "Success", value: "success" },
     { label: "Failed", value: "failed" },
     { label: "Skipped", value: "skipped" },
@@ -811,9 +1431,9 @@ function LogsPage({
   return (
     <>
       <PageHeader
-        eyebrow="Logs"
-        title="Detection history"
-        description="Review browser detections and the call outcomes Swan recorded locally."
+        eyebrow="History"
+        title="Event history"
+        description="Review detections and call results stored in this browser."
       >
         <button
           type="button"
@@ -825,21 +1445,11 @@ function LogsPage({
         </button>
       </PageHeader>
 
-      <div className="summaryStrip logSummary" aria-label="Log summary">
-        <SummaryItem label="Events" value={stats.total} />
-        <ChannelSummary
-          label="Calls"
-          success={stats.callSuccess}
-          failed={stats.callFailed}
-          skipped={stats.callSkipped}
-        />
-      </div>
-
       <section className="dataPanel" aria-labelledby="detection-logs">
         <div className="panelHeader">
           <div className="titleWithIcon">
             <List size={18} aria-hidden="true" />
-            <h2 id="detection-logs">Logs</h2>
+            <h2 id="detection-logs">Events</h2>
           </div>
         </div>
 
@@ -847,14 +1457,14 @@ function LogsPage({
           <div className="filterBar">
             <label className="searchBox">
               <Search size={15} aria-hidden="true" />
-              <span className="srOnly">Search logs</span>
+              <span className="srOnly">Search history</span>
               <input
                 value={logSearch}
                 placeholder="Search by domain"
                 onChange={(event) => onSearchChange(event.currentTarget.value)}
               />
             </label>
-            <div className="filterChips" aria-label="Log filters">
+            <div className="filterChips" aria-label="History filters">
               {logFilters.map((filter) => (
                 <FilterButton
                   active={logFilter === filter.value}
@@ -881,7 +1491,7 @@ function LogsPage({
               {events.length === 0 ? (
                 <tr>
                   <td className="emptyState" colSpan={4}>
-                    Logs appear after a test alert or detected tracked domain.
+                    Events appear after a test alert or detected watched domain.
                   </td>
                 </tr>
               ) : (
@@ -945,55 +1555,6 @@ function PageHeader({
   );
 }
 
-function SummaryItem({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="summaryItem">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function ChannelSummary({
-  failed,
-  label,
-  skipped,
-  success,
-}: {
-  failed: number;
-  label: string;
-  skipped: number;
-  success: number;
-}) {
-  return (
-    <div className="channelSummary">
-      <span>{label}</span>
-      <div className="channelSummaryValues">
-        <StatusCount label="Success" state="success" value={success} />
-        <StatusCount label="Failed" state="failed" value={failed} />
-        <StatusCount label="Skipped" state="skipped" value={skipped} />
-      </div>
-    </div>
-  );
-}
-
-function StatusCount({
-  label,
-  state,
-  value,
-}: {
-  label: string;
-  state: AlertStatus["state"];
-  value: number;
-}) {
-  return (
-    <span className={`statusCount ${state}`}>
-      <strong>{value}</strong>
-      {label}
-    </span>
-  );
-}
-
 function FilterButton({
   active,
   label,
@@ -1006,6 +1567,7 @@ function FilterButton({
   return (
     <button
       type="button"
+      aria-pressed={active}
       className={active ? "filterChip active" : "filterChip"}
       onClick={onClick}
     >
@@ -1089,6 +1651,15 @@ function Field({
   );
 }
 
+function FieldError({ message }: { message?: string | undefined }) {
+  if (!message) return null;
+  return (
+    <p className="fieldError" role="alert">
+      {message}
+    </p>
+  );
+}
+
 function ToggleRow({
   checked,
   description,
@@ -1168,6 +1739,7 @@ function StatusCell({ status }: { status: AlertStatus }) {
 
 function getStatusIcon(state: AlertStatus["state"]): LucideIcon {
   if (state === "success") return CheckCircle2;
+  if (state === "accepted") return Clock;
   if (state === "failed") return CircleAlert;
   if (state === "skipped") return Ban;
   return Clock;
@@ -1175,6 +1747,7 @@ function getStatusIcon(state: AlertStatus["state"]): LucideIcon {
 
 function formatStatus(status: AlertStatus): string {
   if (status.state === "success") return "Success";
+  if (status.state === "accepted") return "Accepted";
   if (status.state === "failed") return "Failed";
   if (status.state === "skipped") return "Skipped";
   return "Pending";
@@ -1182,6 +1755,7 @@ function formatStatus(status: AlertStatus): string {
 
 function formatStatusDetail(status: AlertStatus): string {
   if (status.state === "success") return status.providerId ?? "";
+  if (status.state === "accepted") return status.providerId ?? "";
   if (status.state === "failed") return status.error;
   if (status.state === "skipped") return status.reason;
   return "";
@@ -1202,8 +1776,44 @@ function getImportButtonTitle(info: BootstrapInfo): string {
   return "Import bundled config.yaml data.";
 }
 
-function countCallStatus(events: UrgeEvent[], state: AlertStatus["state"]): number {
-  return events.filter((event) => event.callStatus.state === state).length;
+function createManagedClient(): ManagedClient {
+  return new ManagedClient();
+}
+
+function formatManagedError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return "Managed request failed.";
+}
+
+function managedAccountTag(account: ManagedAccount): string {
+  if (account.entitlementActive) return "Active";
+  if (account.subscriptionStatus) return account.subscriptionStatus;
+  return "Inactive";
+}
+
+function getCardFieldErrors(
+  settings: UserSettings,
+  cardId: SettingsCardId,
+  validateDelivery: boolean,
+): SettingsFieldErrors {
+  const errors: SettingsFieldErrors = {};
+
+  if (!validateDelivery || settings.deliveryMode !== "byok") {
+    return errors;
+  }
+
+  const deliveryErrors = getSettingsFieldErrors(settings);
+  if (cardId === "phone") {
+    if (deliveryErrors.phoneNumber) errors.phoneNumber = deliveryErrors.phoneNumber;
+    return errors;
+  }
+
+  if (deliveryErrors.apiKey) errors.apiKey = deliveryErrors.apiKey;
+  if (deliveryErrors.agentId) errors.agentId = deliveryErrors.agentId;
+  if (deliveryErrors.agentPhoneNumberId) {
+    errors.agentPhoneNumberId = deliveryErrors.agentPhoneNumberId;
+  }
+  return errors;
 }
 
 function isSettingsCardDirty(
@@ -1215,7 +1825,6 @@ function isSettingsCardDirty(
     return (
       saved.enabled !== draft.enabled ||
       saved.phoneNumber !== draft.phoneNumber ||
-      saved.cooldownMinutes !== draft.cooldownMinutes ||
       saved.callEnabled !== draft.callEnabled
     );
   }
@@ -1238,7 +1847,6 @@ function mergeSettingsCard(
       ...saved,
       enabled: draft.enabled,
       phoneNumber: draft.phoneNumber,
-      cooldownMinutes: draft.cooldownMinutes,
       callEnabled: draft.callEnabled,
     };
   }

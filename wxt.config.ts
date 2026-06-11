@@ -1,5 +1,9 @@
 import { defineConfig } from "wxt";
 
+const managedApiHostPermission = getManagedApiHostPermission(
+  process.env.WXT_SWAN_MANAGED_API_BASE_URL,
+);
+
 export default defineConfig({
   outDir: "output",
   modules: ["@wxt-dev/module-react"],
@@ -10,7 +14,10 @@ export default defineConfig({
     homepage_url: "https://swan-oss.com/docs",
     ...(browser === "firefox" ? {} : { incognito: "split" as const }),
     permissions: ["storage", "webNavigation"],
-    host_permissions: ["https://api.elevenlabs.io/*"],
+    host_permissions: [
+      "https://api.elevenlabs.io/*",
+      ...(managedApiHostPermission ? [managedApiHostPermission] : []),
+    ],
     web_accessible_resources:
       browser === "firefox"
         ? ["intervention.html", "assets/*", "chunks/*"]
@@ -53,3 +60,15 @@ export default defineConfig({
       : {}),
   }),
 });
+
+function getManagedApiHostPermission(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const url = new URL(trimmed);
+  if (!["http:", "https:"].includes(url.protocol)) {
+    throw new Error("WXT_SWAN_MANAGED_API_BASE_URL must be an HTTP(S) URL");
+  }
+
+  return `${url.origin}/*`;
+}

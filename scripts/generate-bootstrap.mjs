@@ -42,7 +42,6 @@ export function buildBootstrapFromConfig(config, generatedAt = new Date()) {
   const data = {};
 
   assignString(config, "phoneNumber", settings);
-  assignNumber(config, "cooldownMinutes", settings);
   assignBoolean(config, "monitoringEnabled", settings, "enabled");
   assignBoolean(config, "callEnabled", settings);
 
@@ -113,15 +112,6 @@ function assignString(source, sourceKey, target, targetKey = sourceKey) {
   if (value == null) return;
   if (typeof value !== "string") {
     throw new Error(`${sourceKey} must be a string.`);
-  }
-  target[targetKey] = value;
-}
-
-function assignNumber(source, sourceKey, target, targetKey = sourceKey) {
-  const value = source[sourceKey];
-  if (value == null) return;
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`${sourceKey} must be a number.`);
   }
   target[targetKey] = value;
 }

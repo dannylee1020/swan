@@ -16,6 +16,7 @@ const outputDir = join(rootDir, "output", "chrome-mv3");
 const expectedPermissions = ["storage", "webNavigation"];
 const expectedHostPermissions = [
   "https://api.elevenlabs.io/*",
+  ...managedHostPermissions(process.env.WXT_SWAN_MANAGED_API_BASE_URL),
 ];
 const expectedIcons = [
   "icons/icon-16.png",
@@ -43,6 +44,13 @@ function sameSet(actual, expected) {
     actual.length === expected.length &&
     expected.every((value) => actual.includes(value))
   );
+}
+
+function managedHostPermissions(value) {
+  const trimmed = value?.trim();
+  if (!trimmed) return [];
+  const url = new URL(trimmed);
+  return [`${url.origin}/*`];
 }
 
 function hasExpectedWebAccessibleResources(manifest) {

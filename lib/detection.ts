@@ -16,21 +16,6 @@ export function findMatchingRule(
   return rule ? { domain, rule } : null;
 }
 
-export function shouldAlert(
-  event: Pick<UrgeEvent, "domain" | "timestamp">,
-  previousEvents: UrgeEvent[],
-  cooldownMinutes: number,
-): boolean {
-  const cooldownMs = cooldownMinutes * 60 * 1000;
-  const eventTime = Date.parse(event.timestamp);
-
-  return !previousEvents.some((previous) => {
-    if (previous.domain !== event.domain) return false;
-    const previousTime = Date.parse(previous.timestamp);
-    return eventTime - previousTime >= 0 && eventTime - previousTime < cooldownMs;
-  });
-}
-
 export function createUrgeEvent(domain: string, ruleId: string): UrgeEvent {
   const id =
     typeof crypto !== "undefined" && "randomUUID" in crypto

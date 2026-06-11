@@ -101,7 +101,7 @@ Use [Provider setup](https://swan-oss.com/docs/provider-setup) for the full Elev
 
 Settings, rules, provider credentials, and logs are stored in browser extension local storage. Treat Swan v0 as browser-local software that uses a provider account you control, not a managed production secret store.
 
-Swan does not send data to any Swan-operated server. Alert delivery sends the minimum needed request data to ElevenLabs for the conversational phone call. ElevenLabs may store call, billing, and diagnostic records according to its own policies.
+In BYOK mode, Swan does not send data to any Swan-operated server. Alert delivery sends the minimum needed request data to ElevenLabs for the conversational phone call. In Swan Managed mode, the extension sends only the matched intervention event needed for managed call delivery and subscription checks. Providers and Swan Managed may store call, billing, and diagnostic records according to their own policies.
 
 The software is open source, but phone calls are not free to operate. BYOK (Bring Your Own Key).
 

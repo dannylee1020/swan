@@ -1,6 +1,12 @@
 import { browser, type Browser } from "wxt/browser";
 import { defaultSettings, seedRules } from "./defaults";
-import type { DetectionRule, StorageShape, UrgeEvent, UserSettings } from "./types";
+import type {
+  DetectionRule,
+  ManagedAccount,
+  StorageShape,
+  UrgeEvent,
+  UserSettings,
+} from "./types";
 
 const EVENTS_LIMIT = 100;
 
@@ -99,11 +105,11 @@ function normalizeSettings(input: unknown): UserSettings {
     ...defaultSettings,
     enabled:
       typeof saved.enabled === "boolean" ? saved.enabled : defaultSettings.enabled,
+    deliveryMode:
+      saved.deliveryMode === "managed" || saved.deliveryMode === "byok"
+        ? saved.deliveryMode
+        : defaultSettings.deliveryMode,
     phoneNumber: readString(saved.phoneNumber) || defaultSettings.phoneNumber,
-    cooldownMinutes:
-      typeof saved.cooldownMinutes === "number"
-        ? saved.cooldownMinutes
-        : defaultSettings.cooldownMinutes,
     callEnabled:
       typeof saved.callEnabled === "boolean"
         ? saved.callEnabled
@@ -112,6 +118,48 @@ function normalizeSettings(input: unknown): UserSettings {
       ...defaultSettings.elevenLabs,
       ...savedElevenLabs,
     },
+    managedAccount: normalizeManagedAccount(saved.managedAccount),
+  };
+}
+
+function normalizeManagedAccount(input: unknown): ManagedAccount | null {
+  if (!isRecord(input)) return null;
+
+  const userId = readString(input.userId);
+  const phoneNumber = readString(input.phoneNumber);
+  const sessionToken = readString(input.sessionToken);
+  const eventIngestToken = readString(input.eventIngestToken);
+  const refreshToken = readString(input.refreshToken);
+  const expiresAt = readString(input.expiresAt);
+
+  if (
+    !userId ||
+    !phoneNumber ||
+    !sessionToken ||
+    !eventIngestToken ||
+    !refreshToken ||
+    !expiresAt
+  ) {
+    return null;
+  }
+
+  return {
+    userId,
+    phoneNumber,
+    sessionToken,
+    eventIngestToken,
+    refreshToken,
+    expiresAt,
+    entitlementActive:
+      typeof input.entitlementActive === "boolean"
+        ? input.entitlementActive
+        : false,
+    subscriptionStatus:
+      typeof input.subscriptionStatus === "string"
+        ? input.subscriptionStatus
+        : null,
+    currentPeriodEnd:
+      typeof input.currentPeriodEnd === "string" ? input.currentPeriodEnd : null,
   };
 }
 
@@ -151,6 +199,9 @@ function hasLegacySmsStatus(event: unknown): boolean {
 function isAlertStatus(value: unknown): value is UrgeEvent["callStatus"] {
   if (!isRecord(value) || typeof value.state !== "string") return false;
   if (value.state === "pending") return true;
+  if (value.state === "accepted") {
+    return value.providerId === undefined || typeof value.providerId === "string";
+  }
   if (value.state === "skipped") return typeof value.reason === "string";
   if (value.state === "success") {
     return value.providerId === undefined || typeof value.providerId === "string";

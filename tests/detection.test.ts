@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { findMatchingRule, shouldAlert } from "../lib/detection";
-import type { DetectionRule, UrgeEvent } from "../lib/types";
+import { findMatchingRule } from "../lib/detection";
+import type { DetectionRule } from "../lib/types";
 
 const rule: DetectionRule = {
   id: "rule:example",
@@ -23,29 +23,4 @@ describe("detection", () => {
     ).toBeNull();
   });
 
-  it("suppresses repeat alerts inside cooldown", () => {
-    const previous: UrgeEvent = {
-      id: "event:1",
-      timestamp: "2026-05-20T10:00:00.000Z",
-      domain: "example.com",
-      ruleId: rule.id,
-      trigger: "navigation",
-      callStatus: { state: "success" },
-    };
-
-    expect(
-      shouldAlert(
-        { domain: "example.com", timestamp: "2026-05-20T10:05:00.000Z" },
-        [previous],
-        10,
-      ),
-    ).toBe(false);
-    expect(
-      shouldAlert(
-        { domain: "example.com", timestamp: "2026-05-20T10:11:00.000Z" },
-        [previous],
-        10,
-      ),
-    ).toBe(true);
-  });
 });

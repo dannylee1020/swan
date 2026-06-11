@@ -1,8 +1,8 @@
-import type { AlertContext, CallProvider, ProviderResult } from "../types";
+import type { AlertContext, AlertStatus, CallProvider } from "../types";
 import { selectOpeningVariant } from "../opening-variants";
 
 export class ElevenLabsCallProvider implements CallProvider {
-  async start({ event, settings }: AlertContext): Promise<ProviderResult> {
+  async start({ event, settings }: AlertContext): Promise<AlertStatus> {
     const { apiKey, agentId, agentPhoneNumberId } = settings.elevenLabs;
     if (!settings.phoneNumber || !apiKey || !agentId || !agentPhoneNumberId) {
       throw new Error("ElevenLabs call is not configured");
@@ -51,10 +51,10 @@ export class ElevenLabsCallProvider implements CallProvider {
       );
     }
 
-    return payload.conversation_id
-      ? { providerId: payload.conversation_id }
-      : payload.callSid
-        ? { providerId: payload.callSid }
-        : {};
+    const providerId = payload.conversation_id ?? payload.callSid;
+    return {
+      state: "success",
+      ...(providerId ? { providerId } : {}),
+    };
   }
 }

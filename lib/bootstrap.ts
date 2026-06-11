@@ -4,7 +4,6 @@ import type { DetectionRule, UserSettings } from "./types";
 export interface BootstrapSettings {
   enabled?: boolean;
   phoneNumber?: string;
-  cooldownMinutes?: number;
   callEnabled?: boolean;
   elevenLabs?: Partial<UserSettings["elevenLabs"]>;
 }
@@ -108,9 +107,6 @@ function mergeBootstrapSettings(
     ...(settings.phoneNumber !== undefined
       ? { phoneNumber: settings.phoneNumber }
       : {}),
-    ...(settings.cooldownMinutes !== undefined
-      ? { cooldownMinutes: settings.cooldownMinutes }
-      : {}),
     ...(settings.callEnabled !== undefined
       ? { callEnabled: settings.callEnabled }
       : {}),
@@ -165,7 +161,6 @@ function readBootstrapSettings(input: unknown): BootstrapSettings | undefined {
   const target = settings as Record<string, unknown>;
   readBoolean(input, "enabled", target);
   readString(input, "phoneNumber", target);
-  readNumber(input, "cooldownMinutes", target);
   readBoolean(input, "callEnabled", target);
 
   const elevenLabs = readProviderSettings(input.elevenLabs, [
@@ -219,19 +214,6 @@ function readString(
   const value = source[key];
   if (value == null) return;
   if (typeof value !== "string") throw new Error(`${key} must be a string.`);
-  target[key] = value;
-}
-
-function readNumber(
-  source: Record<string, unknown>,
-  key: string,
-  target: Record<string, unknown>,
-) {
-  const value = source[key];
-  if (value == null) return;
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`${key} must be a number.`);
-  }
   target[key] = value;
 }
 

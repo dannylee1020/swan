@@ -7,7 +7,6 @@ describe("generate-bootstrap", () => {
   it("builds bootstrap data from config yaml", () => {
     const config = parseConfig(`
 phoneNumber: "+15551234567"
-cooldownMinutes: 5
 monitoringEnabled: true
 callEnabled: true
 elevenLabs:
@@ -32,7 +31,6 @@ trackedDomains:
       data: {
         settings: {
           phoneNumber: "+15551234567",
-          cooldownMinutes: 5,
           enabled: true,
           callEnabled: true,
           elevenLabs: {

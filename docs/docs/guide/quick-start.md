@@ -34,7 +34,7 @@ Open **Swan settings** and save the required values:
 
 | Group | Required values |
 | --- | --- |
-| Phone Configuration | Recipient phone number, Start voice call toggle, monitoring toggle, cooldown minutes |
+| Phone Configuration | Recipient phone number, Start voice call toggle, monitoring toggle |
 | ElevenLabs Voice Call | API key, Agent ID, Agent phone number ID |
 
 Use E.164 phone-number formatting for the recipient number, for example `+15551234567`.

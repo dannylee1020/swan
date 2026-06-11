@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { defaultSettings } from "../lib/defaults";
 import { ElevenLabsCallProvider } from "../lib/providers/elevenlabs";
 import type { AlertContext } from "../lib/types";
 
@@ -12,9 +13,9 @@ const context: AlertContext = {
     callStatus: { state: "pending" },
   },
   settings: {
+    ...defaultSettings,
     enabled: true,
     phoneNumber: "+15551234567",
-    cooldownMinutes: 10,
     callEnabled: true,
     elevenLabs: {
       apiKey: "elevenlabs-key",
@@ -39,6 +40,7 @@ describe("provider request builders", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(new ElevenLabsCallProvider().start(context)).resolves.toEqual({
+      state: "success",
       providerId: "conv_123",
     });
 

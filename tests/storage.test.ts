@@ -26,7 +26,6 @@ describe("storage normalization", () => {
     storage.set("settings", {
       enabled: true,
       phoneNumber: "+15551234567",
-      cooldownMinutes: 10,
       callEnabled: true,
       smsEnabled: true,
       twilio: {
@@ -46,14 +45,74 @@ describe("storage normalization", () => {
 
     expect(settings).not.toHaveProperty("smsEnabled");
     expect(settings).not.toHaveProperty("twilio");
+    expect(settings.deliveryMode).toBe("byok");
+    expect(settings.managedAccount).toBeNull();
     expect(settings.elevenLabs.agentId).toBe("agent_123");
+  });
+
+  it("normalizes managed settings and accepted call statuses", async () => {
+    storage.set("settings", {
+      enabled: true,
+      deliveryMode: "managed",
+      callEnabled: true,
+      managedAccount: {
+        userId: "user_123",
+        phoneNumber: "+15551234567",
+        sessionToken: "session-token",
+        eventIngestToken: "ingest-token",
+        refreshToken: "refresh-token",
+        expiresAt: "2026-05-20T11:00:00.000Z",
+        entitlementActive: true,
+        subscriptionStatus: "active",
+        currentPeriodEnd: "2026-06-20T11:00:00.000Z",
+      },
+    });
+    storage.set("events", [
+      {
+        id: "event:managed",
+        timestamp: "2026-05-20T10:00:00.000Z",
+        domain: "example.com",
+        ruleId: "rule:example",
+        trigger: "navigation",
+        callStatus: { state: "accepted", providerId: "delivery_123" },
+      },
+    ]);
+
+    const settings = await getSettings();
+
+    expect(settings.deliveryMode).toBe("managed");
+    expect(settings.managedAccount?.eventIngestToken).toBe("ingest-token");
+    expect(await getEvents()).toEqual([
+      {
+        id: "event:managed",
+        timestamp: "2026-05-20T10:00:00.000Z",
+        domain: "example.com",
+        ruleId: "rule:example",
+        trigger: "navigation",
+        callStatus: { state: "accepted", providerId: "delivery_123" },
+      },
+    ]);
+  });
+
+  it("drops incomplete managed account tokens", async () => {
+    storage.set("settings", {
+      deliveryMode: "managed",
+      managedAccount: {
+        userId: "user_123",
+        phoneNumber: "+15551234567",
+      },
+    });
+
+    const settings = await getSettings();
+
+    expect(settings.deliveryMode).toBe("managed");
+    expect(settings.managedAccount).toBeNull();
   });
 
   it("cleans legacy SMS fields from stored settings and events", async () => {
     storage.set("settings", {
       enabled: true,
       phoneNumber: "+15551234567",
-      cooldownMinutes: 10,
       callEnabled: true,
       smsEnabled: true,
       twilio: { accountSid: "AC123" },

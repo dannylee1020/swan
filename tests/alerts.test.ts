@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AlertCoordinator } from "../lib/alerts";
 import { defaultSettings } from "../lib/defaults";
-import type { CallProvider, ProviderResult, UrgeEvent } from "../lib/types";
+import type { AlertStatus, CallProvider, UrgeEvent } from "../lib/types";
 
 const storage = vi.hoisted(() => new Map<string, unknown>());
 
@@ -51,7 +51,10 @@ describe("alert coordination", () => {
     storage.set("events", []);
 
     const callProvider: CallProvider = {
-      start: vi.fn(async () => ({ providerId: "conv_123" })),
+      start: vi.fn(async () => ({
+        state: "success" as const,
+        providerId: "conv_123",
+      })),
     };
 
     const result = await new AlertCoordinator({
@@ -78,11 +81,11 @@ describe("alert coordination", () => {
     });
     storage.set("events", []);
 
-    let resolveCall: (value: { providerId: string }) => void = () => {};
+    let resolveCall: (value: AlertStatus) => void = () => {};
     const callProvider: CallProvider = {
       start: vi.fn(
         () =>
-          new Promise<ProviderResult>((resolve) => {
+          new Promise<AlertStatus>((resolve) => {
             resolveCall = resolve;
           }),
       ),
@@ -96,7 +99,7 @@ describe("alert coordination", () => {
     expect(storage.get("events")).toEqual([event]);
     expect(callProvider.start).toHaveBeenCalledOnce();
 
-    resolveCall({ providerId: "conv_123" });
+    resolveCall({ state: "success", providerId: "conv_123" });
     await expect(started.completion).resolves.toMatchObject({
       callStatus: { state: "success", providerId: "conv_123" },
     });
@@ -106,5 +109,92 @@ describe("alert coordination", () => {
         callStatus: { state: "success", providerId: "conv_123" },
       },
     ]);
+  });
+
+  it("starts BYOK delivery immediately for repeat detections", async () => {
+    storage.set("settings", {
+      ...defaultSettings,
+      phoneNumber: "+15551234567",
+      callEnabled: true,
+      elevenLabs: {
+        apiKey: "elevenlabs-key",
+        agentId: "agent_123",
+        agentPhoneNumberId: "phnum_123",
+      },
+    });
+    storage.set("events", [
+      {
+        ...event,
+        id: "event:previous",
+        callStatus: { state: "success", providerId: "conv_previous" },
+      },
+    ]);
+
+    const callProvider: CallProvider = {
+      start: vi.fn(async () => ({
+        state: "success" as const,
+        providerId: "conv_123",
+      })),
+    };
+
+    const result = await new AlertCoordinator({
+      callProvider,
+    }).handle(event);
+
+    expect(callProvider.start).toHaveBeenCalledOnce();
+    expect(result.callStatus).toEqual({
+      state: "success",
+      providerId: "conv_123",
+    });
+  });
+
+  it("uses managed delivery for repeat detections", async () => {
+    storage.set("settings", {
+      ...defaultSettings,
+      deliveryMode: "managed",
+      managedAccount: {
+        userId: "user_123",
+        phoneNumber: "+15551234567",
+        sessionToken: "session-token",
+        eventIngestToken: "ingest-token",
+        refreshToken: "refresh-token",
+        expiresAt: "2026-05-20T11:00:00.000Z",
+        entitlementActive: true,
+        subscriptionStatus: "active",
+        currentPeriodEnd: null,
+      },
+    });
+    storage.set("events", [
+      {
+        ...event,
+        id: "event:previous",
+        callStatus: { state: "accepted", providerId: "delivery_1" },
+      },
+    ]);
+
+    const callProvider: CallProvider = {
+      start: vi.fn(async () => ({
+        state: "success" as const,
+        providerId: "conv_123",
+      })),
+    };
+    const managedCallProvider: CallProvider = {
+      start: vi.fn(async () => ({
+        state: "accepted" as const,
+        providerId: "delivery_2",
+      })),
+    };
+
+    const result = await new AlertCoordinator({
+      callProvider,
+      managedCallProvider,
+    }).handle(event);
+
+    expect(callProvider.start).not.toHaveBeenCalled();
+    expect(managedCallProvider.start).toHaveBeenCalledOnce();
+    expect(result.callStatus).toEqual({
+      state: "accepted",
+      providerId: "delivery_2",
+    });
   });
 });

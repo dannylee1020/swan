@@ -3,8 +3,11 @@ export type DetectionRuleSource = "seed" | "user";
 export type AlertStatus =
   | { state: "skipped"; reason: string }
   | { state: "pending" }
+  | { state: "accepted"; providerId?: string }
   | { state: "success"; providerId?: string }
   | { state: "failed"; error: string };
+
+export type DeliveryMode = "byok" | "managed";
 
 export interface DetectionRule {
   id: string;
@@ -29,12 +32,25 @@ export interface ElevenLabsSettings {
   agentPhoneNumberId: string;
 }
 
+export interface ManagedAccount {
+  userId: string;
+  phoneNumber: string;
+  sessionToken: string;
+  eventIngestToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  entitlementActive: boolean;
+  subscriptionStatus: string | null;
+  currentPeriodEnd: string | null;
+}
+
 export interface UserSettings {
   enabled: boolean;
+  deliveryMode: DeliveryMode;
   phoneNumber: string;
-  cooldownMinutes: number;
   callEnabled: boolean;
   elevenLabs: ElevenLabsSettings;
+  managedAccount: ManagedAccount | null;
 }
 
 export interface StorageShape {
@@ -48,10 +64,6 @@ export interface AlertContext {
   settings: UserSettings;
 }
 
-export interface ProviderResult {
-  providerId?: string;
-}
-
 export interface CallProvider {
-  start(context: AlertContext): Promise<ProviderResult>;
+  start(context: AlertContext): Promise<AlertStatus>;
 }

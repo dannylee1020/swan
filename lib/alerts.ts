@@ -1,10 +1,11 @@
-import { shouldAlert } from "./detection";
 import { ElevenLabsCallProvider } from "./providers/elevenlabs";
-import { getEvents, getSettings, saveEvent, updateEvent } from "./storage";
+import { ManagedCallProvider } from "./providers/managed";
+import { getSettings, saveEvent, updateEvent } from "./storage";
 import type { CallProvider, UrgeEvent, UserSettings } from "./types";
 
 export interface AlertCoordinatorDeps {
   callProvider?: CallProvider;
+  managedCallProvider?: CallProvider;
 }
 
 export interface StartedAlert {
@@ -14,9 +15,12 @@ export interface StartedAlert {
 
 export class AlertCoordinator {
   private callProvider: CallProvider;
+  private managedCallProvider: CallProvider;
 
   constructor(deps: AlertCoordinatorDeps = {}) {
     this.callProvider = deps.callProvider ?? new ElevenLabsCallProvider();
+    this.managedCallProvider =
+      deps.managedCallProvider ?? new ManagedCallProvider();
   }
 
   async handle(event: UrgeEvent): Promise<UrgeEvent> {
@@ -26,16 +30,9 @@ export class AlertCoordinator {
 
   async start(event: UrgeEvent): Promise<StartedAlert> {
     const settings = await getSettings();
-    const previousEvents = await getEvents();
 
     if (!settings.enabled) {
       const skipped = withSkippedAlerts(event, "Swan is disabled");
-      await saveEvent(skipped);
-      return { event: skipped, completion: Promise.resolve(skipped) };
-    }
-
-    if (!shouldAlert(event, previousEvents, settings.cooldownMinutes)) {
-      const skipped = withSkippedAlerts(event, "cooldown active");
       await saveEvent(skipped);
       return { event: skipped, completion: Promise.resolve(skipped) };
     }
@@ -49,17 +46,21 @@ export class AlertCoordinator {
   }
 
   private async complete(event: UrgeEvent, settings: UserSettings): Promise<UrgeEvent> {
+    const provider =
+      settings.deliveryMode === "managed"
+        ? this.managedCallProvider
+        : this.callProvider;
     const callStatus = settings.callEnabled
-      ? await this.callProvider
+      ? await provider
           .start({ event, settings })
-          .then((result) =>
-            result.providerId
-              ? { state: "success" as const, providerId: result.providerId }
-              : { state: "success" as const },
-          )
           .catch((error: unknown) => ({
             state: "failed" as const,
-            error: error instanceof Error ? error.message : "Call failed",
+            error:
+              error instanceof Error
+                ? error.message
+                : settings.deliveryMode === "managed"
+                  ? "Managed call failed"
+                  : "Call failed",
           }))
       : { state: "skipped" as const, reason: "Call disabled" };
 

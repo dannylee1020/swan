@@ -11,7 +11,6 @@ Open **Swan settings** and start with **General**.
 | Recipient number | The phone number that should receive voice calls. Use E.164 format, for example `+15551234567`. |
 | Start voice call | Keep enabled if ElevenLabs should start a call for detections and test alerts. |
 | Enable monitoring | Keep enabled to watch configured domains in this browser. |
-| Cooldown minutes | Minimum time before Swan sends another intervention for the same browsing pattern. |
 
 Click the Save button for the card after changing these values.
 
