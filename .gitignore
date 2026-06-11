@@ -14,3 +14,6 @@ docs/.vitepress/cache/
 docs/.vitepress/dist/
 .impeccable.md
 store-assets/
+.impeccable/
+DESIGN.md
+PRODUCT.md

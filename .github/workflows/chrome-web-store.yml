@@ -1,0 +1,241 @@
+name: Chrome Web Store
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Chrome extension version to publish, e.g. 0.1.1"
+        required: true
+        type: string
+      submit_for_review:
+        description: "Submit the uploaded package for Chrome Web Store review"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chrome-web-store-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build and publish Chrome package
+    runs-on: ubuntu-latest
+    environment: chrome-web-store
+
+    env:
+      CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+      CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: release-version
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="${{ inputs.version }}"
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Release version: $version"
+
+      - name: Ensure tag is on main
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Release tag must point to a commit reachable from origin/main." >&2
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate requested version
+        env:
+          RELEASE_VERSION: ${{ steps.release-version.outputs.version }}
+        run: |
+          node <<'NODE'
+          const version = process.env.RELEASE_VERSION;
+          const parts = version.split(".");
+          const valid =
+            parts.length >= 1 &&
+            parts.length <= 4 &&
+            parts.every((part) => /^(0|[1-9]\d*)$/.test(part)) &&
+            parts.every((part) => Number(part) >= 0 && Number(part) <= 65535) &&
+            parts.some((part) => Number(part) !== 0);
+
+          if (!valid) {
+            console.error(`Invalid Chrome extension version: ${version}`);
+            console.error("Use one to four dot-separated integers, e.g. 0.1.1.");
+            process.exit(1);
+          }
+          NODE
+
+      - name: Apply release version
+        env:
+          RELEASE_VERSION: ${{ steps.release-version.outputs.version }}
+        run: npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Build docs
+        run: npm run docs:build
+
+      - name: Build Chrome Web Store zip
+        run: npm run zip:store
+
+      - name: Validate Chrome Web Store zip
+        run: npm run validate:store
+
+      - name: Verify required secrets
+        run: |
+          missing=0
+          for name in CWS_EXTENSION_ID CWS_PUBLISHER_ID CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN; do
+            if [[ -z "${!name}" ]]; then
+              echo "$name is not configured." >&2
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Get Chrome Web Store access token
+        id: cws-token
+        run: |
+          set -euo pipefail
+
+          response="$(curl -sS https://oauth2.googleapis.com/token \
+            -d "client_secret=$CWS_CLIENT_SECRET" \
+            -d "grant_type=refresh_token" \
+            -d "refresh_token=$CWS_REFRESH_TOKEN" \
+            -d "client_id=$CWS_CLIENT_ID")"
+
+          token="$(node -e 'const data = JSON.parse(process.argv[1]); if (!data.access_token) { console.error(JSON.stringify(data)); process.exit(1); } process.stdout.write(data.access_token);' "$response")"
+          echo "::add-mask::$token"
+          echo "access_token=$token" >> "$GITHUB_OUTPUT"
+
+      - name: Upload package
+        env:
+          CWS_ACCESS_TOKEN: ${{ steps.cws-token.outputs.access_token }}
+          RELEASE_VERSION: ${{ steps.release-version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          zip_path="output/swan-${RELEASE_VERSION}-chrome.zip"
+          if [[ ! -f "$zip_path" ]]; then
+            echo "Expected package not found: $zip_path" >&2
+            exit 1
+          fi
+
+          response="$(curl -sS \
+            -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
+            -X POST \
+            -T "$zip_path" \
+            "https://chromewebstore.googleapis.com/upload/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:upload")"
+
+          node - "$response" <<'NODE'
+          const data = JSON.parse(process.argv[2]);
+          const state = data.uploadState;
+          if (state !== "SUCCESS" && state !== "UPLOAD_IN_PROGRESS") {
+            console.error(JSON.stringify(data, null, 2));
+            process.exit(1);
+          }
+          console.log(`Chrome Web Store upload state: ${state}`);
+          NODE
+
+      - name: Wait for upload processing
+        run: |
+          set -euo pipefail
+
+          for attempt in {1..20}; do
+            response="$(curl -sS \
+              -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
+              -X GET \
+              "https://chromewebstore.googleapis.com/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:fetchStatus")"
+
+            set +e
+            node - "$response" <<'NODE'
+          const data = JSON.parse(process.argv[2]);
+          const state = data.uploadState;
+          if (state === "SUCCESS") {
+            console.log("Chrome Web Store upload processing complete.");
+            process.exit(0);
+          }
+          if (state && state !== "UPLOAD_IN_PROGRESS" && state !== "ITEM_PENDING_REVIEW") {
+            console.error(JSON.stringify(data, null, 2));
+            process.exit(2);
+          }
+          console.log(`Chrome Web Store upload state: ${state ?? "unknown"}`);
+          process.exit(1);
+          NODE
+            status="$?"
+            set -e
+            case "$status" in
+              0) exit 0 ;;
+              2) exit 1 ;;
+            esac
+
+            sleep 15
+          done
+
+          echo "Chrome Web Store upload did not finish processing in time." >&2
+          exit 1
+        env:
+          CWS_ACCESS_TOKEN: ${{ steps.cws-token.outputs.access_token }}
+
+      - name: Submit for review
+        if: ${{ github.event_name == 'push' || inputs.submit_for_review }}
+        run: |
+          set -euo pipefail
+
+          response="$(curl -sS \
+            -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
+            -X POST \
+            "https://chromewebstore.googleapis.com/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:publish")"
+
+          node - "$response" <<'NODE'
+          const data = JSON.parse(process.argv[2]);
+          if (data.error) {
+            console.error(JSON.stringify(data, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify(data, null, 2));
+          NODE
+        env:
+          CWS_ACCESS_TOKEN: ${{ steps.cws-token.outputs.access_token }}
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: swan-${{ steps.release-version.outputs.version }}-chrome
+          path: output/swan-${{ steps.release-version.outputs.version }}-chrome.zip
+          if-no-files-found: error

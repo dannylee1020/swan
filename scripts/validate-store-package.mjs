@@ -83,7 +83,9 @@ if (!existsSync(zipPath)) {
   if (entries.includes("manifest.json")) {
     const manifest = JSON.parse(readZipEntry("manifest.json"));
     if (manifest.manifest_version !== 3) fail("Manifest version must be 3.");
-    if (manifest.name !== "Swan") fail('Manifest name must be "Swan".');
+    if (manifest.name !== "Swan NSFW Blocker with Calls") {
+      fail('Manifest name must be "Swan NSFW Blocker with Calls".');
+    }
     if (!manifest.homepage_url) fail("Manifest should include homepage_url.");
     if (manifest.incognito !== "split") {
       fail('Manifest incognito mode must be "split".');

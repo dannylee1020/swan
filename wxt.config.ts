@@ -4,7 +4,7 @@ export default defineConfig({
   outDir: "output",
   modules: ["@wxt-dev/module-react"],
   manifest: ({ browser }) => ({
-    name: "Swan",
+    name: "Swan NSFW Blocker with Calls",
     description:
       "Swan helps interrupt unwanted porn urges with custom domain blocking and a personalized phone call.",
     homepage_url: "https://swan-oss.com/docs",
@@ -27,7 +27,7 @@ export default defineConfig({
       128: "icons/icon-128.png",
     },
     action: {
-      default_title: "Swan",
+      default_title: "Swan NSFW Blocker with Calls",
       default_icon: {
         16: "icons/icon-16.png",
         32: "icons/icon-32.png",
