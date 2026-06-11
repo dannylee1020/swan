@@ -1,12 +1,12 @@
 ---
 layout: doc
 title: Introduction
-description: What Swan is, what it does, and how the browser extension works.
+description: Swan is an open-source Chrome extension that interrupts unwanted porn urges with local domain detection and a phone call.
 ---
 
 # Swan
 
-A browser extension that interrupts lust by calling you at the right moment. Supports Chromium and Firefox based browsers.
+Swan is an open-source Chrome extension that interrupts unwanted porn urges with a phone call at the risky moment. It is built for people who want to quit porn, keep NSFW sites out of their life, and use a tool they can inspect.
 
 ## What Swan does
 
@@ -30,8 +30,15 @@ It is designed intentionally small: one browser extension, user-managed provider
 
 ## Start using Swan
 
+- [Chrome Web Store](./chrome-web-store.md) explains the store-first install path and current fallback.
 - [Quick start](./guide/quick-start.md) gives the shortest path from install to test alert.
 - [Install](./guide/install.md) covers source builds, browser support, and experimental Firefox setup.
 - [Provider setup](./provider-setup.md) walks through ElevenLabs.
 - [Troubleshooting](./troubleshooting.md) covers the common failure modes.
 - [Privacy](./privacy.md) explains local storage, provider data, permissions, and user control.
+
+## Learn more
+
+- [Chrome porn blocker with phone calls](./chrome-porn-blocker.md) explains Swan's interruption loop.
+- [Open-source porn blocker](./open-source-porn-blocker.md) explains the trust and privacy tradeoffs.
+- [Swan vs passive porn blockers](./compare-passive-porn-blockers.md) compares Swan with passive blocking and accountability tools.

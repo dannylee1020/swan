@@ -30,6 +30,12 @@ Swan initiates voice calls through ElevenLabs' outbound-call API.
 
 ## Quick Start
 
+Install Swan from the Chrome Web Store:
+
+https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg
+
+Use the local Chromium release install path from GitHub if you want to inspect the release package or load Swan manually.
+
 Install the latest Chromium release on macOS or Linux:
 
 ```bash
@@ -66,6 +72,7 @@ After loading, Swan opens the settings tab automatically on first install. If it
 
 Start with:
 
+- [Chrome Web Store](https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg)
 - [Quick start](https://swan-oss.com/docs/guide/quick-start)
 - [Install Swan](https://swan-oss.com/docs/guide/install)
 - [Provider setup](https://swan-oss.com/docs/provider-setup)

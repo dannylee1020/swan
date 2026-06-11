@@ -7,6 +7,7 @@
       </a>
       <nav class="swan-system__nav" aria-label="Landing navigation">
         <a href="/docs/">Docs</a>
+        <a href="https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg">Chrome</a>
         <a href="https://github.com/dannylee1020/swan">GitHub</a>
       </nav>
     </header>
@@ -14,23 +15,23 @@
     <section class="swan-system__hero" aria-labelledby="swan-system-title">
       <div class="swan-system__narrative">
         <p class="swan-system__section-label">Lust intercept</p>
-        <h1 id="swan-system-title">A phone call when lust takes over.</h1>
+        <h1 id="swan-system-title">A phone call when porn urges take over.</h1>
         <p class="swan-system__lede">
-          Swan is an open-source Chrome extension for people trying to stop
-          porn use. When you open a site you chose to track, Swan redirects
-          the tab and immediately calls you to break the addiction cycle.
+          Swan is an open-source Chrome extension for people trying to quit
+          porn and keep NSFW sites out of their life. When you open a site you
+          chose to track, Swan redirects the tab and immediately calls you to
+          interrupt the addiction cycle.
         </p>
         <p class="swan-system__sublede">
-          Self-hosted. Local browser storage. Provider accounts you control.
-          Apache 2.0.
+          Browser-local storage. Provider accounts you control. Apache 2.0.
         </p>
 
         <div class="swan-system__actions" aria-label="Primary actions">
-          <a class="swan-system__button swan-system__button--primary" href="/docs/guide/quick-start">
-            Start local setup
+          <a class="swan-system__button swan-system__button--primary" href="https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg">
+            Add to Chrome
           </a>
-          <a class="swan-system__button" href="https://github.com/dannylee1020/swan">
-            View GitHub
+          <a class="swan-system__button" href="/docs/guide/quick-start">
+            Local setup
           </a>
         </div>
       </div>
@@ -82,14 +83,14 @@
           <h2>Phone-first interruption</h2>
           <p>
             Swan starts a voice call through your configured voice agent and phone infrastructure,
-            shipped with Elevenlabs and Twilio by default.
+            using your ElevenLabs account.
           </p>
-          <span class="swan-system__spec-meta">Integrations: ElevenLabs, Twilio</span>
+          <span class="swan-system__spec-meta">Integration: ElevenLabs</span>
         </article>
 
         <article class="swan-system__spec-card">
           <span class="swan-system__spec-number">03</span>
-          <h2>No Cloud</h2>
+          <h2>No Swan cloud</h2>
           <p>
             Swan operates without a backend database, proxy, DNS filter,
             page classifier, or localhost daemon. Settings and logs stay in the

@@ -1,7 +1,7 @@
 ---
 layout: false
-title: Swan
-description: Self-hosted Chromium extension for immediate phone-call intervention.
+title: Chrome Porn Blocker With Phone Calls
+description: Swan is an open-source Chrome extension that interrupts unwanted porn urges with local domain detection and an immediate phone call.
 ---
 
 <SwanHome />
