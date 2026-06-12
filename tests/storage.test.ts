@@ -22,6 +22,13 @@ describe("storage normalization", () => {
     storage.clear();
   });
 
+  it("defaults fresh installs to incomplete onboarding", async () => {
+    const settings = await getSettings();
+
+    expect(settings.deliveryMode).toBe("byok");
+    expect(settings.onboardingCompleted).toBe(false);
+  });
+
   it("ignores legacy SMS and Twilio settings", async () => {
     storage.set("settings", {
       enabled: true,
@@ -46,6 +53,7 @@ describe("storage normalization", () => {
     expect(settings).not.toHaveProperty("smsEnabled");
     expect(settings).not.toHaveProperty("twilio");
     expect(settings.deliveryMode).toBe("byok");
+    expect(settings.onboardingCompleted).toBe(true);
     expect(settings.managedAccount).toBeNull();
     expect(settings.elevenLabs.agentId).toBe("agent_123");
   });
@@ -81,6 +89,7 @@ describe("storage normalization", () => {
     const settings = await getSettings();
 
     expect(settings.deliveryMode).toBe("managed");
+    expect(settings.onboardingCompleted).toBe(true);
     expect(settings.managedAccount?.eventIngestToken).toBe("ingest-token");
     expect(await getEvents()).toEqual([
       {
@@ -106,7 +115,20 @@ describe("storage normalization", () => {
     const settings = await getSettings();
 
     expect(settings.deliveryMode).toBe("managed");
+    expect(settings.onboardingCompleted).toBe(true);
     expect(settings.managedAccount).toBeNull();
+  });
+
+  it("preserves an explicit onboarding flag", async () => {
+    storage.set("settings", {
+      deliveryMode: "byok",
+      onboardingCompleted: false,
+      phoneNumber: "+15551234567",
+    });
+
+    const settings = await getSettings();
+
+    expect(settings.onboardingCompleted).toBe(false);
   });
 
   it("cleans legacy SMS fields from stored settings and events", async () => {

@@ -100,6 +100,7 @@ export async function cleanupLegacySmsData(): Promise<void> {
 function normalizeSettings(input: unknown): UserSettings {
   const saved = isRecord(input) ? input : {};
   const savedElevenLabs = isRecord(saved.elevenLabs) ? saved.elevenLabs : {};
+  const managedAccount = normalizeManagedAccount(saved.managedAccount);
 
   return {
     ...defaultSettings,
@@ -114,12 +115,32 @@ function normalizeSettings(input: unknown): UserSettings {
       typeof saved.callEnabled === "boolean"
         ? saved.callEnabled
         : defaultSettings.callEnabled,
+    onboardingCompleted:
+      typeof saved.onboardingCompleted === "boolean"
+        ? saved.onboardingCompleted
+        : hasExistingSetup(saved, savedElevenLabs, managedAccount),
     elevenLabs: {
       ...defaultSettings.elevenLabs,
       ...savedElevenLabs,
     },
-    managedAccount: normalizeManagedAccount(saved.managedAccount),
+    managedAccount,
   };
+}
+
+function hasExistingSetup(
+  saved: Record<string, unknown>,
+  savedElevenLabs: Record<string, unknown>,
+  managedAccount: ManagedAccount | null,
+): boolean {
+  return Boolean(
+    saved.deliveryMode === "managed" ||
+      saved.deliveryMode === "byok" ||
+      readString(saved.phoneNumber) ||
+      readString(savedElevenLabs.apiKey) ||
+      readString(savedElevenLabs.agentId) ||
+      readString(savedElevenLabs.agentPhoneNumberId) ||
+      managedAccount,
+  );
 }
 
 function normalizeManagedAccount(input: unknown): ManagedAccount | null {

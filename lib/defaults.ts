@@ -24,6 +24,7 @@ export const seedRules: DetectionRule[] = [
 export const defaultSettings: UserSettings = {
   enabled: true,
   deliveryMode: "byok",
+  onboardingCompleted: false,
   phoneNumber: "",
   callEnabled: true,
   elevenLabs: {

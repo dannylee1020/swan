@@ -73,6 +73,121 @@ p {
   background: var(--background);
 }
 
+.onboardingShell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: var(--background);
+}
+
+.onboardingPanel {
+  width: min(760px, 100%);
+  display: grid;
+  gap: 22px;
+  padding: 28px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.onboardingIntro {
+  display: grid;
+  gap: 8px;
+}
+
+.onboardingIntro span {
+  color: var(--primary);
+  font-size: var(--font-xs);
+  font-weight: 760;
+  line-height: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.onboardingIntro h1 {
+  color: var(--text);
+  font-size: 1.75rem;
+  font-weight: 780;
+  line-height: 1.15;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.onboardingIntro p {
+  max-width: 64ch;
+  color: var(--text-muted);
+  font-size: var(--font-md);
+  line-height: var(--line-copy);
+}
+
+.onboardingChoices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.onboardingChoice {
+  min-width: 0;
+  min-height: 132px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.onboardingChoice:hover {
+  border-color: var(--primary);
+  background: color-mix(in oklch, var(--primary-soft) 42%, var(--surface));
+}
+
+.onboardingChoice:active {
+  transform: scale(0.99);
+}
+
+.onboardingChoice:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--primary) 74%, white);
+  outline-offset: 2px;
+}
+
+.choiceIcon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.onboardingChoice > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.onboardingChoice strong {
+  color: var(--text);
+  font-size: var(--font-base);
+  line-height: var(--line-ui);
+}
+
+.onboardingChoice small {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  line-height: var(--line-ui);
+}
+
 .appShell {
   min-height: 100vh;
   display: flex;
@@ -273,7 +388,7 @@ p {
 .textButton:focus-visible,
 .filterChip:focus-visible,
 .navItem:focus-visible,
-.modeOption:has(input:focus-visible) {
+.modeToggleOption:has(input:focus-visible) {
   outline: 2px solid color-mix(in oklch, var(--primary) 74%, white);
   outline-offset: 2px;
 }
@@ -347,7 +462,7 @@ p {
   gap: 6px;
 }
 
-.pageHeader span,
+.pageHeaderEyebrow,
 .field span,
 th {
   color: var(--text-muted);
@@ -375,15 +490,16 @@ th {
 
 .pageHeaderActions {
   flex: 0 0 auto;
-  display: flex;
+  min-width: 280px;
+  display: grid;
   justify-content: flex-end;
 }
 
-.deliveryPanel {
+.modeHeaderControl {
+  min-width: 0;
   display: grid;
-  align-content: start;
-  gap: 12px;
-  padding: 0;
+  justify-items: end;
+  gap: 6px;
 }
 
 .readinessStrip {
@@ -506,55 +622,46 @@ th {
   color: var(--pending);
 }
 
-.deliveryPanelHeader {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.deliveryPanelHeader div {
-  display: grid;
-  gap: 4px;
-}
-
-.deliveryPanelHeader h2 {
-  color: var(--text);
-  font-size: var(--font-base);
-  font-weight: 750;
-  line-height: var(--line-ui);
-}
-
-.deliveryPanelHeader p,
-.modeOption > span:last-child {
-  max-width: 56ch;
+.modeHeaderLabel {
   color: var(--text-muted);
-  font-size: var(--font-sm);
-  line-height: var(--line-ui);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  line-height: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
-.modeOptions {
+.modeToggle {
+  width: 100%;
+  max-width: 312px;
   min-width: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  padding: 0;
-  border: 0;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--surface-low) 72%, var(--surface));
   margin: 0;
 }
 
-.modeOption {
+.modeToggleOption {
   position: relative;
-  min-height: 82px;
-  display: grid;
-  align-content: start;
-  gap: 6px;
-  padding: 12px;
-  border: 1px solid var(--outline);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  min-width: 0;
+  min-height: 32px;
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
   color: var(--text);
-  text-align: left;
+  font-size: var(--font-xs);
+  font-weight: 740;
+  line-height: 1rem;
+  letter-spacing: 0;
+  text-align: center;
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
@@ -562,33 +669,41 @@ th {
   cursor: pointer;
 }
 
-.modeOption input {
+.modeToggle.locked {
+  max-width: 176px;
+}
+
+.modeToggle.locked .modeToggleOption {
+  cursor: default;
+}
+
+.modeToggleOption input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-.modeOption:hover {
-  border-color: var(--primary);
-  background: color-mix(in oklch, var(--surface-low) 76%, var(--surface));
+.modeToggleOption:hover {
+  background: var(--surface-high);
 }
 
-.modeOption.active {
-  border-color: var(--primary);
-  background: color-mix(in oklch, var(--primary-soft) 62%, var(--surface));
+.modeToggleOption.active {
+  border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+  background: var(--surface);
+  color: var(--primary);
 }
 
-.modeOptionTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+.modeToggleOption span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.modeOptionTop strong {
-  color: var(--text);
-  font-size: var(--font-md);
+.modeHeaderNote {
+  max-width: 34ch;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
   line-height: var(--line-ui);
+  text-align: right;
 }
 
 .dataPanel {
@@ -606,6 +721,34 @@ th {
   min-width: 0;
   display: grid;
   gap: 14px;
+}
+
+.settingsNote {
+  padding: 12px 14px;
+  border: 1px solid var(--outline-soft);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--surface-low) 72%, var(--surface));
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  line-height: var(--line-ui);
+}
+
+.settingsNote.ready {
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
+  background: color-mix(in oklch, var(--primary-soft) 46%, var(--surface));
+  color: var(--primary);
+}
+
+.settingsNote.warning {
+  border-color: color-mix(in srgb, var(--pending) 28%, transparent);
+  background: color-mix(in oklch, var(--pending-soft) 50%, var(--surface));
+  color: var(--pending);
+}
+
+.settingsNote.blocked {
+  border-color: color-mix(in srgb, var(--error) 28%, transparent);
+  background: color-mix(in oklch, var(--error-soft) 42%, var(--surface));
+  color: var(--error);
 }
 
 .settingsCard {
@@ -1223,8 +1366,26 @@ tbody tr:hover {
     flex-direction: column;
   }
 
+  .pageHeaderActions {
+    width: 100%;
+    min-width: 0;
+    justify-content: stretch;
+  }
+
+  .modeHeaderControl {
+    justify-items: stretch;
+  }
+
+  .modeToggle {
+    max-width: none;
+  }
+
+  .modeHeaderNote {
+    max-width: none;
+    text-align: left;
+  }
+
   .readinessStrip,
-  .modeOptions,
   .managedSummary,
   .setupLayout {
     grid-template-columns: 1fr;

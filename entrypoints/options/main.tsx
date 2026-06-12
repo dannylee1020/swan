@@ -15,7 +15,6 @@ import {
   RefreshCw,
   Search,
   Send,
-  Settings,
   Trash2,
   Upload,
   type LucideIcon,
@@ -73,7 +72,7 @@ type BootstrapInfo =
   | { state: "error"; error: string };
 
 const navItems: Array<{ id: ActivePage; label: string; icon: LucideIcon }> = [
-  { id: "general", label: "Status", icon: Settings },
+  { id: "general", label: "Status", icon: CheckCircle2 },
   { id: "domains", label: "Domains", icon: Globe2 },
   { id: "logs", label: "History", icon: List },
 ];
@@ -95,6 +94,7 @@ function OptionsApp() {
   const [managedBusy, setManagedBusy] = useState(false);
   const [managedError, setManagedError] = useState("");
   const [managedOtpState, setManagedOtpState] = useState<ManagedOtpState>(null);
+  const [billingReturnPending, setBillingReturnPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<SettingsFieldErrors>({});
   const [domainError, setDomainError] = useState("");
   const [removedRuleUndo, setRemovedRuleUndo] = useState<RemovedRuleUndo>(null);
@@ -110,6 +110,22 @@ function OptionsApp() {
     void refresh();
     void loadBootstrapInfo();
   }, []);
+
+  useEffect(() => {
+    if (!billingReturnPending || !settings?.managedAccount) return;
+
+    const refreshAfterBillingReturn = () => {
+      if (document.visibilityState !== "visible") return;
+      void refreshManagedAccount("billing-return");
+    };
+
+    window.addEventListener("focus", refreshAfterBillingReturn);
+    document.addEventListener("visibilitychange", refreshAfterBillingReturn);
+    return () => {
+      window.removeEventListener("focus", refreshAfterBillingReturn);
+      document.removeEventListener("visibilitychange", refreshAfterBillingReturn);
+    };
+  }, [billingReturnPending, settings?.managedAccount]);
 
   const eventCountsByRule = useMemo(() => {
     const counts = new Map<string, number>();
@@ -161,11 +177,24 @@ function OptionsApp() {
   );
 
   async function refresh() {
-    const [nextSettings, nextRules, nextEvents] = await Promise.all([
+    let [nextSettings, nextRules, nextEvents] = await Promise.all([
       getSettings(),
       getRules(),
       getEvents(),
     ]);
+    const managedModeUnavailable =
+      !managedApiConfigured &&
+      (nextSettings.deliveryMode !== "byok" || !nextSettings.onboardingCompleted);
+    if (managedModeUnavailable) {
+      nextSettings = {
+        ...nextSettings,
+        deliveryMode: "byok",
+        onboardingCompleted: true,
+      };
+      await saveSettings(nextSettings);
+      setActivePage("general");
+      setNotice("Use my ElevenLabs account selected. Add your setup details to continue.");
+    }
     setSettings(nextSettings);
     setSettingsDraft(nextSettings);
     setRules(nextRules);
@@ -206,6 +235,7 @@ function OptionsApp() {
     if (!settings || !settingsDraft || settings.deliveryMode === deliveryMode) {
       return;
     }
+    if (deliveryMode === "managed" && !managedApiConfigured) return;
 
     const nextSettings = { ...settings, ...settingsDraft, deliveryMode };
     await saveSettings(nextSettings);
@@ -215,7 +245,28 @@ function OptionsApp() {
     setNotice(
       deliveryMode === "managed"
         ? "Managed calls selected. Sign in to continue."
-        : "BYOK selected. Swan will use your local ElevenLabs settings.",
+        : "Use my ElevenLabs account selected. Swan will use local setup.",
+    );
+  }
+
+  async function completeOnboarding(deliveryMode: DeliveryMode) {
+    if (!settings || !settingsDraft) return;
+    if (deliveryMode === "managed" && !managedApiConfigured) return;
+
+    const nextSettings = {
+      ...settings,
+      ...settingsDraft,
+      deliveryMode,
+      onboardingCompleted: true,
+    };
+    await saveSettings(nextSettings);
+    setSettings(nextSettings);
+    setSettingsDraft(nextSettings);
+    setActivePage("general");
+    setNotice(
+      deliveryMode === "managed"
+        ? "Managed calls selected. Sign in to continue."
+        : "Use my ElevenLabs account selected. Add your setup details to continue.",
     );
   }
 
@@ -313,7 +364,7 @@ function OptionsApp() {
     }
   }
 
-  async function refreshManagedAccount() {
+  async function refreshManagedAccount(source: "manual" | "billing-return" = "manual") {
     if (!settings?.managedAccount) return;
 
     setManagedBusy(true);
@@ -322,7 +373,14 @@ function OptionsApp() {
       const client = createManagedClient();
       const managedAccount = await client.fetchMe(settings.managedAccount);
       await updateManagedAccount(managedAccount);
-      setNotice("Managed status refreshed.");
+      setBillingReturnPending(false);
+      setNotice(
+        source === "billing-return"
+          ? managedAccount.entitlementActive
+            ? "Subscription active. Managed calls are ready."
+            : "Subscription status refreshed."
+          : "Managed status refreshed.",
+      );
     } catch (error) {
       setManagedError(formatManagedError(error));
     } finally {
@@ -339,6 +397,8 @@ function OptionsApp() {
       const client = createManagedClient();
       const response = await client.createCheckout(settings.managedAccount);
       await browser.tabs.create({ url: response.checkoutUrl });
+      setBillingReturnPending(true);
+      setNotice("Stripe opened. Swan will refresh when you return.");
     } catch (error) {
       setManagedError(formatManagedError(error));
     } finally {
@@ -363,6 +423,8 @@ function OptionsApp() {
         const response = await client.createCheckout(settings.managedAccount);
         await browser.tabs.create({ url: response.checkoutUrl });
       }
+      setBillingReturnPending(true);
+      setNotice("Billing opened. Swan will refresh when you return.");
     } catch (error) {
       setManagedError(formatManagedError(error));
     } finally {
@@ -547,12 +609,21 @@ function OptionsApp() {
     return <main className="loadingShell">Loading Swan...</main>;
   }
 
+  if (!settingsDraft.onboardingCompleted) {
+    return (
+      <OnboardingPage
+        managedApiConfigured={managedApiConfigured}
+        onChooseMode={completeOnboarding}
+      />
+    );
+  }
+
   return (
     <div className="appShell">
-      <aside className="sidebar" aria-label="Swan settings navigation">
+      <aside className="sidebar" aria-label="Swan navigation">
         <div className="brandBlock">
           <div className="brandMark">
-            <h1>Swan settings</h1>
+            <h1>Swan</h1>
           </div>
         </div>
 
@@ -595,44 +666,46 @@ function OptionsApp() {
       <main className="mainPane">
         <header className="topbar">
           <StatusPill enabled={settings.enabled} />
-          <div className="topbarActions">
-            <button
-              type="button"
-              className="primaryButton"
-              disabled={testing || readiness.blockers.length > 0}
-              title={
-                readiness.blockers.length
-                  ? readiness.blockers.join(" ")
-                  : "Send a test alert"
-              }
-              onClick={sendTestAlert}
-            >
-              <Send size={15} aria-hidden="true" />
-              <span>{testing ? "Testing..." : "Send test alert"}</span>
-            </button>
-          </div>
+          {activePage === "general" ? (
+            <div className="topbarActions">
+              <button
+                type="button"
+                className="primaryButton"
+                disabled={testing || readiness.blockers.length > 0}
+                title={
+                  readiness.blockers.length
+                    ? readiness.blockers.join(" ")
+                    : "Send a test alert"
+                }
+                onClick={sendTestAlert}
+              >
+                <Send size={15} aria-hidden="true" />
+                <span>{testing ? "Testing..." : "Send test alert"}</span>
+              </button>
+            </div>
+          ) : null}
         </header>
 
         <div className="content">
           {notice ? <p className="notice">{notice}</p> : null}
 
           {activePage === "general" ? (
-            <GeneralPage
+            <StatusPage
               bootstrapInfo={bootstrapInfo}
+              fieldErrors={fieldErrors}
               importingData={importingData}
               managedApiConfigured={managedApiConfigured}
               managedBusy={managedBusy}
               managedError={managedError}
               managedOtpState={managedOtpState}
               onChangeDeliveryMode={changeDeliveryMode}
-              readiness={readiness}
-              savedSettings={settings}
-              saveState={saveState}
-              fieldErrors={fieldErrors}
-              settingsDraft={settingsDraft}
               onManageManagedSubscription={manageManagedSubscription}
               onImportData={importBundledData}
               onRefreshManagedAccount={refreshManagedAccount}
+              readiness={readiness}
+              savedSettings={settings}
+              saveState={saveState}
+              settingsDraft={settingsDraft}
               onSaveCard={saveSettingsCard}
               onSettingsDraftChange={updateSettingsDraft}
               onSignOutManagedAccount={signOutManagedAccount}
@@ -681,7 +754,62 @@ function OptionsApp() {
   );
 }
 
-function GeneralPage({
+function OnboardingPage({
+  managedApiConfigured,
+  onChooseMode,
+}: {
+  managedApiConfigured: boolean;
+  onChooseMode: (deliveryMode: DeliveryMode) => Promise<void>;
+}) {
+  return (
+    <main className="onboardingShell">
+      <section className="onboardingPanel" aria-labelledby="onboarding-title">
+        <div className="onboardingIntro">
+          <span>Swan setup</span>
+          <h1 id="onboarding-title">Choose who places intervention calls.</h1>
+          <p>
+            Swan keeps monitoring, domains, and history in this browser. Pick the
+            call delivery path you want to set up first.
+          </p>
+        </div>
+
+        <div className="onboardingChoices" aria-label="Call delivery options">
+          {managedApiConfigured ? (
+            <button
+              type="button"
+              className="onboardingChoice"
+              onClick={() => void onChooseMode("managed")}
+            >
+              <span className="choiceIcon">
+                <CheckCircle2 size={18} aria-hidden="true" />
+              </span>
+              <span>
+                <strong>Let Swan handle calls</strong>
+                <small>Sign in, start a subscription, and use managed call delivery.</small>
+              </span>
+            </button>
+          ) : null}
+
+          <button
+            type="button"
+            className="onboardingChoice"
+            onClick={() => void onChooseMode("byok")}
+          >
+            <span className="choiceIcon">
+              <AudioLines size={18} aria-hidden="true" />
+            </span>
+            <span>
+              <strong>Use my ElevenLabs account</strong>
+              <small>Store your own provider key locally in this browser.</small>
+            </span>
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function StatusPage({
   bootstrapInfo,
   fieldErrors,
   importingData,
@@ -729,10 +857,10 @@ function GeneralPage({
   saveState: Record<SettingsCardId, SaveState>;
   settingsDraft: UserSettings;
 }) {
-  const phoneDirty = isSettingsCardDirty(savedSettings, settingsDraft, "phone");
   const localControlsDirty =
     savedSettings.enabled !== settingsDraft.enabled ||
     savedSettings.callEnabled !== settingsDraft.callEnabled;
+  const recipientDirty = savedSettings.phoneNumber !== settingsDraft.phoneNumber;
   const elevenLabsDirty = isSettingsCardDirty(
     savedSettings,
     settingsDraft,
@@ -745,19 +873,20 @@ function GeneralPage({
     <>
       <PageHeader
         eyebrow="Status"
-        title="Intervention setup"
-        description="Choose how Swan calls you, then keep monitoring on."
-      />
+        title="Protection status"
+        description="Readiness, monitoring, and call setup."
+      >
+        <DeliveryModeToggle
+          deliveryMode={settingsDraft.deliveryMode}
+          managedApiConfigured={managedApiConfigured}
+          onChangeDeliveryMode={onChangeDeliveryMode}
+        />
+      </PageHeader>
 
       <ReadinessStrip readiness={readiness} />
 
-      <section className="setupLayout" aria-label="Swan configuration">
+      <section className="setupLayout" aria-label="Swan status and delivery">
         <div className="setupColumn">
-          <DeliveryModePanel
-            deliveryMode={settingsDraft.deliveryMode}
-            onChangeDeliveryMode={onChangeDeliveryMode}
-          />
-
           <SettingsCard icon={PhoneCall} title="Monitoring" tone="primary">
             <div className="phoneSettingsToggles">
               <ToggleRow
@@ -867,9 +996,9 @@ function GeneralPage({
                 does not use them.
               </p>
               <SaveCardFooter
-                dirty={phoneDirty || elevenLabsDirty}
+                dirty={recipientDirty || elevenLabsDirty}
                 state={
-                  phoneDirty && !elevenLabsDirty
+                  recipientDirty && !elevenLabsDirty
                     ? saveState.phone
                     : saveState.elevenLabs
                 }
@@ -962,61 +1091,63 @@ function getReadinessDescription(readiness: ReadinessState): string {
   return readiness.blockers[0] ?? "Complete setup.";
 }
 
-function DeliveryModePanel({
+function DeliveryModeToggle({
   deliveryMode,
+  managedApiConfigured,
   onChangeDeliveryMode,
 }: {
   deliveryMode: DeliveryMode;
+  managedApiConfigured: boolean;
   onChangeDeliveryMode: (deliveryMode: DeliveryMode) => Promise<void>;
 }) {
+  const description = getDeliveryModeDescription(deliveryMode, managedApiConfigured);
+
   return (
-    <section className="deliveryPanel" aria-labelledby="delivery-mode">
-      <div className="deliveryPanelHeader">
-        <div>
-          <h2 id="delivery-mode">Delivery mode</h2>
-          <p>
-            Choose who places intervention calls. Domains and history stay local.
-          </p>
+    <div className="modeHeaderControl" aria-labelledby="delivery-mode-label">
+      <span className="modeHeaderLabel" id="delivery-mode-label">
+        Call delivery
+      </span>
+      {managedApiConfigured ? (
+        <fieldset className="modeToggle" aria-describedby="delivery-mode-note">
+          <legend className="srOnly">Call delivery</legend>
+          <ModeToggleOption
+            active={deliveryMode === "byok"}
+            label="My ElevenLabs"
+            value="byok"
+            onChange={() => void onChangeDeliveryMode("byok")}
+          />
+          <ModeToggleOption
+            active={deliveryMode === "managed"}
+            label="Swan Managed"
+            value="managed"
+            onChange={() => void onChangeDeliveryMode("managed")}
+          />
+        </fieldset>
+      ) : (
+        <div className="modeToggle locked" aria-describedby="delivery-mode-note">
+          <span className="modeToggleOption active">My ElevenLabs</span>
         </div>
-      </div>
-      <fieldset className="modeOptions" aria-label="Delivery mode">
-        <legend className="srOnly">Delivery mode</legend>
-        <ModeOption
-          active={deliveryMode === "byok"}
-          value="byok"
-          description="Use your ElevenLabs account. Credentials stay in this browser."
-          label="Use my keys"
-          onChange={() => void onChangeDeliveryMode("byok")}
-        />
-        <ModeOption
-          active={deliveryMode === "managed"}
-          value="managed"
-          description="Sign in and let Swan place calls for this browser."
-          label="Use managed calls"
-          onChange={() => void onChangeDeliveryMode("managed")}
-        />
-      </fieldset>
-    </section>
+      )}
+      <p className="modeHeaderNote" id="delivery-mode-note">
+        {description}
+      </p>
+    </div>
   );
 }
 
-function ModeOption({
+function ModeToggleOption({
   active,
-  description,
   label,
   onChange,
   value,
 }: {
   active: boolean;
-  description: string;
   label: string;
   onChange: () => void;
   value: DeliveryMode;
 }) {
   return (
-    <label
-      className={active ? "modeOption active" : "modeOption"}
-    >
+    <label className={active ? "modeToggleOption active" : "modeToggleOption"}>
       <input
         type="radio"
         name="deliveryMode"
@@ -1024,12 +1155,18 @@ function ModeOption({
         value={value}
         onChange={onChange}
       />
-      <span className="modeOptionTop">
-        <strong>{label}</strong>
-      </span>
-      <span>{description}</span>
+      <span>{label}</span>
     </label>
   );
+}
+
+function getDeliveryModeDescription(
+  deliveryMode: DeliveryMode,
+  managedApiConfigured: boolean,
+): string {
+  if (!managedApiConfigured) return "Managed calls are not enabled in this build.";
+  if (deliveryMode === "managed") return "Swan handles call delivery and billing.";
+  return "Your provider key stays in this browser.";
 }
 
 function ManagedAccountCard({
@@ -1061,6 +1198,7 @@ function ManagedAccountCard({
   const [code, setCode] = useState("");
   const [localError, setLocalError] = useState("");
   const active = Boolean(account?.entitlementActive);
+  const paymentAction = account ? getManagedPaymentAction(account) : null;
 
   return (
     <SettingsCard
@@ -1083,14 +1221,14 @@ function ManagedAccountCard({
               <strong>{account.phoneNumber}</strong>
             </div>
             <div>
-              <span>Access</span>
+              <span>Call access</span>
               <strong className={active ? "stateText enabled" : "stateText disabled"}>
-                {active ? "Active" : "Inactive"}
+                {getManagedAccessLabel(account)}
               </strong>
             </div>
             <div>
-              <span>Plan</span>
-              <strong>{account.subscriptionStatus ?? "No subscription"}</strong>
+              <span>Billing</span>
+              <strong>{getManagedBillingLabel(account)}</strong>
             </div>
           </div>
           <p className="helperText">
@@ -1099,27 +1237,26 @@ function ManagedAccountCard({
           </p>
           {account.currentPeriodEnd ? (
             <p className="domainNote">
-              Current period ends {new Date(account.currentPeriodEnd).toLocaleDateString()}.
+              {active ? "Renews" : "Current period ends"}{" "}
+              {new Date(account.currentPeriodEnd).toLocaleDateString()}.
             </p>
           ) : null}
           {error ? <p className="managedNotice error">{error}</p> : null}
           <div className="managedActions">
-            <button
-              type="button"
-              className="primaryButton"
-              disabled={busy}
-              onClick={() => void onStartSubscription()}
-            >
-              <span>{active ? "Update subscription" : "Start subscription"}</span>
-            </button>
-            <button
-              type="button"
-              className="secondaryButton"
-              disabled={busy}
-              onClick={() => void onManageSubscription()}
-            >
-              <span>Open billing</span>
-            </button>
+            {paymentAction ? (
+              <button
+                type="button"
+                className="primaryButton"
+                disabled={busy}
+                onClick={() =>
+                  void (paymentAction.kind === "manage"
+                    ? onManageSubscription()
+                    : onStartSubscription())
+                }
+              >
+                <span>{paymentAction.label}</span>
+              </button>
+            ) : null}
             <button
               type="button"
               className="secondaryButton"
@@ -1546,7 +1683,7 @@ function PageHeader({
   return (
     <section className="pageHeader">
       <div>
-        <span>{eyebrow}</span>
+        <span className="pageHeaderEyebrow">{eyebrow}</span>
         <h2>{title}</h2>
         <p>{description}</p>
       </div>
@@ -1787,8 +1924,53 @@ function formatManagedError(error: unknown): string {
 
 function managedAccountTag(account: ManagedAccount): string {
   if (account.entitlementActive) return "Active";
-  if (account.subscriptionStatus) return account.subscriptionStatus;
+  if (requiresBillingAttention(account.subscriptionStatus)) return "Needs billing";
   return "Inactive";
+}
+
+function getManagedAccessLabel(account: ManagedAccount): string {
+  if (account.entitlementActive) return "Active";
+  if (requiresBillingAttention(account.subscriptionStatus)) return "Needs billing";
+  return "Inactive";
+}
+
+function getManagedBillingLabel(account: ManagedAccount): string {
+  const status = account.subscriptionStatus;
+  if (!status) return "Not started";
+  if (status === "active" || status === "trialing") return "Current";
+  if (requiresBillingAttention(status)) return "Needs attention";
+  if (status === "canceled" || status === "incomplete_expired") return "Ended";
+  return formatSubscriptionStatus(status);
+}
+
+function getManagedPaymentAction(account: ManagedAccount): {
+  kind: "checkout" | "manage";
+  label: string;
+} {
+  if (account.entitlementActive) {
+    return { kind: "manage", label: "Manage billing" };
+  }
+  if (requiresBillingAttention(account.subscriptionStatus)) {
+    return { kind: "manage", label: "Update billing" };
+  }
+  return { kind: "checkout", label: "Start subscription" };
+}
+
+function requiresBillingAttention(status: string | null): boolean {
+  return (
+    status === "past_due" ||
+    status === "unpaid" ||
+    status === "incomplete" ||
+    status === "paused"
+  );
+}
+
+function formatSubscriptionStatus(status: string): string {
+  return status
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function getCardFieldErrors(

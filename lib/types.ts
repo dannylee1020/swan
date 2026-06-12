@@ -47,6 +47,7 @@ export interface ManagedAccount {
 export interface UserSettings {
   enabled: boolean;
   deliveryMode: DeliveryMode;
+  onboardingCompleted: boolean;
   phoneNumber: string;
   callEnabled: boolean;
   elevenLabs: ElevenLabsSettings;
