@@ -1,4 +1,5 @@
 import type { AlertStatus, ManagedAccount, UrgeEvent } from "../types";
+import { formatPhoneNumberE164 } from "../phone";
 
 export interface ManagedAuthResponse {
   account: ManagedAccount;
@@ -17,6 +18,8 @@ interface OTPStartResponse {
 interface OTPVerifyResponse {
   account: {
     userId: string;
+    name: string;
+    email: string;
     phoneNumber: string;
     sessionToken: string;
     eventIngestToken: string;
@@ -27,6 +30,8 @@ interface OTPVerifyResponse {
 
 interface MeResponse {
   userId: string;
+  name: string;
+  email: string;
   phoneNumber: string;
   entitlementActive: boolean;
   subscriptionStatus?: string | null;
@@ -79,25 +84,81 @@ export class ManagedClient {
     }
 
     this.baseUrl = baseUrl;
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl =
+      options.fetchImpl ?? ((input, init) => globalThis.fetch(input, init));
   }
 
-  async startOtp(phoneNumber: string): Promise<OTPStartResponse> {
+  async startOtp(
+    phoneNumber: string,
+    intent: "signup" | "signin" = "signup",
+  ): Promise<OTPStartResponse> {
     return this.request<OTPStartResponse>("/v1/auth/otp/start", {
       method: "POST",
-      body: { phoneNumber },
+      body: { phoneNumber: formatPhoneNumberE164(phoneNumber), intent },
     });
+  }
+
+  async startSignupOtp(input: {
+    name: string;
+    email: string;
+    phoneNumber: string;
+  }): Promise<OTPStartResponse> {
+    void input.name;
+    void input.email;
+    return this.startOtp(input.phoneNumber, "signup");
+  }
+
+  async startSigninOtp(phoneNumber: string): Promise<OTPStartResponse> {
+    return this.startOtp(phoneNumber, "signin");
   }
 
   async verifyOtp(input: {
     challengeId: string;
     code: string;
   }): Promise<ManagedAuthResponse> {
+    return this.verifySigninOtp(input);
+  }
+
+  async verifySignupOtp(input: {
+    challengeId: string;
+    code: string;
+    name: string;
+    email: string;
+    phoneNumber: string;
+  }): Promise<ManagedAuthResponse> {
+    return this.verifyOtpWithIntent({
+      ...input,
+      intent: "signup",
+    });
+  }
+
+  async verifySigninOtp(input: {
+    challengeId: string;
+    code: string;
+  }): Promise<ManagedAuthResponse> {
+    return this.verifyOtpWithIntent({
+      ...input,
+      intent: "signin",
+    });
+  }
+
+  private async verifyOtpWithIntent(input: {
+    challengeId: string;
+    code: string;
+    intent: "signup" | "signin";
+    name?: string;
+    email?: string;
+    phoneNumber?: string;
+  }): Promise<ManagedAuthResponse> {
     const response = await this.request<OTPVerifyResponse>("/v1/auth/otp/verify", {
       method: "POST",
       body: {
         challengeId: input.challengeId,
         code: input.code,
+        intent: input.intent,
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.email !== undefined ? { email: input.email } : {}),
+        ...(input.phoneNumber !== undefined ? { phoneNumber: input.phoneNumber } : {}),
         devicePlatform: "browser",
         deviceLabel: "Chrome extension",
       },
@@ -123,6 +184,8 @@ export class ManagedClient {
     return {
       ...account,
       userId: response.userId,
+      name: response.name,
+      email: response.email,
       phoneNumber: response.phoneNumber,
       entitlementActive: response.entitlementActive,
       subscriptionStatus: response.subscriptionStatus ?? null,
@@ -237,6 +300,8 @@ export class ManagedClient {
 function accountFromAuthResponse(response: OTPVerifyResponse): ManagedAccount {
   return {
     userId: response.account.userId,
+    name: response.account.name,
+    email: response.account.email,
     phoneNumber: response.account.phoneNumber,
     sessionToken: response.account.sessionToken,
     eventIngestToken: response.account.eventIngestToken,

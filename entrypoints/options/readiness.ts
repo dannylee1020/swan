@@ -63,11 +63,11 @@ export function getReadinessState({
       {
         id: "mode",
         label: "Mode",
-        value: settings.deliveryMode === "managed" ? "Managed" : "BYOK",
+        value: settings.deliveryMode === "managed" ? "Swan Beta" : "BYOK",
         tone: "neutral",
         detail:
           settings.deliveryMode === "managed"
-            ? "Swan places calls."
+            ? "Swan places hosted beta calls."
             : "Your provider places calls.",
       },
       getRecipientReadiness(settings),
@@ -110,11 +110,11 @@ export function getTestAlertBlockers(
 
   if (settings.deliveryMode === "managed") {
     if (!managedApiConfigured) {
-      blockers.push("Use a build with managed calls enabled.");
+      blockers.push("Use a build with Swan calls enabled.");
     } else if (!settings.managedAccount) {
-      blockers.push("Sign in for managed calls.");
+      blockers.push("Sign in for Swan calls.");
     } else if (!settings.managedAccount.entitlementActive) {
-      blockers.push("Start or refresh the managed subscription.");
+      blockers.push("Free beta call limit reached. BYOK is still available.");
     }
     return blockers;
   }
@@ -205,7 +205,7 @@ function getProviderReadiness(
         label: "Account",
         value: "Build missing",
         tone: "blocked",
-        detail: "Managed API URL missing.",
+        detail: "Swan API URL missing.",
       };
     }
 
@@ -222,11 +222,11 @@ function getProviderReadiness(
     return {
       id: "provider",
       label: "Account",
-      value: settings.managedAccount.entitlementActive ? "Active" : "Inactive",
+      value: settings.managedAccount.entitlementActive ? "Beta active" : "Limit reached",
       tone: settings.managedAccount.entitlementActive ? "ready" : "blocked",
       detail: settings.managedAccount.entitlementActive
-        ? "Calls available."
-        : "Subscription inactive.",
+        ? "Hosted calls available."
+        : "Free beta call limit reached.",
     };
   }
 

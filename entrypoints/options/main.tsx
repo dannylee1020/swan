@@ -8,6 +8,7 @@ import {
   CircleAlert,
   CircleHelp,
   Clock,
+  CreditCard,
   Globe2,
   List,
   PhoneCall,
@@ -36,6 +37,7 @@ import {
   saveRules,
   saveSettings,
 } from "../../lib/storage";
+import { formatPhoneNumberE164 } from "../../lib/phone";
 import {
   getManagedApiBaseUrl,
   ManagedApiError,
@@ -58,12 +60,29 @@ import {
 } from "./readiness";
 import "./style.css";
 
-type ActivePage = "general" | "domains" | "logs";
+type ActivePage = "general" | "plan" | "domains" | "logs";
 type DomainFilter = "all" | "enabled" | "disabled" | "user" | "seed";
 type LogFilter = "all" | AlertStatus["state"];
 type SettingsCardId = "phone" | "elevenLabs";
 type SaveState = "idle" | "saving" | "saved";
-type ManagedOtpState = { challengeId: string; phoneNumber: string } | null;
+type ManagedAuthIntent = "signup" | "signin";
+type ManagedSignupInput = {
+  name: string;
+  email: string;
+  phoneNumber: string;
+};
+type ManagedOtpState = {
+  challengeId: string;
+  phoneNumber: string;
+  intent: ManagedAuthIntent;
+  name?: string;
+  email?: string;
+} | null;
+type ManagedAuthErrorField = "name" | "email" | "phone" | "code";
+type ManagedAuthLocalError = {
+  field: ManagedAuthErrorField;
+  message: string;
+} | null;
 type RemovedRuleUndo = { rule: DetectionRule; index: number } | null;
 type BootstrapInfo =
   | { state: "checking" }
@@ -73,9 +92,14 @@ type BootstrapInfo =
 
 const navItems: Array<{ id: ActivePage; label: string; icon: LucideIcon }> = [
   { id: "general", label: "Status", icon: CheckCircle2 },
+  { id: "plan", label: "Plan", icon: CreditCard },
   { id: "domains", label: "Domains", icon: Globe2 },
   { id: "logs", label: "History", icon: List },
 ];
+// TODO: Restore paid hosted launch constants after beta validation.
+const MANAGED_TRIAL_DAYS = 7;
+const MANAGED_MONTHLY_PRICE_LABEL = "$8.99 / month";
+const MANAGED_BETA_MONTHLY_CALL_LIMIT = 25;
 
 function OptionsApp() {
   const [activePage, setActivePage] = useState<ActivePage>("general");
@@ -244,19 +268,36 @@ function OptionsApp() {
     setSaveState({ phone: "idle", elevenLabs: "idle" });
     setNotice(
       deliveryMode === "managed"
-        ? "Managed calls selected. Sign in to continue."
+        ? "Swan calls selected. Sign in to continue."
         : "Use my ElevenLabs account selected. Swan will use local setup.",
     );
   }
 
-  async function completeOnboarding(deliveryMode: DeliveryMode) {
+  async function completeByokOnboarding(phoneNumber: string) {
     if (!settings || !settingsDraft) return;
-    if (deliveryMode === "managed" && !managedApiConfigured) return;
 
     const nextSettings = {
       ...settings,
       ...settingsDraft,
-      deliveryMode,
+      deliveryMode: "byok" as const,
+      phoneNumber,
+      onboardingCompleted: true,
+    };
+    await saveSettings(nextSettings);
+    setSettings(nextSettings);
+    setSettingsDraft(nextSettings);
+    setActivePage("general");
+    setNotice("Use my ElevenLabs account selected. Add your setup details to continue.");
+  }
+
+  async function completeManagedBetaOnboarding() {
+    if (!settings || !settingsDraft?.managedAccount) return;
+    const managedAccount = settingsDraft.managedAccount;
+
+    const nextSettings = {
+      ...settings,
+      ...settingsDraft,
+      deliveryMode: "managed" as const,
       onboardingCompleted: true,
     };
     await saveSettings(nextSettings);
@@ -264,9 +305,9 @@ function OptionsApp() {
     setSettingsDraft(nextSettings);
     setActivePage("general");
     setNotice(
-      deliveryMode === "managed"
-        ? "Managed calls selected. Sign in to continue."
-        : "Use my ElevenLabs account selected. Add your setup details to continue.",
+      managedAccount.entitlementActive
+        ? "Swan Beta is ready."
+        : "Free beta call limit reached. BYOK is still available.",
     );
   }
 
@@ -314,17 +355,41 @@ function OptionsApp() {
     });
   }
 
-  async function startManagedOtp(phoneNumber: string) {
-    if (!settings || !settingsDraft) return;
+  async function startManagedSignup(input: ManagedSignupInput) {
+    if (!settings || !settingsDraft || managedBusy) return;
 
     setManagedBusy(true);
     setManagedError("");
     try {
       const client = createManagedClient();
-      const response = await client.startOtp(phoneNumber);
+      const response = await client.startSignupOtp(input);
+      setManagedOtpState({
+        challengeId: response.challengeId,
+        phoneNumber: input.phoneNumber,
+        intent: "signup",
+        name: input.name,
+        email: input.email,
+      });
+      setNotice("Verification code sent.");
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      setManagedBusy(false);
+    }
+  }
+
+  async function startManagedSignin(phoneNumber: string) {
+    if (!settings || !settingsDraft || managedBusy) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      const response = await client.startSigninOtp(phoneNumber);
       setManagedOtpState({
         challengeId: response.challengeId,
         phoneNumber,
+        intent: "signin",
       });
       setNotice("Verification code sent.");
     } catch (error) {
@@ -335,28 +400,42 @@ function OptionsApp() {
   }
 
   async function verifyManagedOtp(code: string) {
-    if (!settings || !settingsDraft || !managedOtpState) return;
+    if (!settings || !settingsDraft || !managedOtpState || managedBusy) return;
 
     setManagedBusy(true);
     setManagedError("");
     try {
       const client = createManagedClient();
-      const auth = await client.verifyOtp({
-        challengeId: managedOtpState.challengeId,
-        code,
-      });
+      const auth =
+        managedOtpState.intent === "signup"
+          ? await client.verifySignupOtp({
+              challengeId: managedOtpState.challengeId,
+              code,
+              name: managedOtpState.name ?? "",
+              email: managedOtpState.email ?? "",
+              phoneNumber: managedOtpState.phoneNumber,
+            })
+          : await client.verifySigninOtp({
+              challengeId: managedOtpState.challengeId,
+              code,
+            });
       const managedAccount = await client.fetchMe(auth.account);
       const nextSettings = {
         ...settings,
         ...settingsDraft,
         deliveryMode: "managed" as const,
         managedAccount,
+        onboardingCompleted: false,
       };
       await saveSettings(nextSettings);
       setSettings(nextSettings);
       setSettingsDraft(nextSettings);
       setManagedOtpState(null);
-      setNotice("Signed in for managed calls.");
+      setNotice(
+        managedAccount.entitlementActive
+          ? "Signed in. Review Swan Beta to finish setup."
+          : "Signed in. Free beta call limit reached. BYOK is still available.",
+      );
     } catch (error) {
       setManagedError(formatManagedError(error));
     } finally {
@@ -372,14 +451,22 @@ function OptionsApp() {
     try {
       const client = createManagedClient();
       const managedAccount = await client.fetchMe(settings.managedAccount);
-      await updateManagedAccount(managedAccount);
+      const subscriptionReady = hasManagedSubscription(managedAccount);
+      const completedFromBilling =
+        source === "billing-return" &&
+        subscriptionReady &&
+        !settings.onboardingCompleted;
+      await updateManagedAccount(managedAccount, completedFromBilling);
       setBillingReturnPending(false);
+      if (completedFromBilling) {
+        setActivePage("general");
+      }
       setNotice(
         source === "billing-return"
-          ? managedAccount.entitlementActive
-            ? "Subscription active. Managed calls are ready."
+          ? subscriptionReady
+            ? "Subscription active. Swan calls are ready."
             : "Subscription status refreshed."
-          : "Managed status refreshed.",
+          : "Swan status refreshed.",
       );
     } catch (error) {
       setManagedError(formatManagedError(error));
@@ -389,7 +476,8 @@ function OptionsApp() {
   }
 
   async function startManagedSubscription() {
-    if (!settings?.managedAccount) return;
+    // TODO: Restore this payment handler wiring after beta validation.
+    if (!settings?.managedAccount || managedBusy) return;
 
     setManagedBusy(true);
     setManagedError("");
@@ -398,7 +486,7 @@ function OptionsApp() {
       const response = await client.createCheckout(settings.managedAccount);
       await browser.tabs.create({ url: response.checkoutUrl });
       setBillingReturnPending(true);
-      setNotice("Stripe opened. Swan will refresh when you return.");
+      setNotice("Checkout opened. Swan will refresh when you return.");
     } catch (error) {
       setManagedError(formatManagedError(error));
     } finally {
@@ -407,6 +495,7 @@ function OptionsApp() {
   }
 
   async function manageManagedSubscription() {
+    // TODO: Restore this billing portal wiring after beta validation.
     if (!settings?.managedAccount) return;
 
     setManagedBusy(true);
@@ -453,17 +542,21 @@ function OptionsApp() {
       setSettingsDraft(nextSettings);
       setManagedOtpState(null);
       setManagedBusy(false);
-      setNotice("Signed out of managed calls on this browser.");
+      setNotice("Signed out of Swan on this browser.");
     }
   }
 
-  async function updateManagedAccount(managedAccount: ManagedAccount) {
+  async function updateManagedAccount(
+    managedAccount: ManagedAccount,
+    onboardingCompleted = false,
+  ) {
     if (!settings || !settingsDraft) return;
 
     const nextSettings = {
       ...settings,
       ...settingsDraft,
       managedAccount,
+      onboardingCompleted: settings.onboardingCompleted || onboardingCompleted,
     };
     await saveSettings(nextSettings);
     setSettings(nextSettings);
@@ -612,8 +705,20 @@ function OptionsApp() {
   if (!settingsDraft.onboardingCompleted) {
     return (
       <OnboardingPage
+        busy={managedBusy}
+        error={managedError}
         managedApiConfigured={managedApiConfigured}
-        onChooseMode={completeOnboarding}
+        managedAccount={settingsDraft.managedAccount}
+        otpState={managedOtpState}
+        onCancelManagedOtp={() => setManagedOtpState(null)}
+        onCompleteByok={completeByokOnboarding}
+        onCompleteManagedBeta={completeManagedBetaOnboarding}
+        onRefreshManagedAccount={refreshManagedAccount}
+        onStartManagedSignin={startManagedSignin}
+        onStartManagedSignup={startManagedSignup}
+        onStartManagedSubscription={startManagedSubscription}
+        onSignOutManagedAccount={signOutManagedAccount}
+        onVerifyManagedOtp={verifyManagedOtp}
       />
     );
   }
@@ -695,23 +800,34 @@ function OptionsApp() {
               fieldErrors={fieldErrors}
               importingData={importingData}
               managedApiConfigured={managedApiConfigured}
-              managedBusy={managedBusy}
-              managedError={managedError}
-              managedOtpState={managedOtpState}
               onChangeDeliveryMode={changeDeliveryMode}
-              onManageManagedSubscription={manageManagedSubscription}
               onImportData={importBundledData}
-              onRefreshManagedAccount={refreshManagedAccount}
+              onOpenPlanPage={() => setActivePage("plan")}
               readiness={readiness}
               savedSettings={settings}
               saveState={saveState}
               settingsDraft={settingsDraft}
               onSaveCard={saveSettingsCard}
               onSettingsDraftChange={updateSettingsDraft}
+            />
+          ) : null}
+
+          {activePage === "plan" ? (
+            <PlanPage
+              managedApiConfigured={managedApiConfigured}
+              managedBusy={managedBusy}
+              managedError={managedError}
+              managedOtpState={managedOtpState}
+              onCancelManagedOtp={() => setManagedOtpState(null)}
+              onChangeDeliveryMode={changeDeliveryMode}
+              onManageManagedSubscription={manageManagedSubscription}
+              onRefreshManagedAccount={refreshManagedAccount}
               onSignOutManagedAccount={signOutManagedAccount}
-              onStartManagedOtp={startManagedOtp}
+              onStartManagedSignin={startManagedSignin}
+              onStartManagedSignup={startManagedSignup}
               onStartManagedSubscription={startManagedSubscription}
               onVerifyManagedOtp={verifyManagedOtp}
+              settingsDraft={settingsDraft}
             />
           ) : null}
 
@@ -755,58 +871,279 @@ function OptionsApp() {
 }
 
 function OnboardingPage({
+  busy,
+  error,
+  managedAccount,
   managedApiConfigured,
-  onChooseMode,
+  onCompleteByok,
+  onCompleteManagedBeta,
+  onCancelManagedOtp,
+  onRefreshManagedAccount,
+  onStartManagedSignin,
+  onStartManagedSignup,
+  onStartManagedSubscription,
+  onSignOutManagedAccount,
+  onVerifyManagedOtp,
+  otpState,
 }: {
+  busy: boolean;
+  error: string;
+  managedAccount: ManagedAccount | null;
   managedApiConfigured: boolean;
-  onChooseMode: (deliveryMode: DeliveryMode) => Promise<void>;
+  onCompleteByok: (phoneNumber: string) => Promise<void>;
+  onCompleteManagedBeta: () => Promise<void>;
+  onCancelManagedOtp: () => void;
+  onRefreshManagedAccount: () => Promise<void>;
+  onStartManagedSignin: (phoneNumber: string) => Promise<void>;
+  onStartManagedSignup: (input: ManagedSignupInput) => Promise<void>;
+  onStartManagedSubscription: () => Promise<void>;
+  onSignOutManagedAccount: () => Promise<void>;
+  onVerifyManagedOtp: (code: string) => Promise<void>;
+  otpState: ManagedOtpState;
 }) {
+  const [step, setStep] = useState<"mode" | "byok-phone" | "managed">("mode");
+  const [selectedMode, setSelectedMode] = useState<DeliveryMode>(
+    managedApiConfigured ? "managed" : "byok",
+  );
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [localError, setLocalError] = useState("");
+  const stepCopy = getOnboardingStepCopy(step, managedAccount, otpState);
+  const inlinePhoneError = phoneNumber.trim()
+    ? validatePhoneNumber(phoneNumber, "Recipient number")
+    : "";
+  const byokError = localError || inlinePhoneError || "";
+
+  function chooseMode(nextMode: DeliveryMode) {
+    if (nextMode === "managed" && !managedApiConfigured) return;
+    setLocalError("");
+    setStep(nextMode === "managed" ? "managed" : "byok-phone");
+  }
+
+  function completeByokFromPhone() {
+    const validation = validatePhoneNumber(phoneNumber, "Recipient number");
+    if (validation) {
+      setLocalError(validation);
+      return;
+    }
+    void onCompleteByok(formatPhoneNumberE164(phoneNumber));
+  }
+
   return (
     <main className="onboardingShell">
       <section className="onboardingPanel" aria-labelledby="onboarding-title">
+        <OnboardingProgress
+          index={stepCopy.index}
+          label={stepCopy.label}
+          total={stepCopy.total}
+        />
         <div className="onboardingIntro">
-          <span>Swan setup</span>
-          <h1 id="onboarding-title">Choose who places intervention calls.</h1>
-          <p>
-            Swan keeps monitoring, domains, and history in this browser. Pick the
-            call delivery path you want to set up first.
-          </p>
+          <h1 id="onboarding-title">{stepCopy.title}</h1>
+          <p>{stepCopy.description}</p>
         </div>
 
-        <div className="onboardingChoices" aria-label="Call delivery options">
-          {managedApiConfigured ? (
-            <button
-              type="button"
-              className="onboardingChoice"
-              onClick={() => void onChooseMode("managed")}
-            >
-              <span className="choiceIcon">
-                <CheckCircle2 size={18} aria-hidden="true" />
-              </span>
-              <span>
-                <strong>Let Swan handle calls</strong>
-                <small>Sign in, start a subscription, and use managed call delivery.</small>
-              </span>
-            </button>
-          ) : null}
+        {step === "mode" ? (
+          <div className="onboardingForm">
+            <div className="onboardingChoices" aria-label="Call delivery options">
+              {managedApiConfigured ? (
+                <button
+                  type="button"
+                  className={`onboardingChoice ${
+                    selectedMode === "managed" ? "selected" : ""
+                  }`}
+                  aria-pressed={selectedMode === "managed"}
+                  onClick={() => setSelectedMode("managed")}
+                >
+                  <span className="choiceIcon">
+                    <CheckCircle2 size={18} aria-hidden="true" />
+                  </span>
+                  <span>
+                    <strong>Swan Beta</strong>
+                    <small>
+                      {MANAGED_BETA_MONTHLY_CALL_LIMIT} hosted calls/month during
+                      beta.
+                    </small>
+                  </span>
+                </button>
+              ) : null}
 
-          <button
-            type="button"
-            className="onboardingChoice"
-            onClick={() => void onChooseMode("byok")}
+              <button
+                type="button"
+                className={`onboardingChoice ${
+                  selectedMode === "byok" ? "selected" : ""
+                }`}
+                aria-pressed={selectedMode === "byok"}
+                onClick={() => setSelectedMode("byok")}
+              >
+                <span className="choiceIcon">
+                  <AudioLines size={18} aria-hidden="true" />
+                </span>
+                <span>
+                  <strong>Use my ElevenLabs</strong>
+                  <small>Use your own key from this browser.</small>
+                </span>
+              </button>
+            </div>
+            <div className="onboardingActions stacked">
+              <button
+                type="button"
+                className="primaryButton"
+                onClick={() => chooseMode(selectedMode)}
+              >
+                <span>Continue</span>
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {step === "byok-phone" ? (
+          <form
+            className="onboardingForm"
+            onSubmit={(event) => {
+              event.preventDefault();
+              completeByokFromPhone();
+            }}
           >
-            <span className="choiceIcon">
-              <AudioLines size={18} aria-hidden="true" />
-            </span>
-            <span>
-              <strong>Use my ElevenLabs account</strong>
-              <small>Store your own provider key locally in this browser.</small>
-            </span>
-          </button>
-        </div>
+            <Field label="Recipient number">
+              <input
+                className="monoInput"
+                aria-invalid={localError ? "true" : undefined}
+                value={phoneNumber}
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder="+1 (555) 000-0000"
+                onChange={(event) => {
+                  setPhoneNumber(event.currentTarget.value);
+                  setLocalError("");
+                }}
+              />
+              <FieldError message={byokError} />
+            </Field>
+            <div className="onboardingActions">
+              <button
+                type="button"
+                className="secondaryButton"
+                onClick={() => setStep("mode")}
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                className="primaryButton"
+              >
+                <span>Continue to dashboard</span>
+              </button>
+            </div>
+          </form>
+        ) : null}
+
+        {step === "managed" ? (
+          <div className="onboardingForm">
+            {managedAccount ? (
+              <ManagedBetaReadyStep
+                account={managedAccount}
+                busy={busy}
+                error={error}
+                onContinue={onCompleteManagedBeta}
+                onSignOut={onSignOutManagedAccount}
+                onRefreshAccount={onRefreshManagedAccount}
+              />
+            ) : (
+              <>
+                <ManagedAuthForm
+                  busy={busy}
+                  error={error}
+                  initialPhoneNumber=""
+                  otpState={otpState}
+                  onBackToMode={() => setStep("mode")}
+                  onCancelOtp={onCancelManagedOtp}
+                  onStartSignin={onStartManagedSignin}
+                  onStartSignup={onStartManagedSignup}
+                  onVerifyOtp={onVerifyManagedOtp}
+                />
+              </>
+            )}
+          </div>
+        ) : null}
       </section>
     </main>
   );
+}
+
+function OnboardingProgress({
+  index,
+  label,
+  total,
+}: {
+  index: number;
+  label: string;
+  total: number;
+}) {
+  return (
+    <div className="onboardingProgress" aria-label={`Step ${index} of ${total}`}>
+      <span className="onboardingStepPill">
+        Step {index} of {total}
+      </span>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function getOnboardingStepCopy(
+  step: "mode" | "byok-phone" | "managed",
+  managedAccount: ManagedAccount | null,
+  otpState: ManagedOtpState,
+): {
+  index: number;
+  total: number;
+  label: string;
+  title: string;
+  description: string;
+} {
+  if (step === "byok-phone") {
+    return {
+      index: 2,
+      total: 2,
+      label: "Phone",
+      title: "Enter the number to call.",
+      description: "Used when a watched site opens.",
+    };
+  }
+
+  if (step === "managed") {
+    if (managedAccount) {
+      return {
+        index: 3,
+        total: 3,
+        label: "Ready",
+        title: "Swan is ready.",
+        description: "Finish setup and open the dashboard.",
+      };
+    }
+    if (otpState) {
+      return {
+        index: 2,
+        total: 3,
+        label: "Code",
+        title: "Enter your code.",
+        description: "Check your text message.",
+      };
+    }
+    return {
+      index: 1,
+      total: 3,
+      label: "Account",
+      title: "Use Swan.",
+      description: "Sign in or create an account.",
+    };
+  }
+
+  return {
+    index: 1,
+    total: 2,
+    label: "Delivery",
+    title: "Choose how Swan calls you.",
+    description: "Pick hosted calls or your own ElevenLabs account.",
+  };
 }
 
 function StatusPage({
@@ -814,19 +1151,11 @@ function StatusPage({
   fieldErrors,
   importingData,
   managedApiConfigured,
-  managedBusy,
-  managedError,
-  managedOtpState,
   onChangeDeliveryMode,
   onImportData,
-  onManageManagedSubscription,
-  onRefreshManagedAccount,
+  onOpenPlanPage,
   onSaveCard,
   onSettingsDraftChange,
-  onSignOutManagedAccount,
-  onStartManagedOtp,
-  onStartManagedSubscription,
-  onVerifyManagedOtp,
   readiness,
   savedSettings,
   saveState,
@@ -836,22 +1165,14 @@ function StatusPage({
   fieldErrors: SettingsFieldErrors;
   importingData: boolean;
   managedApiConfigured: boolean;
-  managedBusy: boolean;
-  managedError: string;
-  managedOtpState: ManagedOtpState;
   onChangeDeliveryMode: (deliveryMode: DeliveryMode) => Promise<void>;
   onImportData: () => Promise<void>;
-  onManageManagedSubscription: () => Promise<void>;
-  onRefreshManagedAccount: () => Promise<void>;
+  onOpenPlanPage: () => void;
   onSaveCard: (
     cardId: SettingsCardId,
     validateDelivery?: boolean,
   ) => Promise<boolean>;
   onSettingsDraftChange: (cardId: SettingsCardId, settings: UserSettings) => void;
-  onSignOutManagedAccount: () => Promise<void>;
-  onStartManagedOtp: (phoneNumber: string) => Promise<void>;
-  onStartManagedSubscription: () => Promise<void>;
-  onVerifyManagedOtp: (code: string) => Promise<void>;
   readiness: ReadinessState;
   savedSettings: UserSettings;
   saveState: Record<SettingsCardId, SaveState>;
@@ -992,8 +1313,8 @@ function StatusPage({
                 <FieldError message={fieldErrors.agentPhoneNumberId} />
               </Field>
               <p className="helperText">
-                Your ElevenLabs credentials stay in this browser. Managed mode
-                does not use them.
+                Your ElevenLabs credentials stay in this browser. Swan hosted
+                mode does not use them.
               </p>
               <SaveCardFooter
                 dirty={recipientDirty || elevenLabsDirty}
@@ -1010,19 +1331,45 @@ function StatusPage({
               />
             </SettingsCard>
           ) : (
-            <ManagedAccountCard
-              account={settingsDraft.managedAccount}
-              busy={managedBusy}
-              error={managedError}
-              managedApiConfigured={managedApiConfigured}
-              otpState={managedOtpState}
-              onManageSubscription={onManageManagedSubscription}
-              onRefreshAccount={onRefreshManagedAccount}
-              onSignOut={onSignOutManagedAccount}
-              onStartOtp={onStartManagedOtp}
-              onStartSubscription={onStartManagedSubscription}
-              onVerifyOtp={onVerifyManagedOtp}
-            />
+            <SettingsCard
+              icon={CreditCard}
+              title="Swan Beta"
+              tag={
+                settingsDraft.managedAccount
+                  ? managedAccountTag(settingsDraft.managedAccount)
+                  : "Sign in"
+              }
+            >
+              <div className="managedSummary">
+                <div>
+                  <span>Account</span>
+                  <strong>
+                    {settingsDraft.managedAccount?.email ||
+                      settingsDraft.managedAccount?.phoneNumber ||
+                      "Not signed in"}
+                  </strong>
+                </div>
+                <div>
+                  <span>Plan</span>
+                  <strong>
+                    {settingsDraft.managedAccount
+                      ? getManagedBillingLabel(settingsDraft.managedAccount)
+                      : "Not started"}
+                  </strong>
+                </div>
+              </div>
+              <p className="helperText">
+                Manage your hosted beta account and refresh call access from Plan.
+              </p>
+              <button
+                type="button"
+                className="primaryButton"
+                onClick={onOpenPlanPage}
+              >
+                <CreditCard size={14} aria-hidden="true" />
+                <span>Open plan settings</span>
+              </button>
+            </SettingsCard>
           )}
         </div>
       </section>
@@ -1118,7 +1465,7 @@ function DeliveryModeToggle({
           />
           <ModeToggleOption
             active={deliveryMode === "managed"}
-            label="Swan Managed"
+            label="Swan Beta"
             value="managed"
             onChange={() => void onChangeDeliveryMode("managed")}
           />
@@ -1164,9 +1511,112 @@ function getDeliveryModeDescription(
   deliveryMode: DeliveryMode,
   managedApiConfigured: boolean,
 ): string {
-  if (!managedApiConfigured) return "Managed calls are not enabled in this build.";
-  if (deliveryMode === "managed") return "Swan handles call delivery and billing.";
+  if (!managedApiConfigured) return "Swan calls are not enabled in this build.";
+  if (deliveryMode === "managed") return "Swan handles hosted calls during beta.";
   return "Your provider key stays in this browser.";
+}
+
+function PlanPage({
+  managedApiConfigured,
+  managedBusy,
+  managedError,
+  managedOtpState,
+  onCancelManagedOtp,
+  onChangeDeliveryMode,
+  onManageManagedSubscription,
+  onRefreshManagedAccount,
+  onSignOutManagedAccount,
+  onStartManagedSignin,
+  onStartManagedSignup,
+  onStartManagedSubscription,
+  onVerifyManagedOtp,
+  settingsDraft,
+}: {
+  managedApiConfigured: boolean;
+  managedBusy: boolean;
+  managedError: string;
+  managedOtpState: ManagedOtpState;
+  onCancelManagedOtp: () => void;
+  onChangeDeliveryMode: (deliveryMode: DeliveryMode) => Promise<void>;
+  onManageManagedSubscription: () => Promise<void>;
+  onRefreshManagedAccount: () => Promise<void>;
+  onSignOutManagedAccount: () => Promise<void>;
+  onStartManagedSignin: (phoneNumber: string) => Promise<void>;
+  onStartManagedSignup: (input: ManagedSignupInput) => Promise<void>;
+  onStartManagedSubscription: () => Promise<void>;
+  onVerifyManagedOtp: (code: string) => Promise<void>;
+  settingsDraft: UserSettings;
+}) {
+  const usingManaged = settingsDraft.deliveryMode === "managed";
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Plan"
+        title="Swan Beta"
+        description={`Hosted calls are free during beta, capped at ${MANAGED_BETA_MONTHLY_CALL_LIMIT}/month.`}
+      />
+
+      <div className="planLayout">
+        {!usingManaged ? (
+          <SettingsCard icon={AudioLines} title="Free BYOK" tag="Current">
+            <div className="managedSummary">
+              <div>
+                <span>Mode</span>
+                <strong>My ElevenLabs</strong>
+              </div>
+              <div>
+                <span>Billing</span>
+                <strong>None</strong>
+              </div>
+              <div>
+                <span>Call delivery</span>
+                <strong>Local provider key</strong>
+              </div>
+            </div>
+            <p className="helperText">
+              BYOK keeps provider setup in this browser. Swan Beta uses hosted
+              call delivery for free during validation.
+            </p>
+            <button
+              type="button"
+              className="primaryButton"
+              disabled={!managedApiConfigured}
+              onClick={() => void onChangeDeliveryMode("managed")}
+            >
+              <CreditCard size={14} aria-hidden="true" />
+              <span>Use Swan Beta</span>
+            </button>
+            {!managedApiConfigured ? (
+              <p className="managedNotice error">
+                Swan calls are not available in this build. Rebuild with
+                WXT_SWAN_MANAGED_API_BASE_URL.
+              </p>
+            ) : null}
+          </SettingsCard>
+        ) : null}
+
+        {usingManaged ? (
+          <ManagedAccountCard
+            account={settingsDraft.managedAccount}
+            busy={managedBusy}
+            error={managedError}
+            managedApiConfigured={managedApiConfigured}
+            otpState={managedOtpState}
+            onBackToByok={() => void onChangeDeliveryMode("byok")}
+            onCancelOtp={onCancelManagedOtp}
+            onManageSubscription={onManageManagedSubscription}
+            onRefreshAccount={onRefreshManagedAccount}
+            onSignOut={onSignOutManagedAccount}
+            onStartSignin={onStartManagedSignin}
+            onStartSignup={onStartManagedSignup}
+            onStartSubscription={onStartManagedSubscription}
+            onVerifyOtp={onVerifyManagedOtp}
+          />
+        ) : null}
+      </div>
+    </>
+  );
 }
 
 function ManagedAccountCard({
@@ -1174,10 +1624,13 @@ function ManagedAccountCard({
   busy,
   error,
   managedApiConfigured,
+  onBackToByok,
+  onCancelOtp,
   onManageSubscription,
   onRefreshAccount,
   onSignOut,
-  onStartOtp,
+  onStartSignin,
+  onStartSignup,
   onStartSubscription,
   onVerifyOtp,
   otpState,
@@ -1186,86 +1639,57 @@ function ManagedAccountCard({
   busy: boolean;
   error: string;
   managedApiConfigured: boolean;
+  onBackToByok: () => void;
+  onCancelOtp: () => void;
   onManageSubscription: () => Promise<void>;
   onRefreshAccount: () => Promise<void>;
   onSignOut: () => Promise<void>;
-  onStartOtp: (phoneNumber: string) => Promise<void>;
+  onStartSignin: (phoneNumber: string) => Promise<void>;
+  onStartSignup: (input: ManagedSignupInput) => Promise<void>;
   onStartSubscription: () => Promise<void>;
   onVerifyOtp: (code: string) => Promise<void>;
   otpState: ManagedOtpState;
 }) {
-  const [phoneNumber, setPhoneNumber] = useState(account?.phoneNumber ?? "");
-  const [code, setCode] = useState("");
-  const [localError, setLocalError] = useState("");
-  const active = Boolean(account?.entitlementActive);
-  const paymentAction = account ? getManagedPaymentAction(account) : null;
-
   return (
     <SettingsCard
-      icon={CheckCircle2}
-      title="Managed calls"
+      icon={CreditCard}
+      title="Swan Beta"
       tag={account ? managedAccountTag(account) : "Sign in"}
     >
       {!managedApiConfigured ? (
         <p className="managedNotice error">
-          Managed calls are not available in this build. Rebuild with
+          Swan calls are not available in this build. Rebuild with
           WXT_SWAN_MANAGED_API_BASE_URL.
         </p>
       ) : null}
 
       {account ? (
         <>
-          <div className="managedSummary">
+          <ManagedPlanSummary
+            account={account}
+            busy={busy || !managedApiConfigured}
+            error={error}
+            onRefreshAccount={onRefreshAccount}
+          />
+          <div className="profileGrid" aria-label="Swan account profile">
+            <div>
+              <span>Name</span>
+              <strong>{account.name || "Not set"}</strong>
+            </div>
+            <div>
+              <span>Email</span>
+              <strong>{account.email || "Not set"}</strong>
+            </div>
             <div>
               <span>Phone</span>
               <strong>{account.phoneNumber}</strong>
             </div>
-            <div>
-              <span>Call access</span>
-              <strong className={active ? "stateText enabled" : "stateText disabled"}>
-                {getManagedAccessLabel(account)}
-              </strong>
-            </div>
-            <div>
-              <span>Billing</span>
-              <strong>{getManagedBillingLabel(account)}</strong>
-            </div>
           </div>
           <p className="helperText">
-            Managed calls send only event metadata when Swan intervenes. Your
-            domain list and BYOK keys stay local.
+            Swan calls send only event metadata when Swan intervenes. Your domain
+            list and BYOK keys stay local.
           </p>
-          {account.currentPeriodEnd ? (
-            <p className="domainNote">
-              {active ? "Renews" : "Current period ends"}{" "}
-              {new Date(account.currentPeriodEnd).toLocaleDateString()}.
-            </p>
-          ) : null}
-          {error ? <p className="managedNotice error">{error}</p> : null}
           <div className="managedActions">
-            {paymentAction ? (
-              <button
-                type="button"
-                className="primaryButton"
-                disabled={busy}
-                onClick={() =>
-                  void (paymentAction.kind === "manage"
-                    ? onManageSubscription()
-                    : onStartSubscription())
-                }
-              >
-                <span>{paymentAction.label}</span>
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="secondaryButton"
-              disabled={busy}
-              onClick={() => void onRefreshAccount()}
-            >
-              <RefreshCw size={14} aria-hidden="true" />
-              <span>Refresh status</span>
-            </button>
             <button
               type="button"
               className="textButton"
@@ -1277,77 +1701,558 @@ function ManagedAccountCard({
           </div>
         </>
       ) : (
-        <>
-          <Field label="Managed phone number">
-            <input
-              className="monoInput"
-              aria-invalid={localError ? "true" : undefined}
-              value={phoneNumber}
-              disabled={!managedApiConfigured || busy}
-              placeholder="+1 (555) 000-0000"
-              onChange={(event) => {
-                setPhoneNumber(event.currentTarget.value);
-                setLocalError("");
-              }}
-            />
-            <FieldError message={localError && !otpState ? localError : ""} />
-          </Field>
-          <button
-            type="button"
-            className="secondaryButton"
-            disabled={!managedApiConfigured || busy || phoneNumber.trim().length === 0}
-            onClick={() => {
-              const validation = validatePhoneNumber(phoneNumber, "Managed phone number");
-              if (validation) {
-                setLocalError(validation);
-                return;
-              }
-              void onStartOtp(phoneNumber);
-            }}
-          >
-            <span>{busy && !otpState ? "Sending..." : "Send verification code"}</span>
-          </button>
-          {otpState ? (
-            <>
-              <Field label="Verification code">
-                <input
-                  className="monoInput"
-                  aria-invalid={localError ? "true" : undefined}
-                  value={code}
-                  disabled={busy}
-                  inputMode="numeric"
-                  placeholder="000000"
-                  onChange={(event) => {
-                    setCode(event.currentTarget.value);
-                    setLocalError("");
-                  }}
-                />
-                <FieldError message={localError && otpState ? localError : ""} />
-              </Field>
-              <button
-                type="button"
-                className="primaryButton"
-                disabled={busy || code.trim().length === 0}
-                onClick={() => {
-                  if (!/^\d{4,8}$/.test(code.trim())) {
-                    setLocalError("Enter the numeric verification code.");
-                    return;
-                  }
-                  void onVerifyOtp(code);
-                }}
-              >
-                <span>{busy ? "Verifying..." : "Verify and sign in"}</span>
-              </button>
-            </>
-          ) : null}
-          <p className="helperText">
-            Managed calls use this phone number. BYOK calls keep their own
-            recipient.
-          </p>
-          {error ? <p className="managedNotice error">{error}</p> : null}
-        </>
+        <ManagedAuthForm
+          busy={busy || !managedApiConfigured}
+          error={error}
+          initialPhoneNumber=""
+          otpState={otpState}
+          onBackToMode={onBackToByok}
+          onCancelOtp={onCancelOtp}
+          onStartSignin={onStartSignin}
+          onStartSignup={onStartSignup}
+          onVerifyOtp={onVerifyOtp}
+        />
       )}
     </SettingsCard>
+  );
+}
+
+function ManagedBetaReadyStep({
+  account,
+  busy,
+  error,
+  onContinue,
+  onRefreshAccount,
+  onSignOut,
+}: {
+  account: ManagedAccount;
+  busy: boolean;
+  error: string;
+  onContinue: () => Promise<void>;
+  onRefreshAccount: () => Promise<void>;
+  onSignOut: () => Promise<void>;
+}) {
+  return (
+    <div className="trialPanel">
+      <div className="trialHeader">
+        <span className="choiceIcon">
+          <CreditCard size={18} aria-hidden="true" />
+        </span>
+        <div>
+          <h2>Your account is connected</h2>
+          <p>
+            Swan will place hosted calls for this browser.
+          </p>
+        </div>
+      </div>
+
+      <div className="managedSummary">
+        <div>
+          <span>Access</span>
+          <strong
+            className={
+              account.entitlementActive ? "stateText enabled" : "stateText disabled"
+            }
+          >
+            {getManagedAccessLabel(account)}
+          </strong>
+        </div>
+        <div>
+          <span>Calls</span>
+          <strong>{MANAGED_BETA_MONTHLY_CALL_LIMIT}/month</strong>
+        </div>
+        <div>
+          <span>Cost</span>
+          <strong>Free</strong>
+        </div>
+      </div>
+
+      {error ? <p className="managedNotice error">{error}</p> : null}
+
+      <div className="managedActions">
+        <button
+          type="button"
+          className="primaryButton"
+          disabled={busy}
+          onClick={() => void onContinue()}
+        >
+          <CheckCircle2 size={14} aria-hidden="true" />
+          <span>Continue to dashboard</span>
+        </button>
+        <button
+          type="button"
+          className="secondaryButton"
+          disabled={busy}
+          onClick={() => void onRefreshAccount()}
+        >
+          <RefreshCw size={14} aria-hidden="true" />
+          <span>Refresh status</span>
+        </button>
+        <button
+          type="button"
+          className="textButton"
+          disabled={busy}
+          onClick={() => void onSignOut()}
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/*
+TODO: Restore for paid hosted launch after beta validation.
+
+function ManagedTrialStep({
+  account,
+  busy,
+  error,
+  onRefreshAccount,
+  onSignOut,
+  onStartTrial,
+}: {
+  account: ManagedAccount;
+  busy: boolean;
+  error: string;
+  onRefreshAccount: () => Promise<void>;
+  onSignOut: () => Promise<void>;
+  onStartTrial: () => Promise<void>;
+}) {
+  const subscriptionReady = hasManagedSubscription(account);
+
+  return (
+    <div className="trialPanel">
+      <div className="trialHeader">
+        <span className="choiceIcon">
+          <CreditCard size={18} aria-hidden="true" />
+        </span>
+        <div>
+          <h2>
+            {subscriptionReady
+              ? "Swan calls are ready"
+              : "Start your subscription"}
+          </h2>
+          <p>
+            {MANAGED_MONTHLY_PRICE_LABEL} after a {MANAGED_TRIAL_DAYS}-day trial.
+            Cancel anytime.
+          </p>
+        </div>
+      </div>
+
+      <div className="managedSummary">
+        <div>
+          <span>Price</span>
+          <strong>{MANAGED_MONTHLY_PRICE_LABEL}</strong>
+        </div>
+        <div>
+          <span>Trial</span>
+          <strong>{subscriptionReady ? "Active" : `${MANAGED_TRIAL_DAYS} days`}</strong>
+        </div>
+        <div>
+          <span>Cancel</span>
+          <strong>Anytime</strong>
+        </div>
+      </div>
+
+      {error ? <p className="managedNotice error">{error}</p> : null}
+
+      <div className="managedActions">
+        {!subscriptionReady ? (
+          <button
+            type="button"
+            className="primaryButton"
+            disabled={busy}
+            onClick={() => void onStartTrial()}
+          >
+            <CreditCard size={14} aria-hidden="true" />
+            <span>Start {MANAGED_TRIAL_DAYS}-day trial</span>
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="secondaryButton"
+          disabled={busy}
+          onClick={() => void onRefreshAccount()}
+        >
+          <RefreshCw size={14} aria-hidden="true" />
+          <span>Refresh status</span>
+        </button>
+        <button
+          type="button"
+          className="textButton"
+          disabled={busy}
+          onClick={() => void onSignOut()}
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+*/
+
+function ManagedPlanSummary({
+  account,
+  busy,
+  error,
+  onRefreshAccount,
+}: {
+  account: ManagedAccount;
+  busy: boolean;
+  error: string;
+  onRefreshAccount: () => Promise<void>;
+}) {
+  const active = Boolean(account.entitlementActive);
+
+  return (
+    <>
+      <div className="managedSummary">
+        <div>
+          <span>Access</span>
+          <strong className={active ? "stateText enabled" : "stateText disabled"}>
+            {getManagedAccessLabel(account)}
+          </strong>
+        </div>
+        <div>
+          <span>Plan</span>
+          <strong>{getManagedBillingLabel(account)}</strong>
+        </div>
+        <div>
+          <span>Hosted calls</span>
+          <strong>{MANAGED_BETA_MONTHLY_CALL_LIMIT}/month</strong>
+        </div>
+      </div>
+      {error ? <p className="managedNotice error">{error}</p> : null}
+      <div className="managedActions">
+        {/*
+        TODO: Restore this paid hosted billing action after beta validation.
+        const paymentAction = getManagedPaymentAction(account);
+        <button
+          type="button"
+          className="primaryButton"
+          disabled={busy}
+          onClick={() => void onManageSubscription()}
+        >
+          <span>{paymentAction.label}</span>
+        </button>
+        */}
+        <button
+          type="button"
+          className="secondaryButton"
+          disabled={busy}
+          onClick={() => void onRefreshAccount()}
+        >
+          <RefreshCw size={14} aria-hidden="true" />
+          <span>Refresh status</span>
+        </button>
+      </div>
+    </>
+  );
+}
+
+function ManagedAuthForm({
+  busy,
+  error,
+  initialPhoneNumber,
+  onBackToMode,
+  onCancelOtp,
+  onStartSignin,
+  onStartSignup,
+  onVerifyOtp,
+  otpState,
+}: {
+  busy: boolean;
+  error: string;
+  initialPhoneNumber: string;
+  onBackToMode: () => void;
+  onCancelOtp: () => void;
+  onStartSignin: (phoneNumber: string) => Promise<void>;
+  onStartSignup: (input: ManagedSignupInput) => Promise<void>;
+  onVerifyOtp: (code: string) => Promise<void>;
+  otpState: ManagedOtpState;
+}) {
+  const [intent, setIntent] = useState<ManagedAuthIntent>("signin");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
+  const [code, setCode] = useState("");
+  const [localError, setLocalError] = useState<ManagedAuthLocalError>(null);
+  const normalizedPhone = formatPhoneNumberE164(phoneNumber);
+  const otpForCurrentForm =
+    otpState?.intent === intent && otpState.phoneNumber === normalizedPhone;
+  const nameError = localError?.field === "name" ? localError.message : "";
+  const emailErrorMessage = localError?.field === "email" ? localError.message : "";
+  const phoneError =
+    localError?.field === "phone" && !otpForCurrentForm
+      ? localError.message
+      : "";
+  const codeError =
+    localError?.field === "code" && otpForCurrentForm
+      ? localError.message
+      : "";
+  const isSignup = intent === "signup";
+
+  function switchIntent(nextIntent: ManagedAuthIntent) {
+    if (nextIntent === intent) return;
+    setIntent(nextIntent);
+    setCode("");
+    setLocalError(null);
+  }
+
+  function startOtp() {
+    const phoneError = validatePhoneNumber(phoneNumber, "Phone number");
+    if (phoneError) {
+      setLocalError({ field: "phone", message: phoneError });
+      return;
+    }
+
+    if (intent === "signup") {
+      const trimmedName = name.trim();
+      const emailError = validateEmail(email);
+      if (!trimmedName) {
+        setLocalError({ field: "name", message: "Enter your name." });
+        return;
+      }
+      if (emailError) {
+        setLocalError({ field: "email", message: emailError });
+        return;
+      }
+      void onStartSignup({
+        name: trimmedName,
+        email: email.trim().toLowerCase(),
+        phoneNumber: normalizedPhone,
+      });
+      return;
+    }
+
+    void onStartSignin(normalizedPhone);
+  }
+
+  function verifyOtp() {
+    if (!/^\d{4,8}$/.test(code.trim())) {
+      setLocalError({
+        field: "code",
+        message: "Enter the numeric verification code.",
+      });
+      return;
+    }
+    void onVerifyOtp(code.trim());
+  }
+
+  if (otpForCurrentForm) {
+    return (
+      <ManagedVerificationStep
+        busy={busy}
+        code={code}
+        codeError={codeError}
+        error={error}
+        phoneNumber={normalizedPhone}
+        onBack={() => {
+          onCancelOtp();
+          setCode("");
+          setLocalError(null);
+        }}
+        onChangeCode={(nextCode) => {
+          setCode(nextCode);
+          setLocalError(null);
+        }}
+        onUseByok={onBackToMode}
+        onVerify={verifyOtp}
+      />
+    );
+  }
+
+  return (
+    <form
+      className="managedAuthForm"
+      onSubmit={(event) => {
+        event.preventDefault();
+        startOtp();
+      }}
+    >
+      <div className="authModeHeader">
+        <h2>{isSignup ? "Create your account" : "Sign in"}</h2>
+        <p>
+          {isSignup
+            ? "Add your details to create the account."
+            : "Enter your account phone number."}
+        </p>
+      </div>
+
+      {isSignup ? (
+        <>
+          <Field label="Name">
+            <input
+              className="monoInput"
+              name="managed-name"
+              value={name}
+              disabled={busy}
+              autoComplete="name"
+              maxLength={120}
+              aria-invalid={nameError ? "true" : undefined}
+              placeholder="Danny Lee"
+              onChange={(event) => {
+                setName(event.currentTarget.value);
+                setLocalError(null);
+              }}
+            />
+            <FieldError message={nameError} />
+          </Field>
+          <Field label="Email">
+            <input
+              className="monoInput"
+              name="managed-email"
+              value={email}
+              disabled={busy}
+              autoComplete="email"
+              inputMode="email"
+              maxLength={254}
+              aria-invalid={emailErrorMessage ? "true" : undefined}
+              placeholder="you@example.com"
+              onChange={(event) => {
+                setEmail(event.currentTarget.value);
+                setLocalError(null);
+              }}
+            />
+            <FieldError message={emailErrorMessage} />
+          </Field>
+        </>
+      ) : null}
+
+      <Field label="Phone number">
+        <input
+          className="monoInput"
+          name="managed-phone"
+          aria-invalid={phoneError ? "true" : undefined}
+          value={phoneNumber}
+          disabled={busy}
+          autoComplete="tel"
+          inputMode="tel"
+          placeholder="+1 (555) 000-0000"
+          onChange={(event) => {
+            setPhoneNumber(event.currentTarget.value);
+            setCode("");
+            setLocalError(null);
+          }}
+        />
+        <FieldError message={phoneError} />
+      </Field>
+
+      <button
+        type="submit"
+        className="primaryButton"
+        disabled={busy || normalizedPhone.length === 0}
+      >
+        <span>
+          {busy ? "Sending..." : "Send verification code"}
+        </span>
+      </button>
+
+      <p className="helperText">
+        We will text you a verification code.
+      </p>
+      {error ? <p className="managedNotice error">{error}</p> : null}
+      <div className="authSwitchPrompt">
+        <span>
+          {isSignup ? "Already have an account?" : "Need an account?"}
+        </span>
+        <button
+          type="button"
+          className="textButton"
+          disabled={busy}
+          onClick={() => switchIntent(isSignup ? "signin" : "signup")}
+        >
+          {isSignup ? "Sign in" : "Create account"}
+        </button>
+      </div>
+      <button
+        type="button"
+        className="textButton authByokLink"
+        disabled={busy}
+        onClick={onBackToMode}
+      >
+        Use my ElevenLabs instead
+      </button>
+    </form>
+  );
+}
+
+function ManagedVerificationStep({
+  busy,
+  code,
+  codeError,
+  error,
+  phoneNumber,
+  onBack,
+  onChangeCode,
+  onUseByok,
+  onVerify,
+}: {
+  busy: boolean;
+  code: string;
+  codeError: string;
+  error: string;
+  phoneNumber: string;
+  onBack: () => void;
+  onChangeCode: (code: string) => void;
+  onUseByok: () => void;
+  onVerify: () => void;
+}) {
+  return (
+    <form
+      className="managedAuthForm verificationForm"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onVerify();
+      }}
+    >
+      <div className="authModeHeader centered">
+        <h2>Check your texts</h2>
+        <p>Code sent to {phoneNumber}.</p>
+      </div>
+      <Field label="Verification code">
+        <input
+          className="monoInput codeInput"
+          name="managed-verification-code"
+          aria-invalid={codeError ? "true" : undefined}
+          value={code}
+          disabled={busy}
+          autoComplete="one-time-code"
+          inputMode="numeric"
+          maxLength={8}
+          placeholder="000000"
+          onChange={(event) => onChangeCode(event.currentTarget.value)}
+        />
+        <FieldError message={codeError} />
+      </Field>
+      {error ? <p className="managedNotice error">{error}</p> : null}
+      <div className="onboardingActions">
+        <button
+          type="button"
+          className="secondaryButton"
+          disabled={busy}
+          onClick={onBack}
+        >
+          Back
+        </button>
+        <button
+          type="submit"
+          className="primaryButton"
+          disabled={busy || code.trim().length === 0}
+        >
+          <span>{busy ? "Verifying..." : "Verify code"}</span>
+        </button>
+      </div>
+      <button
+        type="button"
+        className="textButton authByokLink"
+        disabled={busy}
+        onClick={onUseByok}
+      >
+        Use my ElevenLabs instead
+      </button>
+    </form>
   );
 }
 
@@ -1919,25 +2824,47 @@ function createManagedClient(): ManagedClient {
 
 function formatManagedError(error: unknown): string {
   if (error instanceof Error) return error.message;
-  return "Managed request failed.";
+  return "Swan request failed.";
+}
+
+function validateEmail(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "Enter your email address.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    return "Enter a valid email address.";
+  }
+  return "";
+}
+
+function hasManagedSubscription(account: ManagedAccount): boolean {
+  return (
+    account.subscriptionStatus === "active" ||
+    account.subscriptionStatus === "trialing"
+  );
 }
 
 function managedAccountTag(account: ManagedAccount): string {
-  if (account.entitlementActive) return "Active";
+  if (account.entitlementActive) {
+    return hasManagedSubscription(account) ? "Active" : "Beta active";
+  }
+  if (hasManagedSubscription(account)) return "Active";
   if (requiresBillingAttention(account.subscriptionStatus)) return "Needs billing";
-  return "Inactive";
+  return "Limit reached";
 }
 
 function getManagedAccessLabel(account: ManagedAccount): string {
-  if (account.entitlementActive) return "Active";
+  if (account.entitlementActive) {
+    return hasManagedSubscription(account) ? "Active" : "Beta active";
+  }
   if (requiresBillingAttention(account.subscriptionStatus)) return "Needs billing";
-  return "Inactive";
+  return "Beta limit reached";
 }
 
 function getManagedBillingLabel(account: ManagedAccount): string {
   const status = account.subscriptionStatus;
-  if (!status) return "Not started";
-  if (status === "active" || status === "trialing") return "Current";
+  if (!status) return "Free beta";
+  if (status === "trialing") return "Trial active";
+  if (status === "active") return "Current";
   if (requiresBillingAttention(status)) return "Needs attention";
   if (status === "canceled" || status === "incomplete_expired") return "Ended";
   return formatSubscriptionStatus(status);
@@ -1947,13 +2874,16 @@ function getManagedPaymentAction(account: ManagedAccount): {
   kind: "checkout" | "manage";
   label: string;
 } {
-  if (account.entitlementActive) {
+  if (hasManagedSubscription(account)) {
     return { kind: "manage", label: "Manage billing" };
   }
   if (requiresBillingAttention(account.subscriptionStatus)) {
     return { kind: "manage", label: "Update billing" };
   }
-  return { kind: "checkout", label: "Start subscription" };
+  if (account.subscriptionStatus === "canceled") {
+    return { kind: "checkout", label: "Restart subscription" };
+  }
+  return { kind: "checkout", label: "Start free trial" };
 }
 
 function requiresBillingAttention(status: string | null): boolean {

@@ -5,6 +5,8 @@ import type { ManagedAccount, UrgeEvent } from "../lib/types";
 
 const account: ManagedAccount = {
   userId: "user_123",
+  name: "Danny Lee",
+  email: "danny@example.com",
   phoneNumber: "+15551234567",
   sessionToken: "session-token",
   eventIngestToken: "ingest-token",
@@ -25,11 +27,41 @@ const event: UrgeEvent = {
 };
 
 describe("managed client", () => {
+  it("calls the default browser fetch with the global receiver", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchImpl = vi.fn(function (this: typeof globalThis) {
+      expect(this).toBe(globalThis);
+      return Promise.resolve(jsonResponse({
+        challengeId: "challenge_123",
+        expiresAt: "2026-05-20T11:00:00.000Z",
+      }));
+    }) as unknown as typeof fetch;
+
+    vi.stubGlobal("fetch", fetchImpl);
+    try {
+      const result = await new ManagedClient({
+        baseUrl: "https://managed.swan.test",
+      }).startSigninOtp("5551234567");
+
+      expect(result.challengeId).toBe("challenge_123");
+      expect(vi.mocked(fetchImpl)).toHaveBeenCalledOnce();
+      const [_url, init] = vi.mocked(fetchImpl).mock.calls[0]!;
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        phoneNumber: "+15551234567",
+        intent: "signin",
+      });
+    } finally {
+      vi.stubGlobal("fetch", originalFetch);
+    }
+  });
+
   it("verifies OTP using browser device metadata", async () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({
         account: {
           userId: "user_123",
+          name: "Danny Lee",
+          email: "danny@example.com",
           phoneNumber: "+15551234567",
           sessionToken: "session-token",
           eventIngestToken: "ingest-token",
@@ -42,14 +74,52 @@ describe("managed client", () => {
     const result = await new ManagedClient({
       baseUrl: "https://managed.swan.test",
       fetchImpl,
-    }).verifyOtp({ challengeId: "challenge_123", code: "000000" });
+    }).verifySigninOtp({ challengeId: "challenge_123", code: "000000" });
 
     expect(result.account.eventIngestToken).toBe("ingest-token");
     const [_url, init] = vi.mocked(fetchImpl).mock.calls[0]!;
     expect(JSON.parse(String(init?.body))).toMatchObject({
       challengeId: "challenge_123",
       code: "000000",
+      intent: "signin",
       devicePlatform: "browser",
+    });
+  });
+
+  it("verifies signup OTP with profile fields", async () => {
+    const fetchImpl = vi.fn(async () =>
+      jsonResponse({
+        account: {
+          userId: "user_123",
+          name: "Danny Lee",
+          email: "danny@example.com",
+          phoneNumber: "+15551234567",
+          sessionToken: "session-token",
+          eventIngestToken: "ingest-token",
+        },
+        refreshToken: "refresh-token",
+        expiresAt: "2026-05-20T11:00:00.000Z",
+      }),
+    ) as unknown as typeof fetch;
+
+    const result = await new ManagedClient({
+      baseUrl: "https://managed.swan.test",
+      fetchImpl,
+    }).verifySignupOtp({
+      challengeId: "challenge_123",
+      code: "000000",
+      name: "Danny Lee",
+      email: "danny@example.com",
+      phoneNumber: "+15551234567",
+    });
+
+    expect(result.account.email).toBe("danny@example.com");
+    const [_url, init] = vi.mocked(fetchImpl).mock.calls[0]!;
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      intent: "signup",
+      name: "Danny Lee",
+      email: "danny@example.com",
+      phoneNumber: "+15551234567",
     });
   });
 
@@ -95,6 +165,8 @@ describe("managed client", () => {
         jsonResponse({
           account: {
             userId: "user_123",
+            name: "Danny Lee",
+            email: "danny@example.com",
             phoneNumber: "+15551234567",
             sessionToken: "session-token-2",
             eventIngestToken: "ingest-token-2",

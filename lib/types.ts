@@ -34,6 +34,8 @@ export interface ElevenLabsSettings {
 
 export interface ManagedAccount {
   userId: string;
+  name: string;
+  email: string;
   phoneNumber: string;
   sessionToken: string;
   eventIngestToken: string;

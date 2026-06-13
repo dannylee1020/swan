@@ -154,6 +154,8 @@ describe("alert coordination", () => {
       deliveryMode: "managed",
       managedAccount: {
         userId: "user_123",
+        name: "Danny Lee",
+        email: "danny@example.com",
         phoneNumber: "+15551234567",
         sessionToken: "session-token",
         eventIngestToken: "ingest-token",

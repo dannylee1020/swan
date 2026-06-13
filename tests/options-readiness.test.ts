@@ -10,14 +10,16 @@ import type { DetectionRule, ManagedAccount, UrgeEvent } from "../lib/types";
 
 const activeManagedAccount: ManagedAccount = {
   userId: "user_123",
+  name: "Danny Lee",
+  email: "danny@example.com",
   phoneNumber: "+15551234567",
   sessionToken: "session-token",
   eventIngestToken: "ingest-token",
   refreshToken: "refresh-token",
   expiresAt: "2026-06-20T11:00:00.000Z",
   entitlementActive: true,
-  subscriptionStatus: "active",
-  currentPeriodEnd: "2026-07-20T11:00:00.000Z",
+  subscriptionStatus: null,
+  currentPeriodEnd: null,
 };
 
 const enabledRule: DetectionRule = {
@@ -47,7 +49,7 @@ describe("options readiness", () => {
     ]);
   });
 
-  it("treats managed delivery as ready when the build and entitlement are active", () => {
+  it("treats managed beta delivery as ready when the backend grants access", () => {
     const settings = {
       ...defaultSettings,
       deliveryMode: "managed" as const,
@@ -65,9 +67,32 @@ describe("options readiness", () => {
 
     expect(readiness.summary).toBe("Ready");
     expect(readiness.blockers).toEqual([]);
+    expect(readiness.items.find((item) => item.id === "mode")?.value).toBe(
+      "Swan Beta",
+    );
+    expect(readiness.items.find((item) => item.id === "provider")?.value).toBe(
+      "Beta active",
+    );
     expect(readiness.items.find((item) => item.id === "last-test")?.value).toBe(
       "Success",
     );
+  });
+
+  it("blocks managed beta tests after the backend reports the free cap is reached", () => {
+    const settings = {
+      ...defaultSettings,
+      deliveryMode: "managed" as const,
+      callEnabled: true,
+      enabled: true,
+      managedAccount: {
+        ...activeManagedAccount,
+        entitlementActive: false,
+      },
+    };
+
+    expect(getTestAlertBlockers(settings, true)).toEqual([
+      "Free beta call limit reached. BYOK is still available.",
+    ]);
   });
 
   it("warns about missing domains without blocking provider tests", () => {

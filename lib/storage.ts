@@ -166,6 +166,8 @@ function normalizeManagedAccount(input: unknown): ManagedAccount | null {
 
   return {
     userId,
+    name: readString(input.name),
+    email: readString(input.email),
     phoneNumber,
     sessionToken,
     eventIngestToken,
