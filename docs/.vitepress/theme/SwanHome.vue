@@ -14,16 +14,15 @@
 
     <section class="swan-system__hero" aria-labelledby="swan-system-title">
       <div class="swan-system__narrative">
-        <p class="swan-system__section-label">Lust intercept</p>
-        <h1 id="swan-system-title">A phone call when porn urges take over.</h1>
+        <p class="swan-system__section-label">Open source</p>
+        <h1 id="swan-system-title">A phone call when lust takes over.</h1>
         <p class="swan-system__lede">
-          Swan is an open-source Chrome extension for people trying to quit
-          porn and keep NSFW sites out of their life. When you open a site you
-          chose to track, Swan redirects the tab and immediately calls you to
-          interrupt the addiction cycle.
+          Swan is an open-source Chrome extension for quitting porn. When you
+          open a site you chose to track, Swan redirects the tab and calls you
+          before the loop takes over.
         </p>
         <p class="swan-system__sublede">
-          Browser-local storage. Provider accounts you control. Apache 2.0.
+          Open source. Bring-your-own-key. Browser-local rules and logs. Apache 2.0.
         </p>
 
         <div class="swan-system__actions" aria-label="Primary actions">
@@ -56,11 +55,11 @@
           </li>
           <li class="swan-system__sequence-step">
             <span class="swan-system__sequence-time">14:05:36</span>
-            <p><strong>[CALL]</strong> Phone call starts for immediate interruption.</p>
+            <p><strong>[INTERVENE]</strong> Call starts with a direct reminder.</p>
           </li>
           <li class="swan-system__sequence-step swan-system__sequence-step--active">
             <span class="swan-system__sequence-time">14:05:44</span>
-            <p><strong>[CLEAR]</strong> The addiction cycle stops before it starts.</p>
+            <p><strong>[ACT]</strong> One next action breaks the loop.</p>
           </li>
         </ol>
       </aside>
@@ -71,32 +70,35 @@
       <div class="swan-system__spec-grid">
         <article class="swan-system__spec-card">
           <span class="swan-system__spec-number">01</span>
-          <h2>Browser-local detection</h2>
+          <h2>Open source browser extension</h2>
           <p>
-            Detection runs inside the Chromium extension. Swan does not send browsing history to an external server.
+            Swan runs in Chrome and watches only the domains you choose. Rules,
+            logs, and provider settings stay in the browser profile, and the
+            code is open to inspect.
           </p>
-          <span class="swan-system__spec-meta">Dependency: Chromium engine</span>
+          <span class="swan-system__spec-meta">Code: Apache 2.0</span>
         </article>
 
         <article class="swan-system__spec-card">
           <span class="swan-system__spec-number">02</span>
-          <h2>Phone-first interruption</h2>
+          <h2>Free BYOK or managed</h2>
           <p>
-            Swan starts a voice call through your configured voice agent and phone infrastructure,
-            using your ElevenLabs account.
+            Use Swan Core with your own ElevenLabs account, or sign in to Swan
+            for managed call delivery and billing. Detection stays in the
+            extension either way.
           </p>
-          <span class="swan-system__spec-meta">Integration: ElevenLabs</span>
+          <span class="swan-system__spec-meta">Modes: BYOK / Managed</span>
         </article>
 
         <article class="swan-system__spec-card">
           <span class="swan-system__spec-number">03</span>
-          <h2>No Swan cloud</h2>
+          <h2>Interrupt, remind, follow through</h2>
           <p>
-            Swan operates without a backend database, proxy, DNS filter,
-            page classifier, or localhost daemon. Settings and logs stay in the
-            browser profile.
+            When a tracked site opens, Swan redirects the tab, starts the
+            intervention, reminds you what the urge is doing, and pushes toward
+            one concrete next action.
           </p>
-          <span class="swan-system__spec-meta">Storage: chrome.storage.local</span>
+          <span class="swan-system__spec-meta">Loop: redirect / remind / act</span>
         </article>
       </div>
     </section>

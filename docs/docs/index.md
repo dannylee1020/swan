@@ -1,40 +1,71 @@
 ---
 layout: doc
-title: Introduction
-description: Swan is an open-source Chrome extension that interrupts unwanted porn urges with local domain detection and a phone call.
+title: Start
+description: Install Swan from Chrome or run the open-source extension locally with Developer Mode.
 ---
 
-# Swan
+# Start
 
-Swan is an open-source Chrome extension that interrupts unwanted porn urges with a phone call at the risky moment. It is built for people who want to quit porn, keep NSFW sites out of their life, and use a tool they can inspect.
+Swan is an open-source Chrome extension that calls you at the risky moment so you can step out of the porn loop before it takes over.
 
-## What Swan does
+The fastest path is the Chrome Web Store. If you want to inspect or modify the code, you can self-host the extension locally with Chrome Developer Mode.
 
-Swan watches browser navigation for NSFW domains you configure. When you navigate to one of the sites, Swan calls you immediately to intervene and break you out of the urge.
+## Install from Chrome
 
-The goal is not passive blocking or broad surveillance. Swan is built around a narrow intervention loop: detect the urge moment, interrupt quickly, and make the next action harder to ignore.
+Open the [Swan Chrome Web Store listing](https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg), click **Add to Chrome**, then open Swan from the extension toolbar.
 
-## How it works
+Use this path if you want the normal Chrome extension experience and automatic browser-managed updates.
 
-- The extension runs in a local browser profile.
-- Chromium is the supported install path; Firefox is experimental developer support.
-- Detection uses configured domain rules and top-level navigation events.
-- Settings, rules, and logs live in `chrome.storage.local`.
-- Voice calls use your ElevenLabs Conversational AI agent and connected phone number.
+## Self-host with Developer Mode
 
-## Who it is for
+Use the source path if you want to inspect the code, change it, or run Swan without the store package.
 
-Swan is for anyone who struggles to break out of the death spiral: urge -> watch -> hooked -> stronger urge -> continue.
+```bash
+git clone https://github.com/dannylee1020/swan.git
+cd swan
+npm install
+npm run dashboard
+```
 
-It is designed intentionally small: one browser extension, user-managed provider accounts, configurable domain rules, and local logs.
+Then load the local extension:
 
-## Start using Swan
+1. Open `chrome://extensions`.
+2. Enable **Developer Mode**.
+3. Click **Load unpacked**.
+4. Select `output/chrome-mv3-dev`.
+5. Keep `npm run dashboard` running while you work.
 
-- [Chrome Web Store](./chrome-web-store.md) explains the store-first install path and current fallback.
-- [Quick start](./guide/quick-start.md) gives the shortest path from install to test alert.
-- [Install](./guide/install.md) covers source builds, browser support, and experimental Firefox setup.
-- [Provider setup](./provider-setup.md) walks through ElevenLabs.
-- [Troubleshooting](./troubleshooting.md) covers the common failure modes.
+WXT watches the source and hot reloads the local extension, so you do not need to rebuild after every change.
+
+## Configure Swan
+
+Open Swan settings and save the required values:
+
+| Group | Required values |
+| --- | --- |
+| Phone Configuration | Recipient phone number, Start voice call toggle, monitoring toggle |
+| ElevenLabs Voice Call | API key, Agent ID, Agent phone number ID |
+
+Use E.164 phone-number formatting for the recipient number, for example `+15551234567`.
+
+Before relying on Swan, configure the ElevenLabs [agent prompt and knowledge base](./agent/) and run a direct ElevenLabs test call.
+
+## Test the loop
+
+1. Click **Send test alert** in Swan settings.
+2. Confirm an AI call arrives from the ElevenLabs-connected number.
+3. Open **Logs** and verify the latest event has call status.
+4. Open **Domain Tracking** to review, remove, or add tracked domains.
+
+Swan matches configured domains and their subdomains during top-level browser navigation.
+
+## Operate
+
+- [Settings](./guide/configure.md) explains local settings, BYOK calls, Managed calls, and import data.
+- [Provider setup](./provider-setup.md) walks through ElevenLabs setup.
+- [Domain tracking](./guide/domain-tracking.md) explains how Swan matches configured domains.
+- [Test and verify](./guide/test-and-verify.md) covers runtime checks.
+- [Troubleshooting](./troubleshooting.md) covers common setup and call failures.
 - [Privacy](./privacy.md) explains local storage, provider data, permissions, and user control.
 
 ## Learn more

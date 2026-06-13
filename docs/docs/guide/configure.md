@@ -21,7 +21,7 @@ The General page can import bundled setup data generated from a local
 
 1. Copy `config.example.yaml` to `config.yaml`.
 2. Fill in the values you want to manage locally.
-3. Run `npm run setup` or `npm run build`.
+3. Run `npm run dashboard`.
 4. Load or reload the extension.
 5. Open **General** and click **Import data**.
 

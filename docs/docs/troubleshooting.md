@@ -2,48 +2,39 @@
 
 Start with the symptom that matches what you see.
 
-## `npm run setup` fails
+## `npm run dashboard` fails
 
-Run the manual steps to isolate the failure:
+Run install first if dependencies are missing:
 
 ```bash
 npm install
-npm run build
+npm run dashboard
 ```
 
-For Firefox Desktop setup, use:
+## `npm run docs` fails
+
+Run install first if dependencies are missing:
 
 ```bash
-npm run build:firefox
+npm install
+npm run docs
 ```
 
-If TypeScript or WXT generated types are missing, run:
-
-```bash
-npm run prepare
-```
-
-Then retry the build.
+The docs command runs WXT prepare before VitePress starts so fresh checkouts have the generated TypeScript config.
 
 ## Browser cannot load the extension
 
 For Chromium, confirm:
 
-- For source builds, you selected `output/chrome-mv3`, not the repository root.
+- For local dashboard builds, you selected `output/chrome-mv3-dev`, not the repository root.
 - `manifest.json` exists inside that extension directory.
 - Developer Mode is enabled.
 - The browser supports Manifest V3 extensions.
 
-For Firefox Desktop, confirm:
-
-- You selected `output/firefox-mv2/manifest.json`, not the output directory.
-- The add-on was loaded from `about:debugging#/runtime/this-firefox`.
-- Firefox has not restarted since loading the temporary add-on.
-
 If you installed from source, rebuild if the output directory is missing:
 
 ```bash
-npm run build
+npm run dashboard
 ```
 
 ## Settings page did not open
@@ -115,6 +106,4 @@ Swan stores credentials in `chrome.storage.local` for the installed extension. R
 
 ## Need a clean reset
 
-Remove Swan from `chrome://extensions`, then reinstall from the Chrome Web Store or rebuild from source. This can clear extension-local settings for that profile.
-
-For Firefox Desktop, remove Swan from `about:debugging#/runtime/this-firefox`, rebuild with `npm run build:firefox`, then load `output/firefox-mv2/manifest.json` again.
+Remove Swan from `chrome://extensions`, then reinstall from the Chrome Web Store or reload the local dashboard build. This can clear extension-local settings for that profile.

@@ -8,14 +8,8 @@ In Chromium, open `chrome://extensions` and confirm:
 
 - Swan is enabled.
 - Developer Mode remains on.
-- If you loaded a source build, the extension path points at `output/chrome-mv3`.
+- If you loaded a local dashboard build, the extension path points at `output/chrome-mv3-dev`.
 - No manifest or runtime errors are visible on the extension card.
-
-In Firefox Desktop, open `about:debugging#/runtime/this-firefox` and confirm:
-
-- Swan appears under temporary extensions.
-- The temporary add-on points at `output/firefox-mv2/manifest.json`.
-- No manifest or runtime errors are visible.
 
 ## Send a test alert
 
@@ -53,11 +47,7 @@ Open **Logs** and inspect the latest event:
 If you changed the code or pulled a new version:
 
 ```bash
-npm run typecheck
-npm run test
-npm run build
+npm run dashboard
 ```
 
-Then reload Swan from `chrome://extensions`.
-
-For Firefox Desktop, rebuild with `npm run build:firefox`, then reload the temporary add-on from `about:debugging`.
+Keep WXT running while you work. Source changes hot reload into the local extension; reload Swan from `chrome://extensions` only if Chrome reports that it is needed.

@@ -21,7 +21,7 @@ Swan is not a passive blocker. The core loop is narrow: detect the risky moment,
 
 ## Requirements
 
-- Chromium-based browser for the Chrome Web Store install, Firefox currently in testing
+- Chromium-based browser for the Chrome Web Store install or local development
 - ElevenLabs account for the voice-call provider
 - Phone number connected or imported inside ElevenLabs for calls
 - For source builds only: Node.js 20 or newer and npm
@@ -34,24 +34,16 @@ Install Swan from the Chrome Web Store:
 
 https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg
 
-If you want to inspect or modify the extension, build it from source and load the generated folder through `chrome://extensions`.
+If you want to inspect or modify the extension, run the local dashboard command and load the generated dev folder through `chrome://extensions`.
 
-For repeatable local setup from source, copy `config.example.yaml` to `config.yaml` before running `npm run setup`. Swan will bundle that local config as import data, which you can later apply from the General page.
-
-Firefox is not a first-class v0 install path. If you want to test it manually:
-
-```bash
-npm run setup:firefox
-```
-
-Then open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**, and select `output/firefox-mv2/manifest.json`. Firefox temporary add-ons are removed when Firefox restarts, so this path may require more manual work than Chromium.
+For repeatable local setup from source, copy `config.example.yaml` to `config.yaml` before running `npm run dashboard`. Swan will bundle that local config as import data, which you can later apply from the General page.
 
 After loading, Swan opens the settings tab automatically on first install. If it does not, click the Swan extension icon. Configure your phone and provider settings, add tracked domains, and click **Send test alert**.
 
 Start with:
 
 - [Chrome Web Store](https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg)
-- [Quick start](https://swan-oss.com/docs/guide/quick-start)
+- [Start](https://swan-oss.com/docs/)
 - [Install Swan](https://swan-oss.com/docs/guide/install)
 - [Provider setup](https://swan-oss.com/docs/provider-setup)
 - [Test and verify](https://swan-oss.com/docs/guide/test-and-verify)
@@ -72,7 +64,7 @@ Use [Provider setup](https://swan-oss.com/docs/provider-setup) for the full Elev
 - Swan v0 detects configured domains only.
 - It ships with a small editable seed list of NSFW domains and matches subdomains of tracked domains.
 - It does not inspect page content, classify images or videos, install DNS rules, run a proxy, or block at the operating-system level.
-- Chrome Web Store is the supported install path. Firefox Desktop uses a temporary developer add-on and is not first-class supported in this version.
+- Chrome Web Store is the supported install path. Local development targets Chromium.
 - It is recovery-support software, not medical advice, therapy, or clinical treatment.
 
 ## Privacy and Costs
@@ -85,40 +77,24 @@ The software is open source, but phone calls are not free to operate. BYOK (Brin
 
 ## Development
 
-Run WXT in development mode:
+Run the docs and landing page locally:
 
 ```bash
-npm run dev
+npm run docs
 ```
 
-Load the generated `output/chrome-mv3-dev` directory through `chrome://extensions`.
-
-Run the Firefox development target:
+Run the extension dashboard locally with WXT hot reload:
 
 ```bash
-npm run dev:firefox
+npm run dashboard
 ```
 
-Load the generated `output/firefox-mv2-dev/manifest.json` through `about:debugging`.
+Load the generated `output/chrome-mv3-dev` directory through `chrome://extensions`. Keep the WXT process running while you work; source changes hot reload instead of requiring repeated builds.
 
-Firefox support is experimental in v0. Use it for compatibility testing, not as the primary install path.
-
-Build the extension:
+Build the Chrome Web Store package:
 
 ```bash
 npm run build
-```
-
-Run the source checkout setup path:
-
-```bash
-npm run setup
-```
-
-Build the Firefox extension:
-
-```bash
-npm run build:firefox
 ```
 
 ## Contributing

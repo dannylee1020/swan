@@ -27,4 +27,4 @@ Alert delivery sends the minimum call request data to ElevenLabs because ElevenL
 
 Open-source and BYOK means you control the provider setup and call costs. It also means setup takes more work than a fully managed product.
 
-Use [Provider setup](./provider-setup.md) to configure ElevenLabs, or start from [Quick start](./guide/quick-start.md).
+Use [Provider setup](./provider-setup.md) to configure ElevenLabs, or start from [Start](./).

@@ -5,7 +5,7 @@ import { join, relative, sep } from "node:path";
 const SITE_URL = "https://swan-oss.com";
 const SITE_NAME = "Swan";
 const DEFAULT_DESCRIPTION =
-  "Open-source Chrome extension that interrupts unwanted porn urges with local domain detection and an immediate phone call.";
+  "Open-source Chrome extension that interrupts unwanted porn urges with browser-local detection, free BYOK setup, and managed call delivery.";
 const GITHUB_URL = "https://github.com/dannylee1020/swan";
 const CHROME_WEB_STORE_URL =
   "https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg";
@@ -49,7 +49,7 @@ export default defineConfig({
       pageData.frontmatter.description ?? DEFAULT_DESCRIPTION;
     const title = pageData.title
       ? `${pageData.title} | ${SITE_NAME}`
-      : `${SITE_NAME} | Phone-call porn urge interruption`;
+      : `${SITE_NAME} | Porn urge intervention for Chrome`;
     const url = absoluteUrl(pageUrl(pageData.relativePath));
     const head = (pageData.frontmatter.head ??= []);
 
@@ -120,7 +120,6 @@ export default defineConfig({
     nav: [
       { text: "Docs", link: "/docs/" },
       { text: "Add to Chrome", link: CHROME_WEB_STORE_URL },
-      { text: "Guide", link: "/docs/guide/quick-start" },
       { text: "Providers", link: "/docs/provider-setup" },
       { text: "Troubleshooting", link: "/docs/troubleshooting" },
       { text: "Privacy", link: "/docs/privacy" },
@@ -131,24 +130,7 @@ export default defineConfig({
         {
           text: "Start",
           items: [
-            { text: "Introduction", link: "/docs/" },
-            { text: "Chrome Web Store", link: "/docs/chrome-web-store" },
-            { text: "Quick start", link: "/docs/guide/quick-start" },
-            { text: "Install", link: "/docs/guide/install" },
-          ],
-        },
-        {
-          text: "Learn",
-          items: [
-            { text: "Chrome porn blocker", link: "/docs/chrome-porn-blocker" },
-            {
-              text: "Open-source porn blocker",
-              link: "/docs/open-source-porn-blocker",
-            },
-            {
-              text: "Swan vs passive blockers",
-              link: "/docs/compare-passive-porn-blockers",
-            },
+            { text: "Start", link: "/docs/" },
           ],
         },
         {
@@ -169,10 +151,17 @@ export default defineConfig({
           ],
         },
         {
-          text: "Reference",
+          text: "Learn",
           items: [
-            { text: "Architecture", link: "/docs/reference/architecture" },
-            { text: "Privacy", link: "/docs/privacy" },
+            { text: "Chrome porn blocker", link: "/docs/chrome-porn-blocker" },
+            {
+              text: "Open-source porn blocker",
+              link: "/docs/open-source-porn-blocker",
+            },
+            {
+              text: "Swan vs passive blockers",
+              link: "/docs/compare-passive-porn-blockers",
+            },
           ],
         },
       ],

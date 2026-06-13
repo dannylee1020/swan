@@ -20,14 +20,14 @@ The store listing is the recommended install path for Chrome and Chromium users.
 
 ## Source build fallback
 
-Use the source build path if you want to inspect or modify the extension before loading it manually.
+Use the local dashboard path if you want to inspect or modify the extension before loading it manually.
 
 ```bash
 npm install
-npm run setup
+npm run dashboard
 ```
 
-Then open `chrome://extensions`, enable **Developer Mode**, click **Load unpacked**, and select `output/chrome-mv3`.
+Then open `chrome://extensions`, enable **Developer Mode**, click **Load unpacked**, and select `output/chrome-mv3-dev`.
 
 ## What the store version makes easier
 
@@ -40,4 +40,4 @@ Then open `chrome://extensions`, enable **Developer Mode**, click **Load unpacke
 
 Swan is recovery-support software, not therapy or clinical treatment. The extension uses browser-local settings and your configured provider account. The current core does not inspect page content, run a proxy, or send browsing history to a Swan-operated server.
 
-Read [Quick start](./guide/quick-start.md) for setup details after installation.
+Read [Start](./) for setup details after installation.

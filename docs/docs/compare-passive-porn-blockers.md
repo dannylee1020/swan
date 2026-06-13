@@ -26,4 +26,4 @@ Swan Core keeps the loop local by default. It does not send reports to another p
 
 Swan is strongest when you want immediate interruption, not broad monitoring. It is weaker if you need device-wide blocking, image classification, operating-system controls, or managed accountability.
 
-If that tradeoff matches what you need, start with [Chrome Web Store](./chrome-web-store.md) or [Quick start](./guide/quick-start.md).
+If that tradeoff matches what you need, start with [Start](./).

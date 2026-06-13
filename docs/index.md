@@ -1,7 +1,8 @@
 ---
 layout: false
-title: Chrome Porn Blocker With Phone Calls
-description: Swan is an open-source Chrome extension that interrupts unwanted porn urges with local domain detection and an immediate phone call.
+title: Swan - phone call when lust takes over
+titleTemplate: false
+description: Swan is an open-source Chrome extension that interrupts unwanted porn urges with browser-local detection, free BYOK setup, and managed call delivery.
 ---
 
 <SwanHome />

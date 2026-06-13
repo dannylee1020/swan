@@ -1,6 +1,6 @@
 # Update Swan
 
-Chrome Web Store installs update through Chrome. If you are using a source checkout, rebuild and reload the unpacked extension in your browser.
+Chrome Web Store installs update through Chrome. If you are using a local dashboard checkout, keep WXT running and reload the unpacked extension only when Chrome asks for it.
 
 ## Chrome Web Store install
 
@@ -11,7 +11,7 @@ Chrome handles updates for Web Store installs. To check the installed version ma
 3. Enable **Developer Mode** if version details are hidden.
 4. Confirm Swan remains enabled.
 
-## Source checkout
+## Local dashboard checkout
 
 If you installed from a source checkout, pull the latest changes:
 
@@ -25,28 +25,18 @@ If dependencies changed:
 npm install
 ```
 
-Rebuild:
+Start the local dashboard:
 
 ```bash
-npm run build
+npm run dashboard
 ```
 
-Then reload the extension:
+If Chrome asks for a manual reload:
 
 1. Open `chrome://extensions`.
 2. Find Swan.
 3. Click the reload icon.
 4. Open Swan settings and confirm your settings are still present.
-
-### When to re-run source setup
-
-Use setup again if you want the scripted path:
-
-```bash
-npm run setup
-```
-
-It will build the extension and print the current extension path again.
 
 ## Settings persistence
 
