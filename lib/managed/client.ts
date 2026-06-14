@@ -171,7 +171,10 @@ export class ManagedClient {
       "/v1/auth/session/refresh",
       {
         method: "POST",
-        body: { refreshToken: account.refreshToken },
+        body: {
+          refreshToken: account.refreshToken,
+          eventIngestToken: account.eventIngestToken,
+        },
       },
     );
     return { account: accountFromAuthResponse(response) };
@@ -221,6 +224,7 @@ export class ManagedClient {
     await this.request("/v1/auth/logout", {
       method: "POST",
       token: account.sessionToken,
+      body: { eventIngestToken: account.eventIngestToken },
     });
   }
 
