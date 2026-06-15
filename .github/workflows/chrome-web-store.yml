@@ -78,12 +78,17 @@ jobs:
           set -euo pipefail
 
           missing=0
-          for name in CWS_EXTENSION_ID CWS_PUBLISHER_ID CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN WXT_SWAN_MANAGED_API_BASE_URL; do
+          for name in CWS_EXTENSION_ID CWS_PUBLISHER_ID CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN; do
             if [[ -z "${!name}" ]]; then
               echo "$name is not configured." >&2
               missing=1
             fi
           done
+          if [[ -z "$WXT_SWAN_MANAGED_API_BASE_URL" ]]; then
+            echo "SWAN_MANAGED_API_BASE_URL is not configured on the chrome-web-store GitHub environment." >&2
+            echo "This value is required because it is baked into the extension manifest host permissions." >&2
+            missing=1
+          fi
           exit "$missing"
 
       - name: Build Chrome Web Store package
