@@ -8,9 +8,9 @@ export default defineConfig({
     outDir: 'output',
     modules: ['@wxt-dev/module-react'],
     manifest: ({ browser }) => ({
-        name: 'Swan NSFW Blocker with Calls',
+        name: 'Swan - NSFW Blocker with Calls',
         description:
-            'Swan interrupts unwanted porn urges with custom domain blocking and a phone call, using your own key or managed calls.',
+            'Swan helps you break out of unwanted porn urges with custom domain blocking and a phone call, using your own key or managed calls.',
         homepage_url: 'https://swan-oss.com/docs',
         ...(browser === 'firefox' ? {} : { incognito: 'split' as const }),
         permissions: ['storage', 'webNavigation'],
