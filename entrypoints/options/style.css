@@ -98,31 +98,6 @@ p {
   text-align: center;
 }
 
-.onboardingProgress {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  color: var(--text-muted);
-  font-size: var(--font-xs);
-  font-weight: 650;
-  line-height: 1rem;
-}
-
-.onboardingStepPill {
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
-  border-radius: var(--radius);
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 14px;
-}
-
 .onboardingIntro h1 {
   color: var(--text);
   font-size: var(--font-xl);
@@ -137,79 +112,6 @@ p {
   color: var(--text-muted);
   font-size: var(--font-md);
   line-height: var(--line-copy);
-}
-
-.onboardingChoices {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.onboardingChoice {
-  min-width: 0;
-  min-height: 78px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--outline-soft);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text);
-  text-align: left;
-  transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    transform 120ms ease;
-}
-
-.onboardingChoice:hover {
-  border-color: color-mix(in oklch, var(--primary) 52%, var(--outline-soft));
-  background: color-mix(in oklch, var(--surface-low) 56%, var(--surface));
-}
-
-.onboardingChoice.selected {
-  border-color: color-mix(in oklch, var(--primary) 56%, var(--outline-soft));
-  background: color-mix(in oklch, var(--primary-soft) 18%, var(--surface));
-}
-
-.onboardingChoice:active {
-  transform: scale(0.99);
-}
-
-.onboardingChoice:focus-visible {
-  outline: 2px solid color-mix(in oklch, var(--primary) 74%, white);
-  outline-offset: 2px;
-}
-
-.choiceIcon {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius);
-  background: var(--primary-soft);
-  color: var(--primary);
-}
-
-.onboardingChoice > span:last-child {
-  min-width: 0;
-  display: grid;
-  gap: 6px;
-}
-
-.onboardingChoice strong {
-  color: var(--text);
-  font-size: var(--font-md);
-  font-weight: 720;
-  line-height: var(--line-ui);
-}
-
-.onboardingChoice small {
-  color: var(--text-muted);
-  font-size: var(--font-sm);
-  line-height: var(--line-ui);
 }
 
 .onboardingForm {
@@ -1309,57 +1211,6 @@ tbody tr:hover {
   max-width: 34ch;
 }
 
-.trialPanel {
-  display: grid;
-  gap: 14px;
-}
-
-.onboardingPanel .trialPanel {
-  justify-items: stretch;
-}
-
-.trialHeader {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.onboardingPanel .trialHeader {
-  justify-items: center;
-  text-align: center;
-  display: grid;
-}
-
-.onboardingPanel .trialHeader .choiceIcon {
-  width: 42px;
-  height: 42px;
-  color: var(--primary);
-  background: var(--primary-soft);
-}
-
-.trialHeader div {
-  min-width: 0;
-  display: grid;
-  gap: 5px;
-}
-
-.trialHeader h2 {
-  color: var(--text);
-  font-size: var(--font-lg);
-  font-weight: 700;
-  line-height: var(--line-tight);
-  letter-spacing: 0;
-  text-wrap: balance;
-}
-
-.trialHeader p {
-  max-width: 62ch;
-  color: var(--text-muted);
-  font-size: var(--font-sm);
-  line-height: var(--line-ui);
-  text-wrap: pretty;
-}
-
 .verificationForm {
   justify-items: stretch;
 }
@@ -1370,23 +1221,6 @@ tbody tr:hover {
   font-size: var(--font-base);
   font-weight: 650;
   letter-spacing: 0.18em;
-}
-
-.authSwitchPrompt {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding-top: 2px;
-  color: var(--text-muted);
-  font-size: var(--font-sm);
-  line-height: var(--line-ui);
-}
-
-.authSwitchPrompt .textButton {
-  min-height: auto;
-  padding: 0 2px;
 }
 
 .authByokLink {

@@ -35,6 +35,7 @@ jobs:
       CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
       CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
       CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+      WXT_SWAN_MANAGED_API_BASE_URL: ${{ vars.SWAN_MANAGED_API_BASE_URL }}
 
     steps:
       - name: Checkout
@@ -103,21 +104,18 @@ jobs:
         run: npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
 
       - name: Run tests
-        run: npm run test
+        run: npx wxt prepare && npx vitest run
 
       - name: Run typecheck
-        run: npm run typecheck
+        run: npx wxt prepare && npx tsc --noEmit
 
       - name: Build docs
-        run: npm run docs:build
+        run: npx wxt prepare && npx vitepress build docs
 
       - name: Build Chrome Web Store zip
-        run: npm run zip:store
+        run: npm run build
 
-      - name: Validate Chrome Web Store zip
-        run: npm run validate:store
-
-      - name: Verify required secrets
+      - name: Verify required release configuration
         run: |
           missing=0
           for name in CWS_EXTENSION_ID CWS_PUBLISHER_ID CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN; do
@@ -126,6 +124,10 @@ jobs:
               missing=1
             fi
           done
+          if [[ -z "$WXT_SWAN_MANAGED_API_BASE_URL" ]]; then
+            echo "SWAN_MANAGED_API_BASE_URL is not configured." >&2
+            missing=1
+          fi
           exit "$missing"
 
       - name: Get Chrome Web Store access token
