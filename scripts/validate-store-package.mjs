@@ -13,6 +13,7 @@ const zipPath =
   process.argv[2] ?? join(rootDir, "output", `swan-${packageJson.version}-chrome.zip`);
 const outputDir = join(rootDir, "output", "chrome-mv3");
 
+const expectedManifestName = "Swan - NSFW Blocker with Calls";
 const expectedPermissions = ["storage", "webNavigation"];
 const expectedHostPermissions = [
   "https://api.elevenlabs.io/*",
@@ -91,8 +92,8 @@ if (!existsSync(zipPath)) {
   if (entries.includes("manifest.json")) {
     const manifest = JSON.parse(readZipEntry("manifest.json"));
     if (manifest.manifest_version !== 3) fail("Manifest version must be 3.");
-    if (manifest.name !== "Swan NSFW Blocker with Calls") {
-      fail('Manifest name must be "Swan NSFW Blocker with Calls".');
+    if (manifest.name !== expectedManifestName) {
+      fail(`Manifest name must be "${expectedManifestName}".`);
     }
     if (!manifest.homepage_url) fail("Manifest should include homepage_url.");
     if (manifest.incognito !== "split") {
