@@ -21,9 +21,7 @@ jobs:
     env:
       CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
       CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
-      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
-      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
-      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+      CWS_SERVICE_ACCOUNT_JSON: ${{ secrets.CWS_SERVICE_ACCOUNT_JSON }}
       WXT_SWAN_MANAGED_API_BASE_URL: ${{ vars.SWAN_MANAGED_API_BASE_URL }}
 
     steps:
@@ -74,11 +72,12 @@ jobs:
           echo "Release version: $version"
 
       - name: Verify release configuration
+        id: release-config
         run: |
           set -euo pipefail
 
           missing=0
-          for name in CWS_EXTENSION_ID CWS_PUBLISHER_ID CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN; do
+          for name in CWS_EXTENSION_ID CWS_PUBLISHER_ID CWS_SERVICE_ACCOUNT_JSON; do
             if [[ -z "${!name}" ]]; then
               echo "$name is not configured." >&2
               missing=1
@@ -89,12 +88,28 @@ jobs:
             echo "This value is required because it is baked into the extension manifest host permissions." >&2
             missing=1
           fi
-          exit "$missing"
+          if [[ "$missing" -ne 0 ]]; then
+            exit "$missing"
+          fi
+
+          service_account_email="$(node -e 'const credentials = JSON.parse(process.env.CWS_SERVICE_ACCOUNT_JSON); if (!credentials.client_email) process.exit(1); process.stdout.write(credentials.client_email);')"
+          echo "service_account_email=$service_account_email" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google
+        id: google-auth
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.CWS_SERVICE_ACCOUNT_JSON }}
+          service_account: ${{ steps.release-config.outputs.service_account_email }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
 
       - name: Build Chrome Web Store package
         run: npm run build
 
       - name: Upload package for manual review
+        env:
+          CWS_ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
         run: |
           set -euo pipefail
 
@@ -104,17 +119,8 @@ jobs:
             exit 1
           fi
 
-          token_response="$(curl -sS https://oauth2.googleapis.com/token \
-            -d "client_secret=$CWS_CLIENT_SECRET" \
-            -d "grant_type=refresh_token" \
-            -d "refresh_token=$CWS_REFRESH_TOKEN" \
-            -d "client_id=$CWS_CLIENT_ID")"
-
-          access_token="$(node -e 'const data = JSON.parse(process.argv[1]); if (!data.access_token) { console.error(JSON.stringify(data)); process.exit(1); } process.stdout.write(data.access_token);' "$token_response")"
-          echo "::add-mask::$access_token"
-
           upload_response="$(curl -sS \
-            -H "Authorization: Bearer $access_token" \
+            -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
             -X POST \
             -T "$zip_path" \
             "https://chromewebstore.googleapis.com/upload/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:upload")"
