@@ -157,6 +157,51 @@ describe("managed client", () => {
     });
   });
 
+  it("creates Stripe checkout sessions with the user session token", async () => {
+    const fetchImpl = vi.fn(async () =>
+      jsonResponse({
+        checkoutUrl: "https://checkout.stripe.test/session",
+        providerSessionId: "cs_test_123",
+      }),
+    ) as unknown as typeof fetch;
+
+    const result = await new ManagedClient({
+      baseUrl: "https://managed.swan.test",
+      fetchImpl,
+    }).createCheckout(account);
+
+    expect(result.checkoutUrl).toBe("https://checkout.stripe.test/session");
+    const [url, init] = vi.mocked(fetchImpl).mock.calls[0]!;
+    expect(url).toBe("https://managed.swan.test/v1/billing/stripe/checkout");
+    expect(init?.method).toBe("POST");
+    expect(init?.headers).toMatchObject({
+      Accept: "application/json",
+      Authorization: "Bearer session-token",
+    });
+  });
+
+  it("opens Stripe billing portal sessions with the user session token", async () => {
+    const fetchImpl = vi.fn(async () =>
+      jsonResponse({
+        portalUrl: "https://billing.stripe.test/session",
+      }),
+    ) as unknown as typeof fetch;
+
+    const result = await new ManagedClient({
+      baseUrl: "https://managed.swan.test",
+      fetchImpl,
+    }).createPortal(account);
+
+    expect(result.portalUrl).toBe("https://billing.stripe.test/session");
+    const [url, init] = vi.mocked(fetchImpl).mock.calls[0]!;
+    expect(url).toBe("https://managed.swan.test/v1/billing/stripe/portal");
+    expect(init?.method).toBe("POST");
+    expect(init?.headers).toMatchObject({
+      Accept: "application/json",
+      Authorization: "Bearer session-token",
+    });
+  });
+
   it("refreshes once when browser event ingest returns 401", async () => {
     const fetchImpl = vi
       .fn()

@@ -86,7 +86,6 @@ const navItems: Array<{ id: ActivePage; label: string; icon: LucideIcon }> = [
   { id: "domains", label: "Domains", icon: Globe2 },
   { id: "logs", label: "History", icon: List },
 ];
-const MANAGED_BETA_DAILY_CALL_LIMIT = 10;
 
 function OptionsApp() {
   const [activePage, setActivePage] = useState<ActivePage>("general");
@@ -238,7 +237,7 @@ function OptionsApp() {
     setSaveState({ phone: "idle", elevenLabs: "idle" });
     setNotice(
       deliveryMode === "managed"
-        ? "Swan Beta selected. Enter your phone number to continue."
+        ? "Swan Managed selected. Sign in, then start your subscription."
         : "Use my ElevenLabs account selected. Swan will use local setup.",
     );
   }
@@ -354,11 +353,11 @@ function OptionsApp() {
       setSettings(nextSettings);
       setSettingsDraft(nextSettings);
       setManagedOtpState(null);
-      setActivePage("general");
+      setActivePage(managedAccount.entitlementActive ? "general" : "plan");
       setNotice(
         managedAccount.entitlementActive
-          ? "Swan Beta is ready."
-          : "Free beta call limit reached. BYOK is still available.",
+          ? "Swan Managed is ready."
+          : "Start your Swan Managed subscription to enable hosted calls.",
       );
     } catch (error) {
       setManagedError(formatManagedError(error));
@@ -377,6 +376,40 @@ function OptionsApp() {
       const managedAccount = await client.fetchMe(settings.managedAccount);
       await updateManagedAccount(managedAccount);
       setNotice("Swan status refreshed.");
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      setManagedBusy(false);
+    }
+  }
+
+  async function openManagedCheckout() {
+    if (!settings?.managedAccount) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      const response = await client.createCheckout(settings.managedAccount);
+      window.open(response.checkoutUrl, "_blank", "noopener,noreferrer");
+      setNotice("Stripe Checkout opened. Refresh Swan after payment completes.");
+    } catch (error) {
+      setManagedError(formatManagedError(error));
+    } finally {
+      setManagedBusy(false);
+    }
+  }
+
+  async function openManagedPortal() {
+    if (!settings?.managedAccount) return;
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      const response = await client.createPortal(settings.managedAccount);
+      window.open(response.portalUrl, "_blank", "noopener,noreferrer");
+      setNotice("Stripe billing portal opened.");
     } catch (error) {
       setManagedError(formatManagedError(error));
     } finally {
@@ -677,6 +710,8 @@ function OptionsApp() {
               managedOtpState={managedOtpState}
               onCancelManagedOtp={() => setManagedOtpState(null)}
               onChangeDeliveryMode={changeDeliveryMode}
+              onOpenManagedCheckout={openManagedCheckout}
+              onOpenManagedPortal={openManagedPortal}
               onRefreshManagedAccount={refreshManagedAccount}
               onSignOutManagedAccount={signOutManagedAccount}
               onStartManagedSignup={startManagedSignup}
@@ -801,7 +836,7 @@ function OnboardingPage({
                   className="secondaryButton"
                   onClick={() => setStep("managed")}
                 >
-                  Use Swan Beta
+                  Use Swan Managed
                 </button>
               ) : null}
               <button
@@ -856,8 +891,8 @@ function getOnboardingStepCopy(
   }
 
   return {
-    title: "Use Swan Beta",
-    description: `Verify your phone number. ${MANAGED_BETA_DAILY_CALL_LIMIT} hosted calls/day during beta.`,
+    title: "Use Swan Managed",
+    description: "Verify your phone number, then start your subscription to enable hosted calls.",
   };
 }
 
@@ -1048,7 +1083,7 @@ function StatusPage({
           ) : (
             <SettingsCard
               icon={CreditCard}
-              title="Swan Beta"
+              title="Swan Managed"
               tag={
                 settingsDraft.managedAccount
                   ? managedAccountTag(settingsDraft.managedAccount)
@@ -1074,7 +1109,7 @@ function StatusPage({
                 </div>
               </div>
               <p className="helperText">
-                Manage your hosted beta account and refresh call access from Plan.
+                Manage your hosted account and subscription from Plan.
               </p>
               <button
                 type="button"
@@ -1180,7 +1215,7 @@ function DeliveryModeToggle({
           />
           <ModeToggleOption
             active={deliveryMode === "managed"}
-            label="Swan Beta"
+            label="Swan Managed"
             value="managed"
             onChange={() => void onChangeDeliveryMode("managed")}
           />
@@ -1227,7 +1262,7 @@ function getDeliveryModeDescription(
   managedApiConfigured: boolean,
 ): string {
   if (!managedApiConfigured) return "Swan calls are not enabled in this build.";
-  if (deliveryMode === "managed") return "Swan handles hosted calls during beta.";
+  if (deliveryMode === "managed") return "Swan handles hosted calls with an active subscription or trial.";
   return "Your provider key stays in this browser.";
 }
 
@@ -1238,6 +1273,8 @@ function PlanPage({
   managedOtpState,
   onCancelManagedOtp,
   onChangeDeliveryMode,
+  onOpenManagedCheckout,
+  onOpenManagedPortal,
   onRefreshManagedAccount,
   onSignOutManagedAccount,
   onStartManagedSignup,
@@ -1250,6 +1287,8 @@ function PlanPage({
   managedOtpState: ManagedOtpState;
   onCancelManagedOtp: () => void;
   onChangeDeliveryMode: (deliveryMode: DeliveryMode) => Promise<void>;
+  onOpenManagedCheckout: () => Promise<void>;
+  onOpenManagedPortal: () => Promise<void>;
   onRefreshManagedAccount: () => Promise<void>;
   onSignOutManagedAccount: () => Promise<void>;
   onStartManagedSignup: (phoneNumber: string) => Promise<void>;
@@ -1262,8 +1301,8 @@ function PlanPage({
     <>
       <PageHeader
         eyebrow="Plan"
-        title="Swan Beta"
-        description={`Hosted calls are free during beta, capped at ${MANAGED_BETA_DAILY_CALL_LIMIT}/day.`}
+        title="Swan Managed"
+        description="Hosted call delivery requires an active Stripe subscription or trial."
       />
 
       <div className="planLayout">
@@ -1284,8 +1323,8 @@ function PlanPage({
               </div>
             </div>
             <p className="helperText">
-              BYOK keeps provider setup in this browser. Swan Beta uses hosted
-              call delivery for free during validation.
+              BYOK keeps provider setup in this browser. Swan Managed uses hosted
+              call delivery with an active subscription or trial.
             </p>
             <button
               type="button"
@@ -1294,7 +1333,7 @@ function PlanPage({
               onClick={() => void onChangeDeliveryMode("managed")}
             >
               <CreditCard size={14} aria-hidden="true" />
-              <span>Use Swan Beta</span>
+              <span>Use Swan Managed</span>
             </button>
             {!managedApiConfigured ? (
               <p className="managedNotice error">
@@ -1314,6 +1353,8 @@ function PlanPage({
             otpState={managedOtpState}
             onBackToByok={() => void onChangeDeliveryMode("byok")}
             onCancelOtp={onCancelManagedOtp}
+            onOpenCheckout={onOpenManagedCheckout}
+            onOpenPortal={onOpenManagedPortal}
             onRefreshAccount={onRefreshManagedAccount}
             onSignOut={onSignOutManagedAccount}
             onStartSignup={onStartManagedSignup}
@@ -1332,6 +1373,8 @@ function ManagedAccountCard({
   managedApiConfigured,
   onBackToByok,
   onCancelOtp,
+  onOpenCheckout,
+  onOpenPortal,
   onRefreshAccount,
   onSignOut,
   onStartSignup,
@@ -1344,6 +1387,8 @@ function ManagedAccountCard({
   managedApiConfigured: boolean;
   onBackToByok: () => void;
   onCancelOtp: () => void;
+  onOpenCheckout: () => Promise<void>;
+  onOpenPortal: () => Promise<void>;
   onRefreshAccount: () => Promise<void>;
   onSignOut: () => Promise<void>;
   onStartSignup: (phoneNumber: string) => Promise<void>;
@@ -1353,7 +1398,7 @@ function ManagedAccountCard({
   return (
       <SettingsCard
         icon={CreditCard}
-        title="Swan Beta"
+        title="Swan Managed"
         tag={account ? managedAccountTag(account) : "Phone"}
       >
       {!managedApiConfigured ? (
@@ -1369,6 +1414,8 @@ function ManagedAccountCard({
             account={account}
             busy={busy || !managedApiConfigured}
             error={error}
+            onOpenCheckout={onOpenCheckout}
+            onOpenPortal={onOpenPortal}
             onRefreshAccount={onRefreshAccount}
           />
           <div className="profileGrid" aria-label="Swan account profile">
@@ -1420,14 +1467,21 @@ function ManagedPlanSummary({
   account,
   busy,
   error,
+  onOpenCheckout,
+  onOpenPortal,
   onRefreshAccount,
 }: {
   account: ManagedAccount;
   busy: boolean;
   error: string;
+  onOpenCheckout: () => Promise<void>;
+  onOpenPortal: () => Promise<void>;
   onRefreshAccount: () => Promise<void>;
 }) {
-  const active = Boolean(account.entitlementActive);
+  const active = account.entitlementActive && hasManagedSubscription(account);
+  const billingButtonLabel = requiresBillingAttention(account.subscriptionStatus)
+    ? "Update subscription"
+    : "Start subscription";
 
   return (
     <>
@@ -1444,11 +1498,32 @@ function ManagedPlanSummary({
         </div>
         <div>
           <span>Hosted calls</span>
-          <strong>{MANAGED_BETA_DAILY_CALL_LIMIT}/day</strong>
+          <strong>{active ? "Enabled" : "Locked"}</strong>
         </div>
       </div>
       {error ? <p className="managedNotice error">{error}</p> : null}
       <div className="managedActions">
+        {active ? (
+          <button
+            type="button"
+            className="secondaryButton"
+            disabled={busy}
+            onClick={() => void onOpenPortal()}
+          >
+            <CreditCard size={14} aria-hidden="true" />
+            <span>Billing portal</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="primaryButton"
+            disabled={busy}
+            onClick={() => void onOpenCheckout()}
+          >
+            <CreditCard size={14} aria-hidden="true" />
+            <span>{billingButtonLabel}</span>
+          </button>
+        )}
         <button
           type="button"
           className="secondaryButton"
@@ -1554,7 +1629,7 @@ function ManagedAuthForm({
       {showHeader ? (
         <div className="authModeHeader">
           <h2>Enter your phone number</h2>
-          <p>Swan will text a verification code before hosted calls are enabled.</p>
+          <p>Swan will text a verification code before checkout.</p>
         </div>
       ) : null}
 
@@ -1589,7 +1664,7 @@ function ManagedAuthForm({
 
       {showHeader ? (
         <p className="helperText">
-          {MANAGED_BETA_DAILY_CALL_LIMIT} hosted calls/day during beta.
+          Create or sign in to your Swan Managed account. An active subscription or trial is required before hosted calls start.
         </p>
       ) : null}
       {error ? <p className="managedNotice error">{error}</p> : null}
@@ -2266,25 +2341,20 @@ function hasManagedSubscription(account: ManagedAccount): boolean {
 }
 
 function managedAccountTag(account: ManagedAccount): string {
-  if (account.entitlementActive) {
-    return hasManagedSubscription(account) ? "Active" : "Beta active";
-  }
-  if (hasManagedSubscription(account)) return "Active";
+  if (account.entitlementActive && hasManagedSubscription(account)) return "Active";
   if (requiresBillingAttention(account.subscriptionStatus)) return "Needs attention";
-  return "Limit reached";
+  return "Subscription required";
 }
 
 function getManagedAccessLabel(account: ManagedAccount): string {
-  if (account.entitlementActive) {
-    return hasManagedSubscription(account) ? "Active" : "Beta active";
-  }
+  if (account.entitlementActive && hasManagedSubscription(account)) return "Active";
   if (requiresBillingAttention(account.subscriptionStatus)) return "Needs attention";
-  return "Beta limit reached";
+  return "Subscription required";
 }
 
 function getManagedBillingLabel(account: ManagedAccount): string {
   const status = account.subscriptionStatus;
-  if (!status) return "Free beta";
+  if (!status) return "Not started";
   if (status === "trialing") return "Trial active";
   if (status === "active") return "Current";
   if (requiresBillingAttention(status)) return "Needs attention";

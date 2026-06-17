@@ -18,7 +18,7 @@ const activeManagedAccount: ManagedAccount = {
   refreshToken: "refresh-token",
   expiresAt: "2026-06-20T11:00:00.000Z",
   entitlementActive: true,
-  subscriptionStatus: null,
+  subscriptionStatus: "active",
   currentPeriodEnd: null,
 };
 
@@ -49,7 +49,7 @@ describe("options readiness", () => {
     ]);
   });
 
-  it("treats managed beta delivery as ready when the backend grants access", () => {
+  it("treats paid managed delivery as ready when the backend grants access", () => {
     const settings = {
       ...defaultSettings,
       deliveryMode: "managed" as const,
@@ -68,17 +68,43 @@ describe("options readiness", () => {
     expect(readiness.summary).toBe("Ready");
     expect(readiness.blockers).toEqual([]);
     expect(readiness.items.find((item) => item.id === "mode")?.value).toBe(
-      "Swan Beta",
+      "Swan Managed",
     );
     expect(readiness.items.find((item) => item.id === "provider")?.value).toBe(
-      "Beta active",
+      "Active",
     );
     expect(readiness.items.find((item) => item.id === "last-test")?.value).toBe(
       "Success",
     );
   });
 
-  it("blocks managed beta tests after the backend reports the free cap is reached", () => {
+  it("treats managed trial delivery as ready when the backend grants access", () => {
+    const settings = {
+      ...defaultSettings,
+      deliveryMode: "managed" as const,
+      callEnabled: true,
+      enabled: true,
+      managedAccount: {
+        ...activeManagedAccount,
+        subscriptionStatus: "trialing",
+      },
+    };
+
+    const readiness = getReadinessState({
+      events: [],
+      managedApiConfigured: true,
+      rules: [enabledRule],
+      settings,
+    });
+
+    expect(readiness.summary).toBe("Ready");
+    expect(readiness.blockers).toEqual([]);
+    expect(readiness.items.find((item) => item.id === "provider")?.value).toBe(
+      "Active",
+    );
+  });
+
+  it("blocks managed tests until the backend reports an active subscription or trial", () => {
     const settings = {
       ...defaultSettings,
       deliveryMode: "managed" as const,
@@ -91,7 +117,7 @@ describe("options readiness", () => {
     };
 
     expect(getTestAlertBlockers(settings, true)).toEqual([
-      "Free beta call limit reached. BYOK is still available.",
+      "Start a Swan Managed subscription or trial. BYOK is still available.",
     ]);
   });
 

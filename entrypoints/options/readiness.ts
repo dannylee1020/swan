@@ -63,11 +63,11 @@ export function getReadinessState({
       {
         id: "mode",
         label: "Mode",
-        value: settings.deliveryMode === "managed" ? "Swan Beta" : "BYOK",
+        value: settings.deliveryMode === "managed" ? "Swan Managed" : "BYOK",
         tone: "neutral",
         detail:
           settings.deliveryMode === "managed"
-            ? "Swan places hosted beta calls."
+            ? "Swan places hosted managed calls."
             : "Your provider places calls.",
       },
       getRecipientReadiness(settings),
@@ -114,7 +114,7 @@ export function getTestAlertBlockers(
     } else if (!settings.managedAccount) {
       blockers.push("Sign in for Swan calls.");
     } else if (!settings.managedAccount.entitlementActive) {
-      blockers.push("Free beta call limit reached. BYOK is still available.");
+      blockers.push("Start a Swan Managed subscription or trial. BYOK is still available.");
     }
     return blockers;
   }
@@ -222,11 +222,11 @@ function getProviderReadiness(
     return {
       id: "provider",
       label: "Account",
-      value: settings.managedAccount.entitlementActive ? "Beta active" : "Limit reached",
+      value: settings.managedAccount.entitlementActive ? "Active" : "Subscription required",
       tone: settings.managedAccount.entitlementActive ? "ready" : "blocked",
       detail: settings.managedAccount.entitlementActive
         ? "Hosted calls available."
-        : "Free beta call limit reached.",
+        : "Start a subscription or trial.",
     };
   }
 

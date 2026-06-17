@@ -1,6 +1,6 @@
 # Configure Swan
 
-Swan stores settings in `chrome.storage.local` for the loaded extension profile. BYOK calls use your local provider settings. Managed calls use Swan's hosted service for account, payment, entitlement, and call delivery.
+Swan stores settings in `chrome.storage.local` for the loaded extension profile. BYOK calls use your local provider settings. Managed calls use Swan's hosted service for account, payment, entitlement, and call delivery. Managed call delivery requires an active Swan Managed subscription or trial.
 
 ## General settings
 
