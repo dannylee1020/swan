@@ -43,6 +43,11 @@ interface CheckoutResponse {
   providerSessionId: string;
 }
 
+interface CheckoutRequest {
+  successUrl?: string;
+  cancelUrl?: string;
+}
+
 interface PortalResponse {
   portalUrl: string;
 }
@@ -206,10 +211,14 @@ export class ManagedClient {
     });
   }
 
-  async createCheckout(account: ManagedAccount): Promise<CheckoutResponse> {
+  async createCheckout(
+    account: ManagedAccount,
+    request: CheckoutRequest = {},
+  ): Promise<CheckoutResponse> {
     return this.request<CheckoutResponse>("/v1/billing/stripe/checkout", {
       method: "POST",
       token: account.sessionToken,
+      body: request,
     });
   }
 

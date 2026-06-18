@@ -19,6 +19,9 @@ const expectedHostPermissions = [
   "https://api.elevenlabs.io/*",
   ...managedHostPermissions(process.env.WXT_SWAN_MANAGED_API_BASE_URL),
 ];
+const expectedExternallyConnectableMatches = managedExternallyConnectableMatches(
+  process.env.WXT_SWAN_MANAGED_API_BASE_URL,
+);
 const expectedIcons = [
   "icons/icon-16.png",
   "icons/icon-32.png",
@@ -51,6 +54,16 @@ function managedHostPermissions(value) {
   const trimmed = value?.trim();
   if (!trimmed) return [];
   const url = new URL(trimmed);
+  return [`${url.origin}/*`];
+}
+
+function managedExternallyConnectableMatches(value) {
+  const trimmed = value?.trim();
+  if (!trimmed) return [];
+  const url = new URL(trimmed);
+  if (url.hostname === "127.0.0.1" || url.hostname === "localhost") {
+    return [`${url.protocol}//127.0.0.1/*`, `${url.protocol}//localhost/*`];
+  }
   return [`${url.origin}/*`];
 }
 
@@ -109,6 +122,15 @@ if (!existsSync(zipPath)) {
     }
     if (!hasExpectedWebAccessibleResources(manifest)) {
       fail("Manifest must expose intervention page resources.");
+    }
+    const externallyConnectableMatches =
+      manifest.externally_connectable?.matches ?? [];
+    if (
+      !sameSet(externallyConnectableMatches, expectedExternallyConnectableMatches)
+    ) {
+      fail(
+        `Unexpected externally_connectable matches: ${externallyConnectableMatches.join(", ")}`,
+      );
     }
   }
 

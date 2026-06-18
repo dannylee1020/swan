@@ -1,4 +1,5 @@
 import type { AlertStatus, DetectionRule, UrgeEvent, UserSettings } from "../../lib/types";
+import { hasActiveManagedSubscription } from "../../lib/managed/subscription";
 
 export type ReadinessTone = "ready" | "warning" | "blocked" | "neutral";
 
@@ -113,8 +114,8 @@ export function getTestAlertBlockers(
       blockers.push("Use a build with Swan calls enabled.");
     } else if (!settings.managedAccount) {
       blockers.push("Sign in for Swan calls.");
-    } else if (!settings.managedAccount.entitlementActive) {
-      blockers.push("Start a Swan Managed subscription or trial. BYOK is still available.");
+    } else if (!hasActiveManagedSubscription(settings.managedAccount)) {
+      blockers.push("Managed calls require a subscription.");
     }
     return blockers;
   }
@@ -222,11 +223,13 @@ function getProviderReadiness(
     return {
       id: "provider",
       label: "Account",
-      value: settings.managedAccount.entitlementActive ? "Active" : "Subscription required",
-      tone: settings.managedAccount.entitlementActive ? "ready" : "blocked",
-      detail: settings.managedAccount.entitlementActive
+      value: hasActiveManagedSubscription(settings.managedAccount)
+        ? "Active"
+        : "Subscription required",
+      tone: hasActiveManagedSubscription(settings.managedAccount) ? "ready" : "blocked",
+      detail: hasActiveManagedSubscription(settings.managedAccount)
         ? "Hosted calls available."
-        : "Start a subscription or trial.",
+        : "Start a subscription.",
     };
   }
 

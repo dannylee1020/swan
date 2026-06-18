@@ -117,7 +117,24 @@ describe("options readiness", () => {
     };
 
     expect(getTestAlertBlockers(settings, true)).toEqual([
-      "Start a Swan Managed subscription or trial. BYOK is still available.",
+      "Managed calls require a subscription.",
+    ]);
+  });
+
+  it("blocks managed tests when entitlement is true but subscription is missing", () => {
+    const settings = {
+      ...defaultSettings,
+      deliveryMode: "managed" as const,
+      callEnabled: true,
+      enabled: true,
+      managedAccount: {
+        ...activeManagedAccount,
+        subscriptionStatus: null,
+      },
+    };
+
+    expect(getTestAlertBlockers(settings, true)).toEqual([
+      "Managed calls require a subscription.",
     ]);
   });
 

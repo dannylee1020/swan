@@ -1,6 +1,7 @@
 import { saveSettings } from "../storage";
 import type { AlertContext, AlertStatus, CallProvider } from "../types";
 import { ManagedClient } from "../managed/client";
+import { hasActiveManagedSubscription } from "../managed/subscription";
 
 export class ManagedCallProvider implements CallProvider {
   constructor(private readonly client?: ManagedClient) {}
@@ -10,6 +11,12 @@ export class ManagedCallProvider implements CallProvider {
       return {
         state: "skipped",
         reason: "Sign in to Swan Managed to place managed calls",
+      };
+    }
+    if (!hasActiveManagedSubscription(settings.managedAccount)) {
+      return {
+        state: "skipped",
+        reason: "Managed calls require a subscription",
       };
     }
 

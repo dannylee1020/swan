@@ -199,4 +199,32 @@ describe("alert coordination", () => {
       providerId: "delivery_2",
     });
   });
+
+  it("skips managed delivery before subscription is active", async () => {
+    storage.set("settings", {
+      ...defaultSettings,
+      deliveryMode: "managed",
+      managedAccount: {
+        userId: "user_123",
+        name: "Danny Lee",
+        email: "danny@example.com",
+        phoneNumber: "+15551234567",
+        sessionToken: "session-token",
+        eventIngestToken: "ingest-token",
+        refreshToken: "refresh-token",
+        expiresAt: "2026-05-20T11:00:00.000Z",
+        entitlementActive: true,
+        subscriptionStatus: null,
+        currentPeriodEnd: null,
+      },
+    });
+    storage.set("events", []);
+
+    const result = await new AlertCoordinator().handle(event);
+
+    expect(result.callStatus).toEqual({
+      state: "skipped",
+      reason: "Managed calls require a subscription",
+    });
+  });
 });

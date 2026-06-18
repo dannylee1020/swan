@@ -3,6 +3,9 @@ import { defineConfig } from 'wxt';
 const managedApiHostPermission = getManagedApiHostPermission(
     process.env.WXT_SWAN_MANAGED_API_BASE_URL,
 );
+const externallyConnectableMatches = getManagedApiExternallyConnectableMatches(
+    process.env.WXT_SWAN_MANAGED_API_BASE_URL,
+);
 
 export default defineConfig({
     outDir: 'output',
@@ -31,6 +34,13 @@ export default defineConfig({
                           matches: ['<all_urls>'],
                       },
                   ],
+        ...(browser === 'firefox' || externallyConnectableMatches.length === 0
+            ? {}
+            : {
+                  externally_connectable: {
+                      matches: externallyConnectableMatches,
+                  },
+              }),
         icons: {
             16: 'icons/icon-16.png',
             32: 'icons/icon-32.png',
@@ -75,4 +85,20 @@ function getManagedApiHostPermission(value: string | undefined): string | null {
     }
 
     return `${url.origin}/*`;
+}
+
+function getManagedApiExternallyConnectableMatches(value: string | undefined): string[] {
+    const trimmed = value?.trim();
+    if (!trimmed) return [];
+
+    const url = new URL(trimmed);
+    if (!['http:', 'https:'].includes(url.protocol)) {
+        throw new Error('WXT_SWAN_MANAGED_API_BASE_URL must be an HTTP(S) URL');
+    }
+
+    if (url.hostname === '127.0.0.1' || url.hostname === 'localhost') {
+        return [`${url.protocol}//127.0.0.1/*`, `${url.protocol}//localhost/*`];
+    }
+
+    return [`${url.origin}/*`];
 }

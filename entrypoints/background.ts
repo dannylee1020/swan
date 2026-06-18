@@ -1,6 +1,8 @@
 import { browser, type Browser } from "wxt/browser";
 import { AlertCoordinator } from "../lib/alerts";
+import { handleExternalBillingReturnMessage } from "../lib/billing-return";
 import { createUrgeEvent, findMatchingRule } from "../lib/detection";
+import { getManagedApiBaseUrl } from "../lib/managed/client";
 import type { SwanMessage, SwanMessageResponse } from "../lib/messages";
 import { cleanupLegacySmsData, getEvents, getRules } from "../lib/storage";
 
@@ -42,6 +44,31 @@ export default defineBackground(() => {
       }
 
       return false;
+    },
+  );
+
+  getExternalMessageApi()?.onMessageExternal.addListener(
+    (
+      message: unknown,
+      sender: { url?: string },
+      sendResponse: (response: { ok: boolean }) => void,
+    ) => {
+      void handleExternalBillingReturnMessage({
+        managedApiBaseUrl: getManagedApiBaseUrl(),
+        message,
+        senderUrl: sender.url,
+        openDashboard: async (path) => {
+          await browser.tabs.create({ url: browser.runtime.getURL(path) });
+        },
+      })
+        .then((handled) => {
+          sendResponse({ ok: handled });
+        })
+        .catch((error: unknown) => {
+          console.error(error instanceof Error ? error.message : error);
+          sendResponse({ ok: false });
+        });
+      return true;
     },
   );
 });
@@ -107,4 +134,24 @@ function getExtensionActionApi(): ExtensionActionApi | undefined {
   };
 
   return extensionBrowser.action ?? extensionBrowser.browserAction;
+}
+
+type ExternalMessageApi = {
+  onMessageExternal: {
+    addListener(
+      listener: (
+        message: unknown,
+        sender: { url?: string },
+        sendResponse: (response: { ok: boolean }) => void,
+      ) => boolean,
+    ): void;
+  };
+};
+
+function getExternalMessageApi(): ExternalMessageApi | undefined {
+  const extensionBrowser = browser as typeof browser & {
+    runtime: typeof browser.runtime & Partial<ExternalMessageApi>;
+  };
+
+  return extensionBrowser.runtime.onMessageExternal ? extensionBrowser.runtime : undefined;
 }

@@ -42,6 +42,9 @@ import {
   getManagedApiBaseUrl,
   ManagedClient,
 } from "../../lib/managed/client";
+import {
+  hasActiveManagedSubscription,
+} from "../../lib/managed/subscription";
 import type {
   AlertStatus,
   DetectionRule,
@@ -119,7 +122,7 @@ function OptionsApp() {
   });
 
   useEffect(() => {
-    void refresh();
+    void initialize();
     void loadBootstrapInfo();
   }, []);
 
@@ -172,7 +175,12 @@ function OptionsApp() {
     [events, managedApiConfigured, rules, settingsDraft],
   );
 
-  async function refresh() {
+  async function initialize() {
+    const nextSettings = await refresh();
+    await handleBillingReturn(nextSettings);
+  }
+
+  async function refresh(): Promise<UserSettings> {
     let [nextSettings, nextRules, nextEvents] = await Promise.all([
       getSettings(),
       getRules(),
@@ -196,6 +204,7 @@ function OptionsApp() {
     setRules(nextRules);
     setEvents(nextEvents);
     setSaveState({ phone: "idle", elevenLabs: "idle" });
+    return nextSettings;
   }
 
   async function loadBootstrapInfo() {
@@ -378,7 +387,12 @@ function OptionsApp() {
       const client = createManagedClient();
       const managedAccount = await client.fetchMe(settings.managedAccount);
       await updateManagedAccount(managedAccount);
-      setNotice("Swan status refreshed.");
+      if (hasActiveManagedSubscription(managedAccount)) {
+        setActivePage("general");
+        setNotice("Subscription active. Managed calls are enabled.");
+      } else {
+        setNotice("Subscription status refreshed. Managed calls are still locked.");
+      }
     } catch (error) {
       setManagedError(formatManagedError(error));
     } finally {
@@ -395,7 +409,7 @@ function OptionsApp() {
       const client = createManagedClient();
       const response = await client.createCheckout(settings.managedAccount);
       await openExternalBillingUrl(response.checkoutUrl);
-      setNotice("Stripe Checkout opened. Refresh Swan after payment completes.");
+      setNotice("Stripe Checkout opened. Return here after payment completes.");
     } catch (error) {
       setManagedError(formatManagedError(error));
     } finally {
@@ -460,6 +474,55 @@ function OptionsApp() {
     await saveSettings(nextSettings);
     setSettings(nextSettings);
     setSettingsDraft(nextSettings);
+  }
+
+  async function handleBillingReturn(currentSettings: UserSettings) {
+    const billingReturn = readBillingReturnState();
+    if (!billingReturn) return;
+
+    clearBillingReturnState();
+
+    if (billingReturn === "cancelled") {
+      setActivePage("plan");
+      setNotice("Checkout cancelled. Managed calls still require a subscription.");
+      return;
+    }
+
+    if (!currentSettings.managedAccount) {
+      setActivePage("plan");
+      setNotice("Payment returned, but this browser is not signed in to Swan Managed.");
+      return;
+    }
+
+    setManagedBusy(true);
+    setManagedError("");
+    try {
+      const client = createManagedClient();
+      const managedAccount = await client.fetchMe(currentSettings.managedAccount);
+      const nextSettings = {
+        ...currentSettings,
+        managedAccount,
+        deliveryMode: "managed" as const,
+        onboardingCompleted: true,
+      };
+      await saveSettings(nextSettings);
+      setSettings(nextSettings);
+      setSettingsDraft(nextSettings);
+
+      if (hasActiveManagedSubscription(managedAccount)) {
+        setActivePage("general");
+        setNotice("Subscription active. Managed calls are enabled.");
+      } else {
+        setActivePage("plan");
+        setNotice("Payment is still processing. Refresh status in a moment.");
+      }
+    } catch (error) {
+      setActivePage("plan");
+      setManagedError(formatManagedError(error));
+      setNotice("Payment returned, but Swan could not refresh your subscription yet.");
+    } finally {
+      setManagedBusy(false);
+    }
   }
 
   async function addRule() {
@@ -752,7 +815,9 @@ function OptionsApp() {
               logSearch={logSearch}
               rulesById={rulesById}
               onFilterChange={setLogFilter}
-              onRefresh={refresh}
+              onRefresh={async () => {
+                await refresh();
+              }}
               onSearchChange={setLogSearch}
             />
           ) : null}
@@ -1157,8 +1222,7 @@ function ManagedSubscriptionNotice({
 }) {
   const managed = settings.deliveryMode === "managed";
   const subscribed = Boolean(
-    settings.managedAccount?.entitlementActive &&
-      hasManagedSubscription(settings.managedAccount),
+    hasActiveManagedSubscription(settings.managedAccount),
   );
   const needsSubscription = managed && !subscribed;
   const detail = getManagedSubscriptionNoticeDetail({ managed, subscribed });
@@ -1529,7 +1593,7 @@ function ManagedPlanSummary({
   onOpenPortal: () => Promise<void>;
   onRefreshAccount: () => Promise<void>;
 }) {
-  const active = account.entitlementActive && hasManagedSubscription(account);
+  const active = hasActiveManagedSubscription(account);
   const billingButtonLabel = requiresBillingAttention(account.subscriptionStatus)
     ? "Update subscription"
     : "Start free trial";
@@ -2393,21 +2457,14 @@ function formatManagedError(error: unknown): string {
   return "Swan request failed.";
 }
 
-function hasManagedSubscription(account: ManagedAccount): boolean {
-  return (
-    account.subscriptionStatus === "active" ||
-    account.subscriptionStatus === "trialing"
-  );
-}
-
 function managedAccountTag(account: ManagedAccount): string {
-  if (account.entitlementActive && hasManagedSubscription(account)) return "Active";
+  if (hasActiveManagedSubscription(account)) return "Active";
   if (requiresBillingAttention(account.subscriptionStatus)) return "Needs attention";
   return "Subscription required";
 }
 
 function getManagedAccessLabel(account: ManagedAccount): string {
-  if (account.entitlementActive && hasManagedSubscription(account)) return "Active";
+  if (hasActiveManagedSubscription(account)) return "Active";
   if (requiresBillingAttention(account.subscriptionStatus)) return "Needs attention";
   return "Subscription required";
 }
@@ -2429,6 +2486,22 @@ function requiresBillingAttention(status: string | null): boolean {
     status === "incomplete" ||
     status === "paused"
   );
+}
+
+function readBillingReturnState(): "success" | "cancelled" | null {
+  const params = new URLSearchParams(window.location.search);
+  const value = params.get("swanBilling");
+  if (value === "success" || value === "cancelled") return value;
+  return null;
+}
+
+function clearBillingReturnState() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("swanBilling")) return;
+  params.delete("swanBilling");
+  const query = params.toString();
+  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+  window.history.replaceState(null, "", nextUrl);
 }
 
 function formatSubscriptionStatus(status: string): string {

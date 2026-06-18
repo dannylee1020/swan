@@ -178,6 +178,7 @@ describe("managed client", () => {
       Accept: "application/json",
       Authorization: "Bearer session-token",
     });
+    expect(JSON.parse(String(init?.body))).toEqual({});
   });
 
   it("opens Stripe billing portal sessions with the user session token", async () => {
