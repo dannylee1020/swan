@@ -582,6 +582,51 @@ th {
   color: var(--pending);
 }
 
+.subscriptionNotice {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.subscriptionNotice.blocked {
+  border-color: color-mix(in srgb, var(--error) 28%, var(--outline));
+  background: color-mix(in oklch, var(--error-soft) 26%, var(--surface));
+}
+
+.subscriptionNoticeText {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  gap: 3px;
+}
+
+.subscriptionNoticeText span {
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  line-height: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.subscriptionNoticeText strong {
+  color: var(--text);
+  font-size: var(--font-md);
+  font-weight: 760;
+  line-height: var(--line-ui);
+}
+
+.subscriptionNoticeText p {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  line-height: var(--line-ui);
+}
+
 .modeHeaderLabel {
   color: var(--text-muted);
   font-size: var(--font-xs);
@@ -1228,6 +1273,37 @@ tbody tr:hover {
   text-transform: none;
 }
 
+.planPriceBlock {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--outline));
+  border-radius: var(--radius);
+  background: color-mix(in oklch, var(--primary-soft) 42%, var(--surface));
+}
+
+.planPriceBlock span {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.planPriceBlock strong {
+  color: var(--text);
+  font-size: var(--font-lg);
+  font-weight: 760;
+  line-height: var(--line-tight);
+}
+
+.planPriceBlock p {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  line-height: var(--line-ui);
+}
+
 .managedSummary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1483,6 +1559,16 @@ tbody tr:hover {
 
   .readinessItem:nth-last-child(-n + 2) {
     border-bottom: 0;
+  }
+
+  .subscriptionNotice {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .subscriptionNotice .secondaryButton {
+    justify-content: center;
+    width: 100%;
   }
 
   .managedSummary div + div {

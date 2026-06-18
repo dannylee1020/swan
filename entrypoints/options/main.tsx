@@ -86,6 +86,9 @@ const navItems: Array<{ id: ActivePage; label: string; icon: LucideIcon }> = [
   { id: "domains", label: "Domains", icon: Globe2 },
   { id: "logs", label: "History", icon: List },
 ];
+const MANAGED_PLAN_TRIAL = "7-day free trial";
+const MANAGED_PLAN_PRICE = "$9.99/month";
+const MANAGED_PLAN_TERMS = `${MANAGED_PLAN_TRIAL}, then ${MANAGED_PLAN_PRICE}.`;
 
 function OptionsApp() {
   const [activePage, setActivePage] = useState<ActivePage>("general");
@@ -955,6 +958,7 @@ function StatusPage({
       </PageHeader>
 
       <ReadinessStrip readiness={readiness} />
+      <ManagedSubscriptionNotice settings={settingsDraft} onOpenPlanPage={onOpenPlanPage} />
 
       <section className="setupLayout" aria-label="Swan status and delivery">
         <div className="setupColumn">
@@ -1144,6 +1148,53 @@ function StatusPage({
   );
 }
 
+function ManagedSubscriptionNotice({
+  onOpenPlanPage,
+  settings,
+}: {
+  onOpenPlanPage: () => void;
+  settings: UserSettings;
+}) {
+  const managed = settings.deliveryMode === "managed";
+  const subscribed = Boolean(
+    settings.managedAccount?.entitlementActive &&
+      hasManagedSubscription(settings.managedAccount),
+  );
+  const needsSubscription = managed && !subscribed;
+  const detail = getManagedSubscriptionNoticeDetail({ managed, subscribed });
+
+  return (
+    <section
+      className={`subscriptionNotice ${needsSubscription ? "blocked" : "neutral"}`}
+      aria-label="Managed subscription requirement"
+    >
+      <div className="subscriptionNoticeText">
+        <span>Subscription</span>
+        <strong>Managed calls require a subscription.</strong>
+        <p>{detail}</p>
+      </div>
+      {needsSubscription ? (
+        <button type="button" className="secondaryButton" onClick={onOpenPlanPage}>
+          <CreditCard size={14} aria-hidden="true" />
+          <span>Open plan settings</span>
+        </button>
+      ) : null}
+    </section>
+  );
+}
+
+function getManagedSubscriptionNoticeDetail({
+  managed,
+  subscribed,
+}: {
+  managed: boolean;
+  subscribed: boolean;
+}): string {
+  if (!managed) return "BYOK calls use your own ElevenLabs account.";
+  if (subscribed) return "Your Managed calls are enabled.";
+  return "Start a subscription to enable Managed calls.";
+}
+
 function ReadinessStrip({ readiness }: { readiness: ReadinessState }) {
   const visibleItems = readiness.items.filter((item) =>
     ["mode", "recipient", "provider", "domains"].includes(item.id),
@@ -1302,7 +1353,7 @@ function PlanPage({
       <PageHeader
         eyebrow="Plan"
         title="Swan Managed"
-        description="Hosted call delivery requires an active Stripe subscription or trial."
+        description={`Managed calls require a subscription. ${MANAGED_PLAN_TERMS}`}
       />
 
       <div className="planLayout">
@@ -1323,8 +1374,8 @@ function PlanPage({
               </div>
             </div>
             <p className="helperText">
-              BYOK keeps provider setup in this browser. Swan Managed uses hosted
-              call delivery with an active subscription or trial.
+              BYOK keeps provider setup in this browser. Swan Managed starts with a{" "}
+              {MANAGED_PLAN_TERMS.toLowerCase()}
             </p>
             <button
               type="button"
@@ -1481,10 +1532,15 @@ function ManagedPlanSummary({
   const active = account.entitlementActive && hasManagedSubscription(account);
   const billingButtonLabel = requiresBillingAttention(account.subscriptionStatus)
     ? "Update subscription"
-    : "Start subscription";
+    : "Start free trial";
 
   return (
     <>
+      <div className="planPriceBlock">
+        <span>Swan Managed</span>
+        <strong>{MANAGED_PLAN_TRIAL}</strong>
+        <p>Then {MANAGED_PLAN_PRICE} for hosted Managed calls.</p>
+      </div>
       <div className="managedSummary">
         <div>
           <span>Access</span>
