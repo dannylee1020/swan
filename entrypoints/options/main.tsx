@@ -391,7 +391,7 @@ function OptionsApp() {
     try {
       const client = createManagedClient();
       const response = await client.createCheckout(settings.managedAccount);
-      window.open(response.checkoutUrl, "_blank", "noopener,noreferrer");
+      await openExternalBillingUrl(response.checkoutUrl);
       setNotice("Stripe Checkout opened. Refresh Swan after payment completes.");
     } catch (error) {
       setManagedError(formatManagedError(error));
@@ -408,7 +408,7 @@ function OptionsApp() {
     try {
       const client = createManagedClient();
       const response = await client.createPortal(settings.managedAccount);
-      window.open(response.portalUrl, "_blank", "noopener,noreferrer");
+      await openExternalBillingUrl(response.portalUrl);
       setNotice("Stripe billing portal opened.");
     } catch (error) {
       setManagedError(formatManagedError(error));
@@ -2326,6 +2326,10 @@ function getImportButtonTitle(info: BootstrapInfo): string {
 
 function createManagedClient(): ManagedClient {
   return new ManagedClient();
+}
+
+async function openExternalBillingUrl(url: string): Promise<void> {
+  await browser.tabs.create({ url });
 }
 
 function formatManagedError(error: unknown): string {
