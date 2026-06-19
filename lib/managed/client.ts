@@ -48,6 +48,10 @@ interface CheckoutRequest {
   cancelUrl?: string;
 }
 
+interface CheckoutSyncRequest {
+  providerSessionId: string;
+}
+
 interface PortalResponse {
   portalUrl: string;
 }
@@ -201,6 +205,31 @@ export class ManagedClient {
     };
   }
 
+  async fetchMeWithSessionRefresh(account: ManagedAccount): Promise<ManagedAccount> {
+    const response = await this.withSessionRefresh(account, (candidate) =>
+      this.fetchMe(candidate),
+    );
+    return response.result;
+  }
+
+  async syncCheckout(account: ManagedAccount, request: CheckoutSyncRequest): Promise<void> {
+    await this.request("/v1/billing/stripe/checkout/sync", {
+      method: "POST",
+      token: account.sessionToken,
+      body: request,
+    });
+  }
+
+  async syncCheckoutWithSessionRefresh(
+    account: ManagedAccount,
+    request: CheckoutSyncRequest,
+  ): Promise<ManagedAccount> {
+    const response = await this.withSessionRefresh(account, async (candidate) => {
+      await this.syncCheckout(candidate, request);
+    });
+    return response.account;
+  }
+
   async updateSettings(account: ManagedAccount, input: {
     enabled?: boolean;
   }): Promise<void> {
@@ -222,11 +251,30 @@ export class ManagedClient {
     });
   }
 
+  async createCheckoutWithSessionRefresh(
+    account: ManagedAccount,
+    request: CheckoutRequest = {},
+  ): Promise<{ account: ManagedAccount; checkout: CheckoutResponse }> {
+    const response = await this.withSessionRefresh(account, (candidate) =>
+      this.createCheckout(candidate, request),
+    );
+    return { account: response.account, checkout: response.result };
+  }
+
   async createPortal(account: ManagedAccount): Promise<PortalResponse> {
     return this.request<PortalResponse>("/v1/billing/stripe/portal", {
       method: "POST",
       token: account.sessionToken,
     });
+  }
+
+  async createPortalWithSessionRefresh(
+    account: ManagedAccount,
+  ): Promise<{ account: ManagedAccount; portal: PortalResponse }> {
+    const response = await this.withSessionRefresh(account, (candidate) =>
+      this.createPortal(candidate),
+    );
+    return { account: response.account, portal: response.result };
   }
 
   async logout(account: ManagedAccount): Promise<void> {
@@ -271,9 +319,36 @@ export class ManagedClient {
     } catch (error) {
       if (error instanceof ManagedApiError && error.status === 401 && !retried) {
         const refreshed = await this.refreshAccount(account);
-        return this.sendBrowserEventWithRetry(refreshed.account, event, true);
+        return this.sendBrowserEventWithRetry(
+          mergeRefreshedManagedAccount(account, refreshed.account),
+          event,
+          true,
+        );
       }
       throw error;
+    }
+  }
+
+  private async withSessionRefresh<T>(
+    account: ManagedAccount,
+    action: (account: ManagedAccount) => Promise<T>,
+  ): Promise<{ account: ManagedAccount; result: T }> {
+    try {
+      return { account, result: await action(account) };
+    } catch (error) {
+      if (!(error instanceof ManagedApiError) || error.status !== 401) {
+        throw error;
+      }
+
+      const refreshed = await this.refreshAccount(account);
+      const refreshedAccount = mergeRefreshedManagedAccount(
+        account,
+        refreshed.account,
+      );
+      return {
+        account: refreshedAccount,
+        result: await action(refreshedAccount),
+      };
     }
   }
 
@@ -323,6 +398,20 @@ function accountFromAuthResponse(response: OTPVerifyResponse): ManagedAccount {
     entitlementActive: false,
     subscriptionStatus: null,
     currentPeriodEnd: null,
+    pendingStripeCheckoutSessionId: null,
+  };
+}
+
+function mergeRefreshedManagedAccount(
+  previous: ManagedAccount,
+  refreshed: ManagedAccount,
+): ManagedAccount {
+  return {
+    ...refreshed,
+    entitlementActive: previous.entitlementActive,
+    subscriptionStatus: previous.subscriptionStatus,
+    currentPeriodEnd: previous.currentPeriodEnd,
+    pendingStripeCheckoutSessionId: previous.pendingStripeCheckoutSessionId,
   };
 }
 

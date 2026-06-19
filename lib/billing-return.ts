@@ -65,7 +65,7 @@ function parseUrl(value: string): URL | null {
 }
 
 function isLocalHost(hostname: string): boolean {
-  return hostname === "127.0.0.1" || hostname === "localhost";
+  return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "0.0.0.0";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

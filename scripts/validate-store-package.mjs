@@ -61,8 +61,16 @@ function managedExternallyConnectableMatches(value) {
   const trimmed = value?.trim();
   if (!trimmed) return [];
   const url = new URL(trimmed);
-  if (url.hostname === "127.0.0.1" || url.hostname === "localhost") {
-    return [`${url.protocol}//127.0.0.1/*`, `${url.protocol}//localhost/*`];
+  if (
+    url.hostname === "127.0.0.1" ||
+    url.hostname === "localhost" ||
+    url.hostname === "0.0.0.0"
+  ) {
+    return [
+      `${url.protocol}//127.0.0.1/*`,
+      `${url.protocol}//localhost/*`,
+      `${url.protocol}//0.0.0.0/*`,
+    ];
   }
   return [`${url.origin}/*`];
 }

@@ -20,6 +20,7 @@ const activeManagedAccount: ManagedAccount = {
   entitlementActive: true,
   subscriptionStatus: "active",
   currentPeriodEnd: null,
+  pendingStripeCheckoutSessionId: null,
 };
 
 const enabledRule: DetectionRule = {

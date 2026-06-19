@@ -183,6 +183,10 @@ function normalizeManagedAccount(input: unknown): ManagedAccount | null {
         : null,
     currentPeriodEnd:
       typeof input.currentPeriodEnd === "string" ? input.currentPeriodEnd : null,
+    pendingStripeCheckoutSessionId:
+      typeof input.pendingStripeCheckoutSessionId === "string"
+        ? input.pendingStripeCheckoutSessionId
+        : null,
   };
 }
 

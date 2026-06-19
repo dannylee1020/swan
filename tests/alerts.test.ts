@@ -164,6 +164,7 @@ describe("alert coordination", () => {
         entitlementActive: true,
         subscriptionStatus: "active",
         currentPeriodEnd: null,
+        pendingStripeCheckoutSessionId: null,
       },
     });
     storage.set("events", [
@@ -216,6 +217,7 @@ describe("alert coordination", () => {
         entitlementActive: true,
         subscriptionStatus: null,
         currentPeriodEnd: null,
+        pendingStripeCheckoutSessionId: null,
       },
     });
     storage.set("events", []);

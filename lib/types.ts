@@ -44,6 +44,7 @@ export interface ManagedAccount {
   entitlementActive: boolean;
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
+  pendingStripeCheckoutSessionId: string | null;
 }
 
 export interface UserSettings {

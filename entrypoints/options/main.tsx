@@ -43,7 +43,9 @@ import {
   ManagedClient,
 } from "../../lib/managed/client";
 import {
+  getManagedPlanDisplay,
   hasActiveManagedSubscription,
+  requiresBillingAttention,
 } from "../../lib/managed/subscription";
 import type {
   AlertStatus,
@@ -385,7 +387,10 @@ function OptionsApp() {
     setManagedError("");
     try {
       const client = createManagedClient();
-      const managedAccount = await client.fetchMe(settings.managedAccount);
+      const managedAccount = await refreshManagedAccountFromServer(
+        client,
+        settings.managedAccount,
+      );
       await updateManagedAccount(managedAccount);
       if (hasActiveManagedSubscription(managedAccount)) {
         setActivePage("general");
@@ -407,8 +412,18 @@ function OptionsApp() {
     setManagedError("");
     try {
       const client = createManagedClient();
-      const response = await client.createCheckout(settings.managedAccount);
-      await openExternalBillingUrl(response.checkoutUrl);
+      const response = await client.createCheckoutWithSessionRefresh(
+        settings.managedAccount,
+        {
+          successUrl: browser.runtime.getURL("/options.html?swanBilling=success"),
+          cancelUrl: browser.runtime.getURL("/options.html?swanBilling=cancelled"),
+        },
+      );
+      await updateManagedAccount({
+        ...response.account,
+        pendingStripeCheckoutSessionId: response.checkout.providerSessionId,
+      });
+      await openExternalBillingUrl(response.checkout.checkoutUrl);
       setNotice("Stripe Checkout opened. Return here after payment completes.");
     } catch (error) {
       setManagedError(formatManagedError(error));
@@ -424,8 +439,11 @@ function OptionsApp() {
     setManagedError("");
     try {
       const client = createManagedClient();
-      const response = await client.createPortal(settings.managedAccount);
-      await openExternalBillingUrl(response.portalUrl);
+      const response = await client.createPortalWithSessionRefresh(
+        settings.managedAccount,
+      );
+      await updateManagedAccount(response.account);
+      await openExternalBillingUrl(response.portal.portalUrl);
       setNotice("Stripe billing portal opened.");
     } catch (error) {
       setManagedError(formatManagedError(error));
@@ -498,7 +516,10 @@ function OptionsApp() {
     setManagedError("");
     try {
       const client = createManagedClient();
-      const managedAccount = await client.fetchMe(currentSettings.managedAccount);
+      const managedAccount = await refreshManagedAccountFromServer(
+        client,
+        currentSettings.managedAccount,
+      );
       const nextSettings = {
         ...currentSettings,
         managedAccount,
@@ -523,6 +544,25 @@ function OptionsApp() {
     } finally {
       setManagedBusy(false);
     }
+  }
+
+  async function refreshManagedAccountFromServer(
+    client: ManagedClient,
+    account: ManagedAccount,
+  ): Promise<ManagedAccount> {
+    let nextAccount = account;
+    if (account.pendingStripeCheckoutSessionId) {
+      nextAccount = await client.syncCheckoutWithSessionRefresh(nextAccount, {
+        providerSessionId: account.pendingStripeCheckoutSessionId,
+      });
+    }
+
+    const managedAccount = await client.fetchMeWithSessionRefresh(nextAccount);
+    if (!hasActiveManagedSubscription(managedAccount)) return managedAccount;
+    return {
+      ...managedAccount,
+      pendingStripeCheckoutSessionId: null,
+    };
   }
 
   async function addRule() {
@@ -1594,6 +1634,7 @@ function ManagedPlanSummary({
   onRefreshAccount: () => Promise<void>;
 }) {
   const active = hasActiveManagedSubscription(account);
+  const planDisplay = getManagedPlanDisplay(account);
   const billingButtonLabel = requiresBillingAttention(account.subscriptionStatus)
     ? "Update subscription"
     : "Start free trial";
@@ -1602,8 +1643,8 @@ function ManagedPlanSummary({
     <>
       <div className="planPriceBlock">
         <span>Swan Managed</span>
-        <strong>{MANAGED_PLAN_TRIAL}</strong>
-        <p>Then {MANAGED_PLAN_PRICE} for hosted Managed calls.</p>
+        <strong>{planDisplay.headline}</strong>
+        <p>{planDisplay.detail}</p>
       </div>
       <div className="managedSummary">
         <div>
@@ -2477,15 +2518,6 @@ function getManagedBillingLabel(account: ManagedAccount): string {
   if (requiresBillingAttention(status)) return "Needs attention";
   if (status === "canceled" || status === "incomplete_expired") return "Ended";
   return formatSubscriptionStatus(status);
-}
-
-function requiresBillingAttention(status: string | null): boolean {
-  return (
-    status === "past_due" ||
-    status === "unpaid" ||
-    status === "incomplete" ||
-    status === "paused"
-  );
 }
 
 function readBillingReturnState(): "success" | "cancelled" | null {

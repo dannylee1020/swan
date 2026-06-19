@@ -45,6 +45,12 @@ describe("billing return bridge", () => {
         "http://127.0.0.1:8000",
       ),
     ).toBe(true);
+    expect(
+      isAllowedBillingReturnSender(
+        "http://127.0.0.1:8000/v1/billing/stripe/return/success",
+        "http://0.0.0.0:8000",
+      ),
+    ).toBe(true);
   });
 
   it("opens the dashboard for valid external billing messages", async () => {

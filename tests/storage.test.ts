@@ -75,6 +75,7 @@ describe("storage normalization", () => {
         entitlementActive: true,
         subscriptionStatus: "active",
         currentPeriodEnd: "2026-06-20T11:00:00.000Z",
+        pendingStripeCheckoutSessionId: "cs_test_123",
       },
     });
     storage.set("events", [
@@ -93,6 +94,7 @@ describe("storage normalization", () => {
     expect(settings.deliveryMode).toBe("managed");
     expect(settings.onboardingCompleted).toBe(true);
     expect(settings.managedAccount?.eventIngestToken).toBe("ingest-token");
+    expect(settings.managedAccount?.pendingStripeCheckoutSessionId).toBe("cs_test_123");
     expect(await getEvents()).toEqual([
       {
         id: "event:managed",

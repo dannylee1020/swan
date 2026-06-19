@@ -75,7 +75,7 @@ export default defineConfig({
     }),
 });
 
-function getManagedApiHostPermission(value: string | undefined): string | null {
+export function getManagedApiHostPermission(value: string | undefined): string | null {
     const trimmed = value?.trim();
     if (!trimmed) return null;
 
@@ -87,7 +87,9 @@ function getManagedApiHostPermission(value: string | undefined): string | null {
     return `${url.origin}/*`;
 }
 
-function getManagedApiExternallyConnectableMatches(value: string | undefined): string[] {
+export function getManagedApiExternallyConnectableMatches(
+    value: string | undefined,
+): string[] {
     const trimmed = value?.trim();
     if (!trimmed) return [];
 
@@ -96,8 +98,16 @@ function getManagedApiExternallyConnectableMatches(value: string | undefined): s
         throw new Error('WXT_SWAN_MANAGED_API_BASE_URL must be an HTTP(S) URL');
     }
 
-    if (url.hostname === '127.0.0.1' || url.hostname === 'localhost') {
-        return [`${url.protocol}//127.0.0.1/*`, `${url.protocol}//localhost/*`];
+    if (
+        url.hostname === '127.0.0.1' ||
+        url.hostname === 'localhost' ||
+        url.hostname === '0.0.0.0'
+    ) {
+        return [
+            `${url.protocol}//127.0.0.1/*`,
+            `${url.protocol}//localhost/*`,
+            `${url.protocol}//0.0.0.0/*`,
+        ];
     }
 
     return [`${url.origin}/*`];
