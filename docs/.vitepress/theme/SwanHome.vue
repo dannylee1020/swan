@@ -7,6 +7,7 @@
       </a>
       <nav class="swan-system__nav" aria-label="Landing navigation">
         <a href="/docs/">Docs</a>
+        <a href="https://blog.swan-oss.com/">Blog</a>
         <a href="https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg">Chrome</a>
         <a href="https://github.com/dannylee1020/swan">GitHub</a>
       </nav>
@@ -107,6 +108,8 @@
       <span>SWAN // APACHE 2.0</span>
       <span class="swan-system__footer-links">
         <a href="/docs/">DOCS</a>
+        <span aria-hidden="true">//</span>
+        <a href="https://blog.swan-oss.com/">BLOG</a>
         <span aria-hidden="true">//</span>
         <a href="https://github.com/dannylee1020/swan">GITHUB</a>
       </span>

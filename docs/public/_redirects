@@ -4,6 +4,7 @@
 /agent /docs/agent/ 301
 /agent/* /docs/agent/:splat 301
 /docs/reference/storage-privacy /docs/privacy 301
+/docs/adult-blocker-extension https://blog.swan-oss.com/posts/adult-blocker-extension 301
 /provider-setup /docs/provider-setup 301
 /troubleshooting /docs/troubleshooting 301
 /privacy /docs/privacy 301

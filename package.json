@@ -6,6 +6,8 @@
   "scripts": {
     "docs": "wxt prepare && vitepress dev docs --host 127.0.0.1 --port 5292",
     "docs:build": "wxt prepare && vitepress build docs",
+    "blog": "vitepress dev blog --host 127.0.0.1 --port 5293",
+    "blog:build": "vitepress build blog",
     "dashboard": "node scripts/generate-bootstrap.mjs && wxt --browser chrome",
     "build": "node scripts/generate-bootstrap.mjs --release && wxt zip --browser chrome && node scripts/validate-store-package.mjs"
   },

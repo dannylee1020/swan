@@ -2,12 +2,12 @@ import { defineConfig } from "vitepress";
 import { readdir, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 
-const SITE_URL = "https://swan-oss.com";
-const SITE_NAME = "Swan";
+const SITE_URL = "https://blog.swan-oss.com";
+const SITE_NAME = "Swan Blog";
 const DEFAULT_DESCRIPTION =
-  "Open-source Chrome extension that interrupts unwanted porn urges with browser-local detection, free BYOK setup, and managed call delivery.";
+  "Field notes and practical writing about Swan, an open-source Chrome extension for interrupting unwanted porn urges.";
+const MAIN_SITE_URL = "https://swan-oss.com";
 const GITHUB_URL = "https://github.com/dannylee1020/swan";
-const BLOG_URL = "https://blog.swan-oss.com";
 const CHROME_WEB_STORE_URL =
   "https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg";
 
@@ -39,10 +39,10 @@ async function collectHtmlFiles(directory: string): Promise<string[]> {
 
 export default defineConfig({
   lang: "en-US",
-  title: "Swan",
+  title: SITE_NAME,
   description: DEFAULT_DESCRIPTION,
-  titleTemplate: ":title | Swan",
-  appearance: true,
+  titleTemplate: ":title | Swan Blog",
+  appearance: false,
   cleanUrls: true,
   lastUpdated: true,
   transformPageData(pageData) {
@@ -50,13 +50,19 @@ export default defineConfig({
       pageData.frontmatter.description ?? DEFAULT_DESCRIPTION;
     const title = pageData.title
       ? `${pageData.title} | ${SITE_NAME}`
-      : `${SITE_NAME} | Porn urge intervention for Chrome`;
+      : SITE_NAME;
     const url = absoluteUrl(pageUrl(pageData.relativePath));
     const head = (pageData.frontmatter.head ??= []);
 
     head.push(
       ["link", { rel: "canonical", href: url }],
-      ["meta", { property: "og:type", content: "website" }],
+      [
+        "meta",
+        {
+          property: "og:type",
+          content: pageData.relativePath === "index.md" ? "website" : "article",
+        },
+      ],
       ["meta", { property: "og:site_name", content: SITE_NAME }],
       ["meta", { property: "og:title", content: title }],
       ["meta", { property: "og:description", content: description }],
@@ -65,25 +71,6 @@ export default defineConfig({
       ["meta", { name: "twitter:title", content: title }],
       ["meta", { name: "twitter:description", content: description }],
     );
-
-    if (pageData.relativePath === "index.md") {
-      head.push([
-        "script",
-        { type: "application/ld+json" },
-        JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          name: "Swan",
-          applicationCategory: "BrowserApplication",
-          operatingSystem: "Chrome, Chromium",
-          description: DEFAULT_DESCRIPTION,
-          url: SITE_URL,
-          installUrl: CHROME_WEB_STORE_URL,
-          codeRepository: GITHUB_URL,
-          license: "https://www.apache.org/licenses/LICENSE-2.0",
-        }),
-      ]);
-    }
   },
   async buildEnd(siteConfig) {
     const htmlFiles = await collectHtmlFiles(siteConfig.outDir);
@@ -111,63 +98,20 @@ export default defineConfig({
   },
   head: [
     ["link", { rel: "icon", href: "/mark.svg", type: "image/svg+xml" }],
-    ["meta", { name: "theme-color", content: "#13736f" }],
-    ["meta", { name: "color-scheme", content: "light dark" }],
+    ["meta", { name: "theme-color", content: "#ffffff" }],
+    ["meta", { name: "color-scheme", content: "light" }],
   ],
   themeConfig: {
     search: {
       provider: "local",
     },
     nav: [
-      { text: "Docs", link: "/docs/" },
-      { text: "Blog", link: BLOG_URL },
+      { text: "Swan", link: MAIN_SITE_URL },
+      { text: "Docs", link: `${MAIN_SITE_URL}/docs/` },
       { text: "Add to Chrome", link: CHROME_WEB_STORE_URL },
-      { text: "Providers", link: "/docs/provider-setup" },
-      { text: "Troubleshooting", link: "/docs/troubleshooting" },
-      { text: "Privacy", link: "/docs/privacy" },
       { text: "GitHub", link: GITHUB_URL },
     ],
-    sidebar: {
-      "/docs/": [
-        {
-          text: "Start",
-          items: [
-            { text: "Start", link: "/docs/" },
-          ],
-        },
-        {
-          text: "Configure",
-          items: [
-            { text: "Settings", link: "/docs/guide/configure" },
-            { text: "Provider setup", link: "/docs/provider-setup" },
-            { text: "Agent prompt", link: "/docs/agent/" },
-            { text: "Domain tracking", link: "/docs/guide/domain-tracking" },
-          ],
-        },
-        {
-          text: "Operate",
-          items: [
-            { text: "Test and verify", link: "/docs/guide/test-and-verify" },
-            { text: "Troubleshooting", link: "/docs/troubleshooting" },
-            { text: "Update Swan", link: "/docs/guide/update" },
-          ],
-        },
-        {
-          text: "Learn",
-          items: [
-            { text: "Chrome porn blocker", link: "/docs/chrome-porn-blocker" },
-            {
-              text: "Open-source porn blocker",
-              link: "/docs/open-source-porn-blocker",
-            },
-            {
-              text: "Swan vs passive blockers",
-              link: "/docs/compare-passive-porn-blockers",
-            },
-          ],
-        },
-      ],
-    },
+    aside: false,
     socialLinks: [
       { icon: "github", link: GITHUB_URL },
     ],
@@ -176,7 +120,7 @@ export default defineConfig({
       label: "On this page",
     },
     footer: {
-      message: "Open source browser intervention software.",
+      message: "Practical notes for a narrow browser intervention tool.",
       copyright: "Swan is open source software.",
     },
   },
