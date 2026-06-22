@@ -200,6 +200,32 @@ body {
   margin: 0;
 }
 
+.blog-cta {
+  max-width: 68ch;
+  margin: 2rem 0;
+  padding: 1.125rem 1.25rem;
+  border: 1px solid var(--vp-c-text-1);
+  background: var(--vp-c-bg-soft);
+}
+
+.blog-cta p {
+  margin: 0;
+}
+
+.blog-cta p + p {
+  margin-top: 0.75rem;
+}
+
+.blog-cta__title {
+  color: var(--vp-c-text-1);
+  font-weight: 760;
+}
+
+.blog-cta__link {
+  display: inline-block;
+  margin-top: 0.125rem;
+}
+
 .VPDoc .custom-block {
   border: 1px solid var(--vp-c-text-1);
   border-radius: 0;

@@ -68,6 +68,11 @@ Swan is a fit if:
 
 Swan is not a fit if you need device-wide filtering, DNS rules, mobile app blocking, image classification, or managed parental controls.
 
+<div class="blog-cta">
+  <p class="blog-cta__title">Use Swan when the risky path starts in Chrome.</p>
+  <p>Install Swan from the <a class="blog-cta__link" href="https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg">Chrome Web Store</a>, then review the <a href="https://swan-oss.com/docs/chrome-web-store">install guide</a> and <a href="https://swan-oss.com/docs/guide/domain-tracking">domain tracking scope</a> before relying on it.</p>
+</div>
+
 ## A practical layered setup
 
 Start with the layer that matches the first action.

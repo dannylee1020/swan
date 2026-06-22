@@ -57,6 +57,11 @@ Swan is built around that narrow browser moment. It watches configured adult dom
 
 Swan does not inspect images or videos, run DNS filtering, control native apps, or cover every browser profile. That limit is the tradeoff. It is a focused interruption tool for a browser event.
 
+<div class="blog-cta">
+  <p class="blog-cta__title">Make the Chrome moment harder to finish automatically.</p>
+  <p>If adult sites in Chrome are where the loop starts, install Swan from the <a class="blog-cta__link" href="https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg">Chrome Web Store</a> and pair it with the <a href="/posts/how-to-block-adult-sites-on-chrome">Chrome blocking setup</a>.</p>
+</div>
+
 ## Use accountability without shame
 
 Accountability works best when it creates a pause, not a courtroom.

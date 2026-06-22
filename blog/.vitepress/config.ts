@@ -11,6 +11,8 @@ const GITHUB_URL = "https://github.com/dannylee1020/swan";
 const CHROME_WEB_STORE_URL =
   "https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg";
 
+const pageMetadata = new Map<string, { lastmod?: string }>();
+
 function pageUrl(relativePath: string): string {
   const withoutExtension = relativePath.replace(/\.md$/, "");
   if (withoutExtension === "index") return "/";
@@ -22,6 +24,26 @@ function pageUrl(relativePath: string): string {
 
 function absoluteUrl(pathname: string): string {
   return new URL(pathname, SITE_URL).toString();
+}
+
+function normalizeDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value !== "string") return undefined;
+
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed.toISOString().slice(0, 10);
+}
+
+function absoluteAssetUrl(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.trim() === "") return undefined;
+  return new URL(value, SITE_URL).toString();
 }
 
 async function collectHtmlFiles(directory: string): Promise<string[]> {
@@ -52,7 +74,14 @@ export default defineConfig({
       ? `${pageData.title} | ${SITE_NAME}`
       : SITE_NAME;
     const url = absoluteUrl(pageUrl(pageData.relativePath));
+    const datePublished = normalizeDate(pageData.frontmatter.date);
+    const dateModified = normalizeDate(
+      pageData.frontmatter.updated ?? pageData.frontmatter.date,
+    );
+    const image = absoluteAssetUrl(pageData.frontmatter.image);
     const head = (pageData.frontmatter.head ??= []);
+
+    pageMetadata.set(url, { lastmod: dateModified ?? datePublished });
 
     head.push(
       ["link", { rel: "canonical", href: url }],
@@ -67,10 +96,61 @@ export default defineConfig({
       ["meta", { property: "og:title", content: title }],
       ["meta", { property: "og:description", content: description }],
       ["meta", { property: "og:url", content: url }],
-      ["meta", { name: "twitter:card", content: "summary" }],
+      [
+        "meta",
+        {
+          name: "twitter:card",
+          content: image ? "summary_large_image" : "summary",
+        },
+      ],
       ["meta", { name: "twitter:title", content: title }],
       ["meta", { name: "twitter:description", content: description }],
     );
+
+    if (image) {
+      head.push(
+        ["meta", { property: "og:image", content: image }],
+        ["meta", { name: "twitter:image", content: image }],
+      );
+    }
+
+    if (pageData.relativePath !== "index.md" && pageData.title) {
+      head.push([
+        "script",
+        { type: "application/ld+json" },
+        JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: pageData.title,
+          description,
+          url,
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": url,
+          },
+          ...(datePublished ? { datePublished } : {}),
+          ...(dateModified || datePublished
+            ? { dateModified: dateModified ?? datePublished }
+            : {}),
+          ...(image ? { image: [image] } : {}),
+          author: {
+            "@type": "Organization",
+            name: "Swan",
+            url: MAIN_SITE_URL,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "Swan",
+            url: MAIN_SITE_URL,
+          },
+          isPartOf: {
+            "@type": "Blog",
+            name: SITE_NAME,
+            url: SITE_URL,
+          },
+        }),
+      ]);
+    }
   },
   async buildEnd(siteConfig) {
     const htmlFiles = await collectHtmlFiles(siteConfig.outDir);
@@ -86,10 +166,15 @@ export default defineConfig({
         return absoluteUrl(`/${pathname}`);
       })
       .sort();
+    const sitemapEntries = urls.map((url) => {
+      const lastmod = pageMetadata.get(url)?.lastmod;
+      if (!lastmod) return `  <url><loc>${url}</loc></url>`;
+      return `  <url><loc>${url}</loc><lastmod>${lastmod}</lastmod></url>`;
+    });
     const sitemap = [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-      ...urls.map((url) => `  <url><loc>${url}</loc></url>`),
+      ...sitemapEntries,
       "</urlset>",
       "",
     ].join("\n");

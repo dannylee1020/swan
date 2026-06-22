@@ -73,6 +73,11 @@ When Swan detects a tracked domain during top-level browser navigation, it redir
 
 Swan does not inspect prompts, chats, images, videos, apps, DNS traffic, social feeds, or whole-device activity. It does not know whether content is AI-generated. Its value is narrower: when the risky path begins with opening a known adult domain in Chrome, Swan can interrupt that browser event and force a pause.
 
+<div class="blog-cta">
+  <p class="blog-cta__title">Use Swan for the browser-domain part of the loop.</p>
+  <p>If known adult sites in Chrome are the repeatable start point, install Swan from the <a class="blog-cta__link" href="https://chromewebstore.google.com/detail/swan/pckfmifdcfhalnpaiknalfcpagdgmbjg">Chrome Web Store</a> and review the <a href="https://swan-oss.com/docs/guide/domain-tracking">domain tracking scope</a>.</p>
+</div>
+
 That can be useful, but it should not be confused with AI moderation.
 
 ## Practical next steps

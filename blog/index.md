@@ -2,6 +2,7 @@
 layout: doc
 title: Swan Blog
 description: Practical notes about Swan, browser intervention, adult-site blocking, and open-source recovery-support software.
+lastUpdated: false
 ---
 
 # Swan Blog
